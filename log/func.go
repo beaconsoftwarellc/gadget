@@ -12,10 +12,6 @@ const (
 	MaskEnv = "LOGGING_MASK"
 )
 
-///////////////////
-// Output Functions
-///////////////////
-
 // FunctionFromEnv reads the environment variables and returns an appropriate log function
 func FunctionFromEnv() Output {
 	logLevel := loggingMaskFromEnv()

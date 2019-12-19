@@ -14,7 +14,7 @@ import (
 func FileExists(path string) bool {
 	stat, err := os.Stat(path)
 	r := true
-	if os.IsNotExist(err) || stat.IsDir() {
+	if os.IsNotExist(err) || err != nil || stat.IsDir() {
 		r = false
 	}
 	return r

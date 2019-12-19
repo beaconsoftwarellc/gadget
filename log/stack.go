@@ -6,7 +6,7 @@ import (
 	"github.com/beaconsoftwarellc/gadget/collection"
 )
 
-// StackLogger implments the tiered logging interface with a string stack for the messages
+// StackLogger implements the tiered logging interface with a string stack for the messages
 type StackLogger struct {
 	messages collection.StringStack
 }
