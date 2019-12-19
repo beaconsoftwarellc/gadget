@@ -38,8 +38,9 @@ func (l *logger) NewMessage(level Level, err error) *Message {
 // NewMessagef with the passed level and message
 func (l *logger) NewMessagef(level Level, format string, args ...interface{}) *Message {
 	message := &Message{
-		Message:   fmt.Sprintf(format, args...),
-		SessionID: l.sessionID,
+		LogIdentifier: l.identifier,
+		Message:       fmt.Sprintf(format, args...),
+		SessionID:     l.sessionID,
 	}
 	message.setFields(level, l)
 	return message
@@ -50,7 +51,7 @@ func (m *Message) setFields(level Level, l *logger) {
 	ts := time.Now().UTC()
 	m.TimestampUnix = ts.Unix()
 	m.Timestamp = ts.String()
-	m.Caller = stack.Caller(l.stackOffset).String()
+	m.Caller = stack.Caller(l.stackOffset + 1).String()
 	m.LogIdentifier = l.identifier
 	m.setTrace()
 }
@@ -81,12 +82,16 @@ func getStack() []string {
 
 // TTYString for logging this message to console.
 func (m *Message) TTYString() string {
-	if nil == m.Error {
-		return fmt.Sprintf("[%s:%s] %s %s: %s (%s)\n", m.LogIdentifier, m.SessionID, m.Timestamp, m.Level, m.Message, m.Caller)
+	sessionString := ""
+	if m.SessionID != "" {
+		sessionString = ":" + m.SessionID
 	}
-	s := fmt.Sprintf("[%s:%s] %s %s: %+v (%s)\n", m.LogIdentifier, m.SessionID, m.Timestamp, m.Level, m.Error, m.Caller)
+	if nil == m.Error {
+		return fmt.Sprintf("[%s%s] %s %s: %s (%s)\n", m.LogIdentifier, sessionString, m.Timestamp, m.Level, m.Message, m.Caller)
+	}
+	s := fmt.Sprintf("[%s%s] %s %s: %+v (%s)\n", m.LogIdentifier, sessionString, m.Timestamp, m.Level, m.Error, m.Caller)
 	if len(m.Stack) != 0 {
-		s = fmt.Sprintf("%s%s\n", s, strings.Join(m.Stack, "\n"))
+		s = fmt.Sprintf("%s\t%s\n", s, strings.Join(m.Stack, "\n\t"))
 	}
 	return s
 }
