@@ -67,17 +67,12 @@ func ProcessMap(config interface{}, envVars map[string]string) error {
 		if "" == env {
 			if !envOptions.Contains("optional") {
 				return MissingEnvironmentVariableError{Tag: envTag, Field: typ.Name}
-			} else if reflect.String == typ.Type.Kind() && isAWSMetaServiceLookup(valueField.String()) {
-				valueField.SetString(AWSLookup(valueField.String()))
 			}
 			continue
 		}
 
 		switch t := typ.Type.Kind(); t {
 		case reflect.String:
-			if isAWSMetaServiceLookup(env) {
-				env = AWSLookup(env)
-			}
 			valueField.SetString(env)
 		case reflect.Int:
 			parsed, err := strconv.Atoi(env)

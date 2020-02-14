@@ -59,20 +59,6 @@ func TestValidConfig(t *testing.T) {
 	assert.Equal(expectedNotEnvironmentField, config.NotEnvironmentField)
 }
 
-func TestAWSLookupDuringProcess(t *testing.T) {
-	assert := assert.New(t)
-	os.Clearenv()
-	os.Setenv("STRING_FIELD", awsMetaService+"amazon.com")
-	expectedIntField := 42
-	os.Setenv("INT_FIELD", strconv.Itoa(expectedIntField))
-	config := &specification{OptionalField: awsMetaService + "amazon.com"}
-	err := Process(config)
-	awsLookupReturn := "<html>\r\n<body>\r\n</body>\r\n</html>\r\n"
-
-	assert.NoError(err)
-	assert.Equal(&specification{StringField: awsLookupReturn, IntField: expectedIntField, OptionalField: awsLookupReturn}, config)
-}
-
 func TestProcessNonPointerFails(t *testing.T) {
 	assert := assert.New(t)
 	os.Clearenv()
