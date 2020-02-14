@@ -1,3 +1,4 @@
+.PHONY: all help unit
 
 all: unit
 
@@ -6,6 +7,5 @@ help:
 	@echo "  unit                    to run unit tests"
 
 unit:
-	@echo "go test package"
 	go mod tidy
 	go test -cover -p 1 ./...

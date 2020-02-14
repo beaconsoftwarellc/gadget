@@ -51,7 +51,8 @@ func (m *Message) setFields(level Level, l *logger) {
 	ts := time.Now().UTC()
 	m.TimestampUnix = ts.Unix()
 	m.Timestamp = ts.String()
-	m.Caller = stack.Caller(l.stackOffset + 1).String()
+	// this seems to be correct sometimes, but needs a +1 in other situations, this needs to be smarter.
+	m.Caller = stack.Caller(l.stackOffset).String()
 	m.LogIdentifier = l.identifier
 	m.setTrace()
 }

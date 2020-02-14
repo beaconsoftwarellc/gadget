@@ -98,7 +98,7 @@ func TestLogFormat(t *testing.T) {
 		NewGlobal(id, NewOutput(FlagAll, f))
 		msg := generator.String(7)
 		t.function(msg)
-		assert.True(strings.HasPrefix(actual.Caller, "log_test.go"), "test for %s failed", t.expected)
+		assert.True(strings.HasPrefix(actual.Caller, "log_test.go"), "expected: '%s*' got: '%s'", "log_test.go", actual.Caller)
 		assert.Equal(id, actual.LogIdentifier, id)
 		assert.Equal(t.expected, actual.Level, t.expected)
 		assert.Equal(msg, actual.Message)
