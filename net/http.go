@@ -107,10 +107,10 @@ type httpRedirectClient struct {
 
 // Do the request by sending the payload to the remote server and returning the response and any errors
 func (client *httpRedirectClient) Do(req *http.Request) (*http.Response, errors.TracerError) {
-	log.Debugf("sending request to %s", req.URL.String())
+	log.Debugf("sending %s %s", req.Method, req.URL.String())
 	now := time.Now()
 	resp, err := client.client.Do(req)
-	log.Debugf("request to %s complete in %s", req.URL.String(), time.Now().Sub(now))
+	log.Debugf("%s %s complete in %s", req.Method, req.URL.String(), time.Now().Sub(now))
 	if nil == err && (resp.StatusCode < 200 || resp.StatusCode > 299) {
 		err = NewBadStatusError(req.Method, req.URL.String(), resp.StatusCode)
 	}
