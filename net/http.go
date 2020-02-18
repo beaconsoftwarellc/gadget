@@ -109,7 +109,11 @@ type httpRedirectClient struct {
 func (client *httpRedirectClient) Do(req *http.Request) (*http.Response, errors.TracerError) {
 	now := time.Now()
 	resp, err := client.client.Do(req)
-	log.Debugf("%d %s %s (%s)", resp.StatusCode, req.Method, req.URL.String(), time.Now().Sub(now))
+	statusCode := 0
+	if nil != resp {
+		statusCode = resp.StatusCode
+	}
+	log.Debugf("%d %s %s (%s)", statusCode, req.Method, req.URL.String(), time.Now().Sub(now))
 	if nil == err && (resp.StatusCode < 200 || resp.StatusCode > 299) {
 		err = NewBadStatusError(req.Method, req.URL.String(), resp.StatusCode)
 	}
