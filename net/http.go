@@ -113,6 +113,8 @@ func (client *httpRedirectClient) Do(req *http.Request) (*http.Response, errors.
 	message := "success"
 	if nil != resp {
 		statusCode = resp.StatusCode
+	}
+	if nil != err {
 		message = err.Error()
 	}
 	log.Debugf("%d %s %s (%s) - %s", statusCode, req.Method, req.URL.String(), time.Now().Sub(now), message)
