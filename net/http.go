@@ -110,10 +110,12 @@ func (client *httpRedirectClient) Do(req *http.Request) (*http.Response, errors.
 	now := time.Now()
 	resp, err := client.client.Do(req)
 	statusCode := 0
+	message := "success"
 	if nil != resp {
 		statusCode = resp.StatusCode
+		message = err.Error()
 	}
-	log.Debugf("%d %s %s (%s)", statusCode, req.Method, req.URL.String(), time.Now().Sub(now))
+	log.Debugf("%d %s %s (%s) - %s", statusCode, req.Method, req.URL.String(), time.Now().Sub(now), message)
 	if nil == err && (resp.StatusCode < 200 || resp.StatusCode > 299) {
 		err = NewBadStatusError(req.Method, req.URL.String(), resp.StatusCode)
 	}
