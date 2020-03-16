@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 
-	"gitlab.com/beacon-software/gadget/log"
+	"github.com/beaconsoftwarellc/gadget/log"
 )
 
 // Bucket wraps the S3 downloader with an in memory cache

@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"gitlab.com/beacon-software/gadget/generator"
+	"github.com/beaconsoftwarellc/gadget/generator"
 )
 
 type specification struct {

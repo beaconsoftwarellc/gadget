@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"gitlab.com/beacon-software/gadget/errors"
+	"github.com/beaconsoftwarellc/gadget/errors"
 )
 
 // InvalidSpecificationError  indicates that a config is of the wrong type.
