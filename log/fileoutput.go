@@ -15,7 +15,7 @@ type fileOutput struct {
 
 // NewFileOutput that writes messages of the passed level to the passed file path.
 func NewFileOutput(level LevelFlag, path string) (Output, error) {
-	fd, err := os.OpenFile(path, os.O_WRONLY | os.O_APPEND, 0666)
+	fd, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if nil != err {
 		return nil, err
 	}
