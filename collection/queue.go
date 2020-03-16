@@ -1,6 +1,6 @@
 package collection
 
-// Queue is an implementation of a queue (fifo) datastructure
+// Queue is an implementation of a queue (fifo) data structure
 type Queue interface {
 	// Size of the queue represented as a count of the elements in the queue.
 	Size() int

@@ -27,10 +27,10 @@ const (
 )
 
 func newSession() (*session.Session, errors.TracerError) {
-	session, err := session.NewSessionWithOptions(session.Options{
+	sess, err := session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	})
-	return session, errors.Wrap(err)
+	return sess, errors.Wrap(err)
 }
 
 type administration struct {
@@ -63,12 +63,12 @@ func GetAdministration() (Administration, errors.TracerError) {
 	if nil != admin.cwlogs {
 		return admin, nil
 	}
-	session, err := newSession()
+	sess, err := newSession()
 	if nil != err {
 		log.Error(err)
 		return nil, err
 	}
-	admin.cwlogs = cloudwatchlogs.New(session)
+	admin.cwlogs = cloudwatchlogs.New(sess)
 	err = admin.UpdateLogGroups()
 	log.Error(err)
 	return admin, errors.Wrap(err)
@@ -79,7 +79,7 @@ func (cwa *administration) Run() {
 	defer cwa.Unlock()
 	timeutil.RunEvery(func() {
 		for _, output := range cwa.outputs {
-			output.SendEvents()
+			log.Error(output.SendEvents())
 		}
 	}, cwa.sendWait)
 }
