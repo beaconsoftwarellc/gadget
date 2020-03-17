@@ -28,6 +28,8 @@ const (
 	HeaderUserAgent = "User-Agent"
 	// HeaderCacheControl specifies directives for caching mechanisms in both requests and responses
 	HeaderCacheControl = "Cache-Control"
+	// HeaderContentEncoding specifies how the payload of the http message is encoded
+	HeaderContentEncoding = "Content-Encoding"
 
 	// MIMEAppJSON is the HTTP value application/json for ContentType
 	MIMEAppJSON = "application/json"
