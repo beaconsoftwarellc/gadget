@@ -4,11 +4,11 @@ import (
 	"strings"
 )
 
-// TagOptions is the string following a comma in a struct field's "json"
+// TagOptions is the string following a comma in a struct field's
 // tag, or the empty string. It does not include the leading comma.
 type TagOptions []string
 
-// ParseTag splits a struct field's json tag into its name and
+// ParseTag splits a struct field's tag into its name and
 // comma-separated options.
 func ParseTag(tag string) (string, TagOptions) {
 	if idx := strings.Index(tag, ","); idx != -1 {

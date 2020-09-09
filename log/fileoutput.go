@@ -21,7 +21,7 @@ func NewFileOutput(level LevelFlag, path string) (Output, error) {
 	}
 	return &fileOutput{
 		level:    level,
-		file: fd,
+		file: 		fd,
 		filepath: path,
 	}, nil
 }
