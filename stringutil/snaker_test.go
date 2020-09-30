@@ -3,7 +3,7 @@ package stringutil
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assert1 "github.com/stretchr/testify/assert"
 )
 
 func TestUnderscore(t *testing.T) {

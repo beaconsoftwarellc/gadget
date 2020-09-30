@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assert1 "github.com/stretchr/testify/assert"
 
 	"github.com/beaconsoftwarellc/gadget/generator"
 )
@@ -136,7 +136,7 @@ func TestValidateIPv6Address(t *testing.T) {
 }
 
 func TestGetIntValue(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	values := url.Values{}
 
@@ -160,7 +160,7 @@ func TestGetIntValue(t *testing.T) {
 }
 
 func TestGetInt64Value(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	values := url.Values{}
 
@@ -184,7 +184,7 @@ func TestGetInt64Value(t *testing.T) {
 }
 
 func TestGetInt32Value(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	values := url.Values{}
 
@@ -208,7 +208,7 @@ func TestGetInt32Value(t *testing.T) {
 }
 
 func TestGetInt16Value(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	values := url.Values{}
 
@@ -232,7 +232,7 @@ func TestGetInt16Value(t *testing.T) {
 }
 
 func TestGetInt8Value(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	values := url.Values{}
 
@@ -256,7 +256,7 @@ func TestGetInt8Value(t *testing.T) {
 }
 
 func TestGetUintValue(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	values := url.Values{}
 
@@ -280,7 +280,7 @@ func TestGetUintValue(t *testing.T) {
 }
 
 func TestGetUint64Value(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	values := url.Values{}
 
@@ -304,7 +304,7 @@ func TestGetUint64Value(t *testing.T) {
 }
 
 func TestGetUint32Value(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	values := url.Values{}
 
@@ -328,7 +328,7 @@ func TestGetUint32Value(t *testing.T) {
 }
 
 func TestGetUint16Value(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	values := url.Values{}
 
@@ -352,7 +352,7 @@ func TestGetUint16Value(t *testing.T) {
 }
 
 func TestGetUint8Value(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	values := url.Values{}
 

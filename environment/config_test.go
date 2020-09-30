@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assert1 "github.com/stretchr/testify/assert"
 
 	"github.com/beaconsoftwarellc/gadget/generator"
 )
@@ -23,7 +23,7 @@ type unsupportedTypeSpecification struct {
 }
 
 func TestPush(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	os.Clearenv()
 
 	spec := &specification{
@@ -39,7 +39,7 @@ func TestPush(t *testing.T) {
 }
 
 func TestValidConfig(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	os.Clearenv()
 
 	expectedStringField := "life, the universe and everything"
@@ -60,7 +60,7 @@ func TestValidConfig(t *testing.T) {
 }
 
 func TestProcessNonPointerFails(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	os.Clearenv()
 
 	expectedStringField := "life, the universe and everything"
@@ -78,7 +78,7 @@ func TestProcessNonPointerFails(t *testing.T) {
 }
 
 func TestMissingEnviroment(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	os.Clearenv()
 
 	expectedStringField := "life, the universe and everything"
@@ -95,7 +95,7 @@ func TestMissingEnviroment(t *testing.T) {
 }
 
 func TestNotImplementedType(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	os.Clearenv()
 
 	os.Setenv("BOOL_FIELD", "true")
@@ -108,7 +108,7 @@ func TestNotImplementedType(t *testing.T) {
 }
 
 func TestInvalidConfigValue(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	os.Clearenv()
 
 	expectedStringField := "life, the universe and everything"
@@ -129,7 +129,7 @@ func TestInvalidConfigValue(t *testing.T) {
 }
 
 func TestNonStructProcessed(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	os.Clearenv()
 
 	config := "42"

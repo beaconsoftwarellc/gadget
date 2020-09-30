@@ -3,11 +3,11 @@ package stringutil
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assert1 "github.com/stretchr/testify/assert"
 )
 
 func TestParseTag(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	tags := []struct {
 		Raw     string
@@ -30,7 +30,7 @@ func TestParseTag(t *testing.T) {
 }
 
 func TestContains(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	_, options := ParseTag(",foo,bar")
 

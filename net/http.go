@@ -16,6 +16,8 @@ const (
 	HeaderAuthorization = "Authorization"
 	// HeaderContentType is the HTTP header Content Type
 	HeaderContentType = "Content-Type"
+	// HeaderContentLength is the HTTP header name for specifying length of the body in bytes
+	HeaderContentLength = "Content-Length"
 	// HeaderAccept is the HTTP header Accept
 	HeaderAccept = "Accept"
 	// HeaderHost specifies the domain name of the server

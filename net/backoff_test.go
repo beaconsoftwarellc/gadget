@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
+	assert1 "github.com/stretchr/testify/assert"
 )
 
 func getF(expectedCalls int) (*int, F) {
@@ -22,14 +22,14 @@ func getF(expectedCalls int) (*int, F) {
 }
 
 func TestBackoff(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	calls, f := getF(1)
 	assert.NoError(Backoff(f))
 	assert.Equal(1, *calls)
 }
 
 func TestBackoffExtendedErrorIsReturned(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	calls, f := getF(10)
 	start := time.Now()
 	minCycle := 1 * time.Millisecond
@@ -39,14 +39,14 @@ func TestBackoffExtendedErrorIsReturned(t *testing.T) {
 }
 
 func TestBackoffExtendedBadMinimum(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	calls, f := getF(3)
 	assert.Error(BackoffExtended(f, 2, 1*time.Microsecond, 10*time.Millisecond))
 	assert.Equal(2, *calls)
 }
 
 func TestCalculateBackoff(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	result1 := CalculateBackoff(r, 5, 10*time.Millisecond, 6*time.Hour)
 	result2 := CalculateBackoff(r, 6, 10*time.Millisecond, 6*time.Hour)

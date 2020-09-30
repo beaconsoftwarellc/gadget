@@ -3,13 +3,13 @@ package crypto
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assert1 "github.com/stretchr/testify/assert"
 
 	"github.com/beaconsoftwarellc/gadget/generator"
 )
 
 func TestNewAES(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	encryption, err := NewAES(nil)
 	aes := encryption.(*AESEncryption)
 	assert.NoError(err)
@@ -23,7 +23,7 @@ func TestNewAES(t *testing.T) {
 }
 
 func TestNewAESPassedKey(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	key := AESEncryption{}.GenerateKey()
 	encryption, err := NewAES(key)
 	aes := encryption.(*AESEncryption)
@@ -36,13 +36,13 @@ func TestNewAESPassedKey(t *testing.T) {
 }
 
 func TestNewAESBadKeyPanics(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	_, err := NewAES(generator.Bytes(AES256KeySize + 5))
 	assert.EqualError(err, "crypto/aes: invalid key size 37")
 }
 
 func TestAESEncrypt(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	encryption, err := NewAES(nil)
 	aes := encryption.(*AESEncryption)
 	assert.NoError(err)
@@ -53,7 +53,7 @@ func TestAESEncrypt(t *testing.T) {
 }
 
 func TestAESDecryptNonsense(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	encryption, err := NewAES(nil)
 	aes := encryption.(*AESEncryption)
 	assert.NoError(err)
@@ -63,7 +63,7 @@ func TestAESDecryptNonsense(t *testing.T) {
 }
 
 func TestAESDecryptModified(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	encryption, err := NewAES(nil)
 	aes := encryption.(*AESEncryption)
 	assert.NoError(err)
@@ -77,7 +77,7 @@ func TestAESDecryptModified(t *testing.T) {
 }
 
 func TestAESEncryptDecrypt(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	encryption, err := NewAES(nil)
 	aes := encryption.(*AESEncryption)
 	assert.NoError(err)
@@ -90,7 +90,7 @@ func TestAESEncryptDecrypt(t *testing.T) {
 }
 
 func TestAESEncryptDecryptDifferentInstances(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	encryption, err := NewAES(nil)
 	aes := encryption.(*AESEncryption)
 	assert.NoError(err)

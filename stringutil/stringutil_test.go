@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assert1 "github.com/stretchr/testify/assert"
 )
 
 func TestLastRune(t *testing.T) {
@@ -142,7 +142,7 @@ var appendIfMissingData = []struct {
 }
 
 func TestAppendIfMissing(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	for _, te := range appendIfMissingData {
 		actual := AppendIfMissing(te.initial, te.toAdd)
 		assert.Equal(te.expected, actual)
@@ -150,7 +150,7 @@ func TestAppendIfMissing(t *testing.T) {
 }
 
 func TestSprintHex(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	sprintHexStringTests := []struct {
 		expected string
@@ -170,7 +170,7 @@ func TestSprintHex(t *testing.T) {
 }
 
 func TestByteToASCIIHexValue(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	byteToASCIIHexTests := []struct {
 		expected []byte
@@ -191,7 +191,7 @@ func TestByteToASCIIHexValue(t *testing.T) {
 }
 
 func TestMakeASCIIZeros(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	makeASCIIZerosTests := []struct {
 		expected []byte

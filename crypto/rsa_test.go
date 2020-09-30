@@ -4,20 +4,20 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assert1 "github.com/stretchr/testify/assert"
 
 	"github.com/beaconsoftwarellc/gadget/generator"
 )
 
 func TestGenerateKey(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	rsaEncryption := NewRSAEncryption()
 	expected := rsaEncryption.GenerateKey()
 	assert.NotNil(expected)
 }
 
 func TestMarshalPrivateKey(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	rsae := &RSAEncryption{}
 	rsae.SetPrivateKey(rsae.GenerateKey())
 	assert.NotNil(rsae.GetPrivateKey())
@@ -31,7 +31,7 @@ func TestMarshalPrivateKey(t *testing.T) {
 }
 
 func TestMarshalUnmarshalPrivate(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	rsae := &RSAEncryption{}
 	expected := rsae.GenerateKey()
 	rsae.SetPrivateKey(expected)
@@ -43,7 +43,7 @@ func TestMarshalUnmarshalPrivate(t *testing.T) {
 }
 
 func TestMarshalPublicKey(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	rsae := &RSAEncryption{}
 	key := rsae.GenerateKey()
 	assert.NotNil(key)
@@ -57,7 +57,7 @@ func TestMarshalPublicKey(t *testing.T) {
 }
 
 func TestMarshalUnmarshalPublic(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	rsae := &RSAEncryption{}
 	key := rsae.GenerateKey()
 	expected := key.PublicKey
@@ -70,7 +70,7 @@ func TestMarshalUnmarshalPublic(t *testing.T) {
 }
 
 func TestEncrypt(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	rsae := &RSAEncryption{}
 	rsae.SetPublicKey(rsae.GenerateKey().PublicKey)
 	plaintext := generator.String(190) // this is the MAX for our keys
@@ -80,7 +80,7 @@ func TestEncrypt(t *testing.T) {
 }
 
 func TestEncryptDecrypt(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	encrypt := &RSAEncryption{}
 	encrypt.SetPrivateKey(encrypt.GenerateKey())
 	decrypt := NewRSAEncryption()
@@ -98,7 +98,7 @@ func TestEncryptDecrypt(t *testing.T) {
 }
 
 func TestSign(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	rsae := NewRSAEncryption()
 	signKey := rsae.GenerateKey()
 	rsae.SetPrivateKey(signKey)
@@ -109,7 +109,7 @@ func TestSign(t *testing.T) {
 }
 
 func TestSignVerify(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	rsae := &RSAEncryption{}
 	signKey := rsae.GenerateKey()
 	rsae.SetPrivateKey(signKey)
@@ -122,7 +122,7 @@ func TestSignVerify(t *testing.T) {
 }
 
 func TestVerifyFail(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	r1 := &RSAEncryption{}
 	r2 := &RSAEncryption{}
 	r1.SetPrivateKey(r1.GenerateKey())
@@ -140,7 +140,7 @@ func TestVerifyFail(t *testing.T) {
 }
 
 func TestEncryptAndSign(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	r1 := &RSAEncryption{}
 	r2 := &RSAEncryption{}
 	r1.SetPrivateKey(r1.GenerateKey())
@@ -156,7 +156,7 @@ func TestEncryptAndSign(t *testing.T) {
 }
 
 func TestEncryptAndSignDecryptAndVerify(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	r1 := &RSAEncryption{}
 	r2 := &RSAEncryption{}
 	r1.SetPrivateKey(r1.GenerateKey())

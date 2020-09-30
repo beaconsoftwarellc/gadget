@@ -3,11 +3,11 @@ package collection
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assert1 "github.com/stretchr/testify/assert"
 )
 
 func TestDListHead(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	// test list initialization
 	list := NewDList()
@@ -61,7 +61,7 @@ func TestDListHead(t *testing.T) {
 }
 
 func TestDListIsHead(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	list := NewDList()
 	elm, err := list.InsertNext(nil, "foo")
 	assert.NoError(err)
@@ -75,7 +75,7 @@ func TestDListIsHead(t *testing.T) {
 }
 
 func TestDListTail(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	// test list initialization
 	list := NewDList()
 	assert.Nil(list.Tail())
@@ -128,7 +128,7 @@ func TestDListTail(t *testing.T) {
 }
 
 func TestDListIsTail(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	list := NewDList()
 	elm, err := list.InsertNext(nil, "foo")
 	assert.NoError(err)
@@ -142,7 +142,7 @@ func TestDListIsTail(t *testing.T) {
 }
 
 func TestDListInsertNext(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	list := NewDList()
 	assert.Equal(0, list.Size())
 	elm, err := list.InsertNext(nil, "fun")
@@ -162,7 +162,7 @@ func TestDListInsertNext(t *testing.T) {
 }
 
 func TestDListInsertPrevious(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	list := NewDList()
 	assert.Equal(0, list.Size())
 	elm, err := list.InsertPrevious(nil, "fun")
@@ -201,7 +201,7 @@ func TestDListInsertPrevious(t *testing.T) {
 }
 
 func TestDListRemove(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	list := NewDList()
 	data := "foo"
 	data1 := "bar"

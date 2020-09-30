@@ -4,11 +4,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
+	assert1 "github.com/stretchr/testify/assert"
 )
 
 func TestNewTicker(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	expected := 1 * time.Second
 	obj := NewTicker(expected)
 	assert.NotNil(obj)
@@ -19,7 +19,7 @@ func TestNewTicker(t *testing.T) {
 }
 
 func TestTicker_StartStop(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	obj := NewTicker(1 * time.Millisecond)
 	assert.NotNil(obj)
 	tkr, ok := obj.(*ticker)
@@ -38,7 +38,7 @@ func TestTicker_StartStop(t *testing.T) {
 }
 
 func TestTicker_Reset(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	obj := NewTicker(1 * time.Millisecond)
 	assert.NotNil(obj)
 	tkr, ok := obj.(*ticker)

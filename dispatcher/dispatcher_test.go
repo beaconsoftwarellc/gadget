@@ -5,7 +5,7 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assert1 "github.com/stretchr/testify/assert"
 
 	"github.com/beaconsoftwarellc/gadget/generator"
 )
@@ -19,7 +19,7 @@ func (task *GenericTask) Execute() error {
 }
 
 func TestDispatchTask(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	d := NewDispatcher(10, 1, 1)
 	d.Run()
 	expected := generator.String(20)
@@ -44,7 +44,7 @@ func TestNewDispatcherDoesNotFail(t *testing.T) {
 }
 
 func TestDispatchTasks(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	d := NewDispatcher(1000, 10, 100)
 	d.Run()
 	tasks := []TestTask{}
@@ -66,7 +66,7 @@ func TestDispatchTasks(t *testing.T) {
 }
 
 func TestMinWorkerSize(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	minWorkers := 5
 	maxWorkers := minWorkers + 10
 	obj := NewDispatcher(1000, minWorkers, maxWorkers)
@@ -78,7 +78,7 @@ func TestMinWorkerSize(t *testing.T) {
 }
 
 func TestMaxWorkerSize(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	minWorkers := 1
 	maxWorkers := 100
 	// use 10 buffered doc to slow things down a bit
@@ -105,7 +105,7 @@ func TestMaxWorkerSize(t *testing.T) {
 }
 
 func TestQuitExitsWithoutCompletingQueue(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	obj := NewDispatcher(1, 1, 2)
 	d, ok := obj.(*dispatcher)
 	assert.True(ok)
@@ -126,7 +126,7 @@ func TestQuitExitsWithoutCompletingQueue(t *testing.T) {
 }
 
 func TestAddTaskWhileDrainingStillCompletes(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	d := NewDispatcher(100, 1, 20)
 	d.Run()
 	var completedTasks int32
@@ -150,7 +150,7 @@ func TestAddTaskWhileDrainingStillCompletes(t *testing.T) {
 
 func TestQuitDrainDrains(t *testing.T) {
 	t.SkipNow()
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	d := NewDispatcher(100, 1, 30)
 	d.Run()
 	var completedTasks int32

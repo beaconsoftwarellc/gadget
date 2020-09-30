@@ -3,13 +3,13 @@ package specialized
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assert1 "github.com/stretchr/testify/assert"
 
 	"github.com/beaconsoftwarellc/gadget/collection"
 )
 
 func TestReuqueingQueue(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	rqq := NewRequeueingQueue()
 	assert.Equal(0, rqq.Size())
 	actual, err := rqq.Peek()

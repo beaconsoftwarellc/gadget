@@ -3,11 +3,11 @@ package collection
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assert1 "github.com/stretchr/testify/assert"
 )
 
 func TestQueue(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	queue := NewQueue()
 	assert.Equal(0, queue.Size())
 	actual, err := queue.Peek()

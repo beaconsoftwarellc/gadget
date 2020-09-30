@@ -3,11 +3,11 @@ package intutil
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assert1 "github.com/stretchr/testify/assert"
 )
 
 func TestInt64Max(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	testData := []struct {
 		input    int64
@@ -25,7 +25,7 @@ func TestInt64Max(t *testing.T) {
 }
 
 func TestInt64Min(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	testData := []struct {
 		input    int64
@@ -43,7 +43,7 @@ func TestInt64Min(t *testing.T) {
 }
 
 func TestInt32Max(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	testData := []struct {
 		input    int32
@@ -61,7 +61,7 @@ func TestInt32Max(t *testing.T) {
 }
 
 func TestInt32Min(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	testData := []struct {
 		input    int32
@@ -79,7 +79,7 @@ func TestInt32Min(t *testing.T) {
 }
 
 func TestInt16Max(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	testData := []struct {
 		input    int16
@@ -97,7 +97,7 @@ func TestInt16Max(t *testing.T) {
 }
 
 func TestInt16Min(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	testData := []struct {
 		input    int16
@@ -115,7 +115,7 @@ func TestInt16Min(t *testing.T) {
 }
 
 func TestInt8Max(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	testData := []struct {
 		input    int8
@@ -133,7 +133,7 @@ func TestInt8Max(t *testing.T) {
 }
 
 func TestInt8Min(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	testData := []struct {
 		input    int8
@@ -151,7 +151,7 @@ func TestInt8Min(t *testing.T) {
 }
 
 func TestUintMax(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	testData := []struct {
 		input    uint
@@ -169,7 +169,7 @@ func TestUintMax(t *testing.T) {
 }
 
 func TestUintMin(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	testData := []struct {
 		input    uint
@@ -187,7 +187,7 @@ func TestUintMin(t *testing.T) {
 }
 
 func TestUint64Max(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	testData := []struct {
 		input    uint64
@@ -205,7 +205,7 @@ func TestUint64Max(t *testing.T) {
 }
 
 func TestUint64Min(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	testData := []struct {
 		input    uint64
@@ -223,7 +223,7 @@ func TestUint64Min(t *testing.T) {
 }
 
 func TestUint32Max(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	testData := []struct {
 		input    uint32
@@ -241,7 +241,7 @@ func TestUint32Max(t *testing.T) {
 }
 
 func TestUint32Min(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	testData := []struct {
 		input    uint32
@@ -259,7 +259,7 @@ func TestUint32Min(t *testing.T) {
 }
 
 func TestUint16Max(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	testData := []struct {
 		input    uint16
@@ -277,7 +277,7 @@ func TestUint16Max(t *testing.T) {
 }
 
 func TestUint16Min(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	testData := []struct {
 		input    uint16
@@ -295,7 +295,7 @@ func TestUint16Min(t *testing.T) {
 }
 
 func TestUint8Max(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	testData := []struct {
 		input    uint8
@@ -313,7 +313,7 @@ func TestUint8Max(t *testing.T) {
 }
 
 func TestUint8Min(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	testData := []struct {
 		input    uint8

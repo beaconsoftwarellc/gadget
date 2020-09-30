@@ -3,11 +3,11 @@ package collection
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assert1 "github.com/stretchr/testify/assert"
 )
 
 func TestListHead(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	// test list initialization
 	list := NewList()
@@ -52,7 +52,7 @@ func TestListHead(t *testing.T) {
 }
 
 func TestListIsHead(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	list := NewList()
 	elm := list.InsertNext(nil, "foo")
 	assert.True(list.IsHead(elm))
@@ -64,7 +64,7 @@ func TestListIsHead(t *testing.T) {
 }
 
 func TestListTail(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	// test list initialization
 	list := NewList()
 	assert.Nil(list.Tail())
@@ -114,7 +114,7 @@ func TestListTail(t *testing.T) {
 }
 
 func TestListIsTail(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	list := NewList()
 	elm := list.InsertNext(nil, "foo")
 	assert.True(list.IsTail(elm))
@@ -126,7 +126,7 @@ func TestListIsTail(t *testing.T) {
 }
 
 func TestInsertNext(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	list := NewList()
 	assert.Equal(0, list.Size())
 	elm := list.InsertNext(nil, "fun")
@@ -142,7 +142,7 @@ func TestInsertNext(t *testing.T) {
 }
 
 func TestRemoveNext(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	list := NewList()
 	data, err := list.RemoveNext(nil)
 	assert.Nil(data)
@@ -179,7 +179,7 @@ func insert(list List, ia []int, done chan bool) {
 }
 
 func TestListConcurrentInsert(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	var done = make(chan bool, 2)
 	elms := []int{1, 2, 3}
 	elms1 := []int{4, 5, 6}

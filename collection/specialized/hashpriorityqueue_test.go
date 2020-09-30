@@ -3,7 +3,7 @@ package specialized
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assert1 "github.com/stretchr/testify/assert"
 
 	"github.com/beaconsoftwarellc/gadget/collection"
 	"github.com/beaconsoftwarellc/gadget/generator"
@@ -27,7 +27,7 @@ func NewMockHashPriority(p int, s string) *MockHashPriority {
 }
 
 func TestHashPriorityQueue_Size(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	q := NewHashPriorityQueue()
 	assert.Equal(0, q.Size())
 	sameHash := generator.String(20)
@@ -42,7 +42,7 @@ func TestHashPriorityQueue_Size(t *testing.T) {
 }
 
 func TestHashPriorityQueue_Peek(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	q := NewHashPriorityQueue()
 	expected := NewMockHashPriority(3, generator.String(20))
 	q.Push(expected)
@@ -58,7 +58,7 @@ func TestHashPriorityQueue_Peek(t *testing.T) {
 }
 
 func TestHashPriorityQueue(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	type fields struct {
 		list collection.List
 	}

@@ -4,13 +4,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
+	assert1 "github.com/stretchr/testify/assert"
 
 	"github.com/beaconsoftwarellc/gadget/generator"
 )
 
 func TestRateHashPriorityQueue_Size(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	q := NewRateHashPriorityQueue(1, time.Microsecond)
 	assert.Equal(0, q.Size())
 	sameHash := generator.String(20)
@@ -25,7 +25,7 @@ func TestRateHashPriorityQueue_Size(t *testing.T) {
 }
 
 func TestRateHashPriorityQueue_Peek(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	// this needs to be slow enough that it does not elapse before size is called,
 	// but fast enough that Pop does not take too long to return
 	q := NewRateHashPriorityQueue(1, 10*time.Millisecond)
@@ -43,7 +43,7 @@ func TestRateHashPriorityQueue_Peek(t *testing.T) {
 }
 
 func TestRateHashPriorityQueue_Stop(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	obj := NewRateHashPriorityQueue(1, time.Microsecond)
 	q, ok := obj.(*rhpQueue)
 	assert.True(ok)
@@ -53,7 +53,7 @@ func TestRateHashPriorityQueue_Stop(t *testing.T) {
 }
 
 func TestRateHashPriorityQueue_Channel(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	q := NewRateHashPriorityQueue(1, 1*time.Microsecond)
 	expected := NewMockHashPriority(3, generator.String(20))
 	q.Push(expected)
@@ -68,7 +68,7 @@ func TestRateHashPriorityQueue_Channel(t *testing.T) {
 }
 
 func TestRateHashPriorityQueue_Pop(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	// we have to get all the elements in before this time elapses once
 	q := NewRateHashPriorityQueue(1, 55*time.Millisecond)
 	for i := 0; i < 10; i++ {
@@ -86,7 +86,7 @@ func TestRateHashPriorityQueue_Pop(t *testing.T) {
 }
 
 func TestRateHashPriorityQueue_NoLimitPop(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	// we have to get all the elements in before this time elapses once
 	q := NewRateHashPriorityQueue(1, 50*time.Millisecond)
 	for i := 0; i < 10; i++ {
