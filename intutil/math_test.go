@@ -3,7 +3,7 @@ package intutil
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assert1 "github.com/stretchr/testify/assert"
 )
 
 func TestMin(t *testing.T) {
@@ -52,7 +52,7 @@ func TestMaxv(t *testing.T) {
 }
 
 func TestDecrementor_Decrement_Resets(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	decrementor := NewDecrementor(2)
 	assert.Equal(1, decrementor.Decrement())
 	assert.Equal(0, decrementor.Decrement())
@@ -61,7 +61,7 @@ func TestDecrementor_Decrement_Resets(t *testing.T) {
 
 func TestDecrementor_Decrement(t *testing.T) {
 	decrementor := NewDecrementor(10000)
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	ch := make(chan bool)
 	f := func() {
 		last := 0

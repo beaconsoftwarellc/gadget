@@ -3,7 +3,7 @@ package crypto
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assert1 "github.com/stretchr/testify/assert"
 )
 
 var inputStrings = []string{
@@ -16,7 +16,7 @@ var inputStrings = []string{
 }
 
 func TestHashAndSalt(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	for _, password := range inputStrings {
 		hash, salt := HashAndSalt(password)
 		assert.NotEmpty(hash)

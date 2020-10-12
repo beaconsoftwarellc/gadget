@@ -3,11 +3,11 @@ package collection
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assert1 "github.com/stretchr/testify/assert"
 )
 
 func TestStack(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	stack := NewStack()
 	assert.Equal(0, stack.Size())
 	actual, err := stack.Peek()
@@ -56,7 +56,7 @@ func TestStack(t *testing.T) {
 }
 
 func TestStringStack(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	stack := NewStringStack()
 	assert.Equal(0, stack.Size())
 	actual, err := stack.Peek()

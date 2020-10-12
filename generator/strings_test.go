@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assert1 "github.com/stretchr/testify/assert"
 )
 
 func TestIDFunc(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	var testData = []IDPrefix{
 		"",
@@ -35,7 +35,7 @@ func TestIDFunc(t *testing.T) {
 	assert.Panics(func() { ID(IDPrefix(random(MaxPrefix+1, letters))) })
 }
 func TestBase32IDFunc(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	var testData = []IDPrefix{
 		"",
@@ -63,7 +63,7 @@ func TestBase32IDFunc(t *testing.T) {
 }
 
 func TestEmail(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	var expected []string
 	for i := 0; i < 1000; i++ {
@@ -75,7 +75,7 @@ func TestEmail(t *testing.T) {
 }
 
 func TestPassword(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	var expected []string
 	for i := 0; i < 1000; i++ {
@@ -87,7 +87,7 @@ func TestPassword(t *testing.T) {
 }
 
 func TestSecret(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	var expected []string
 	for i := 0; i < 1000; i++ {
@@ -99,7 +99,7 @@ func TestSecret(t *testing.T) {
 }
 
 func TestRandom(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	var testData = []int{10, 15, 20}
 
@@ -115,7 +115,7 @@ func TestRandom(t *testing.T) {
 }
 
 func TestName(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	var expected []string
 	for i := 0; i < 100; i++ {
@@ -127,7 +127,7 @@ func TestName(t *testing.T) {
 }
 
 func TestString(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	var expected []string
 	for i := 0; i < 100; i++ {
@@ -140,7 +140,7 @@ func TestString(t *testing.T) {
 }
 
 func TestCode(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	var expected []string
 	for i := 0; i < 100; i++ {
@@ -153,7 +153,7 @@ func TestCode(t *testing.T) {
 }
 
 func TestHex(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	var expected []string
 	for i := 0; i < 100; i++ {

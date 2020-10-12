@@ -3,7 +3,7 @@ package specialized
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assert1 "github.com/stretchr/testify/assert"
 
 	"github.com/beaconsoftwarellc/gadget/collection"
 )
@@ -21,7 +21,7 @@ func NewMockPriority(p int) *MockPriority {
 }
 
 func TestPriorityQueue_Size(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	q := NewPriorityQueue()
 	assert.Equal(0, q.Size())
 	q.Push(NewMockPriority(1))
@@ -35,7 +35,7 @@ func TestPriorityQueue_Size(t *testing.T) {
 }
 
 func TestPriorityQueue_Peek(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	q := NewPriorityQueue()
 	expected := NewMockPriority(3)
 	q.Push(expected)
@@ -51,7 +51,7 @@ func TestPriorityQueue_Peek(t *testing.T) {
 }
 
 func Test_priorityQueue_Pop(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	type fields struct {
 		list collection.List
 	}

@@ -8,18 +8,18 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
-	"github.com/stretchr/testify/assert"
+	assert1 "github.com/stretchr/testify/assert"
 )
 
 func TestTimeToTimestamp(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	tm := time.Now()
 	ts := TimeToTimestamp(tm)
 	assert.Equal(tm.Unix(), ts.Seconds)
 }
 
 func TestTimestampToTime(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	ts, err := ptypes.TimestampProto(time.Now())
 	assert.NoError(err)
 
@@ -31,7 +31,7 @@ func TestTimestampToTime(t *testing.T) {
 }
 
 func TestTimestampToNullTime(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	ts, err := ptypes.TimestampProto(time.Time{})
 	nt := TimestampToNullTime(ts)
 	assert.NoError(err)
@@ -46,7 +46,7 @@ func TestTimestampToNullTime(t *testing.T) {
 }
 
 func TestNullTimeToTimestamp(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	nt := mysql.NullTime{}
 	ts := NullTimeToTimestamp(nt)
 	assert.False(nt.Valid)

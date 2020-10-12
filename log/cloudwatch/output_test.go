@@ -4,13 +4,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
+	assert1 "github.com/stretchr/testify/assert"
 
 	"github.com/beaconsoftwarellc/gadget/log"
 )
 
 func Test_EnsureGroupNameIsValid(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	tests := []struct {
 		name     string
 		input    string
@@ -45,7 +45,7 @@ func Test_EnsureGroupNameIsValid(t *testing.T) {
 }
 
 func Test_EnsureStreamNameIsValid(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	tests := []struct {
 		name     string
 		input    string
@@ -85,7 +85,7 @@ func Test_Skip(t *testing.T) {
 	// Run this if you make changes and check that the messages make it
 	// into cloudwatch.
 	t.SkipNow()
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	admin, err := GetAdministration()
 	if !assert.NoError(err) {
 		return

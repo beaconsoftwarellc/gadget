@@ -3,11 +3,11 @@ package environment
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assert1 "github.com/stretchr/testify/assert"
 )
 
 func TestBucketName(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 
 	bucket := NewBucket()
 	bucketName := "foo"

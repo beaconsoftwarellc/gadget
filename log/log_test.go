@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assert1 "github.com/stretchr/testify/assert"
 
 	"github.com/beaconsoftwarellc/gadget/errors"
 	"github.com/beaconsoftwarellc/gadget/generator"
@@ -41,7 +41,7 @@ func (err *ErrorPlus) String() string {
 // Global instance
 
 func TestStandardLogger(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	id := generator.String(5)
 	var actual Message
 	f := func(m Message) {
@@ -59,7 +59,7 @@ func TestStandardLogger(t *testing.T) {
 }
 
 func TestLogFormat(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	var tests = []struct {
 		function func(string, ...interface{}) string
 		expected Level
@@ -108,7 +108,7 @@ func TestLogFormat(t *testing.T) {
 }
 
 func TestLogErrorObj(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	var tests = []struct {
 		function func(err error) error
 		expected Level
@@ -166,7 +166,7 @@ func TestLogErrorObj(t *testing.T) {
 }
 
 func TestLogger_AddOutput(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	var actual Message
 	var actual1 Message
 	f := func(m Message) {

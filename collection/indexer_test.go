@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assert1 "github.com/stretchr/testify/assert"
 
 	"github.com/beaconsoftwarellc/gadget/generator"
 )
@@ -32,7 +32,7 @@ func NewTestIndexable(id string, fname, fvalue string) *TestIndexable {
 }
 
 func Test_newIndex(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	expected := generator.String(20)
 	indexFace := NewIndex(expected)
 	index := indexFace.(*index)
@@ -41,7 +41,7 @@ func Test_newIndex(t *testing.T) {
 }
 
 func TestIndex_Add(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	id := generator.TestID()
 	fieldName := generator.String(20)
 	fieldValue := generator.String(20)
@@ -65,7 +65,7 @@ func TestIndex_Add(t *testing.T) {
 }
 
 func TestIndex_Update(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	id := generator.TestID()
 	fieldName := generator.String(20)
 	fieldValue := generator.String(20)
@@ -88,7 +88,7 @@ func TestIndex_Update(t *testing.T) {
 }
 
 func TestIndex_Remove(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	id := generator.TestID()
 	fieldName := generator.String(20)
 	fieldValue := generator.String(20)
@@ -136,7 +136,7 @@ func Test_stringify(t *testing.T) {
 }
 
 func TestIndex_IdsForValue(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	fieldName := generator.String(20)
 	fieldValue := generator.String(20)
 	indexFace := NewIndex(fieldName)
@@ -156,7 +156,7 @@ func TestIndex_IdsForValue(t *testing.T) {
 }
 
 func TestIndexer_Index(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	indexer := NewIndexer()
 
 	fieldName := generator.String(20)

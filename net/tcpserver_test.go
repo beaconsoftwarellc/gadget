@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
+	assert1 "github.com/stretchr/testify/assert"
 
 	"github.com/beaconsoftwarellc/gadget/dispatcher"
 	"github.com/beaconsoftwarellc/gadget/errors"
@@ -39,14 +39,14 @@ func (mt *MockTask) Execute() error {
 }
 
 func TestNewTCPServer(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	mglgt := &MockGetListenerGetTask{}
 	server := NewTCPServer(2, 10, mglgt)
 	assert.NotNil(server)
 }
 
 func TestListen(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	mglgt := &MockGetListenerGetTask{}
 	atLeastOnce := false
 	mglgt.task = &MockTask{}
@@ -67,7 +67,7 @@ func TestListen(t *testing.T) {
 }
 
 func TestListenFailsAfterMaxErrors(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	mglgt := &MockGetListenerGetTask{}
 	mglgt.task = &MockTask{}
 	mglgt.listener = &MockListener{
@@ -84,7 +84,7 @@ func TestListenFailsAfterMaxErrors(t *testing.T) {
 }
 
 func TestListenFailsAfterMaxErrorsCreateTask(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	mglgt := &MockGetListenerGetTask{}
 	mglgt.task = &MockTask{}
 	mglgt.listener = &MockListener{
@@ -101,7 +101,7 @@ func TestListenFailsAfterMaxErrorsCreateTask(t *testing.T) {
 }
 
 func Test_server_OnIdle(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	mglgt := &MockGetListenerGetTask{}
 	mglgt.task = &MockTask{}
 	mglgt.listener = &MockListener{

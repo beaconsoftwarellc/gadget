@@ -3,7 +3,7 @@ package stringutil
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assert1 "github.com/stretchr/testify/assert"
 )
 
 func compare(expected, actual map[string]string, t *testing.T) bool {
@@ -44,14 +44,14 @@ func TestDetemplateSimple(t *testing.T) {
 }
 
 func TestDetemplateEmptyRender(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	actual, err := Detemplate("template {{foo}} blah", "")
 	assert.Nil(actual)
 	assert.EqualError(err, NewCharacterMismatchError(0, -1).Error())
 }
 
 func TestDetemplateEmptyTemplateAndRender(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	actual, err := Detemplate("", "")
 	assert.Equal(map[string]string{}, actual)
 	assert.NoError(err)

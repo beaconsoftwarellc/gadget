@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	assert1 "github.com/stretchr/testify/assert"
 )
 
 type TestTask struct {
@@ -27,7 +27,7 @@ func newTestTask(expected string, doError bool) *internalTask {
 }
 
 func TestAddWorkerForPool(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	pool := make(chan Worker)
 	complete := make(chan *internalTask, 50)
 	w := NewWorker(pool, complete)
@@ -37,7 +37,7 @@ func TestAddWorkerForPool(t *testing.T) {
 }
 
 func TestWorkerRun(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	// we have one message in this test so we need +1
 	// so we do not block
 	pool := make(chan Worker, 2)
@@ -56,7 +56,7 @@ func TestWorkerRun(t *testing.T) {
 func TestWorkerWithErrorMessageContinues(t *testing.T) {
 	// we have two messages in this test so we +1 so
 	// we do not block
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	pool := make(chan Worker, 3)
 	complete := make(chan *internalTask, 50)
 	w := NewWorker(pool, complete)
@@ -75,7 +75,7 @@ func TestWorkerWithErrorMessageContinues(t *testing.T) {
 }
 
 func TestWorkerExec(t *testing.T) {
-	assert := assert.New(t)
+	assert := assert1.New(t)
 	pool := make(chan Worker, 3)
 	complete := make(chan *internalTask, 50)
 	w := NewWorker(pool, complete)

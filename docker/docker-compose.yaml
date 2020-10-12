@@ -1,0 +1,17 @@
+version: '3.3'
+services:
+    testdb:
+        # Uncomment to suppress logging
+        # logging:
+        #     driver: none
+        image: mysql:8.0.21
+        ports:
+            - "3306:3306"
+        environment:
+            MYSQL_ROOT_PASSWORD: ""
+            MYSQL_ALLOW_EMPTY_PASSWORD: 1
+        volumes:
+#            - type: bind
+#              source: ./volumes/mysql
+#              target: /var/lib/mysql
+            - ./testdb/initdb.d:/docker-entrypoint-initdb.d
