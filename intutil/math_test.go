@@ -7,6 +7,7 @@ import (
 )
 
 func TestMin(t *testing.T) {
+	assert := assert1.New(t)
 	var testData = []struct {
 		a        int
 		b        int
@@ -17,11 +18,12 @@ func TestMin(t *testing.T) {
 		{3, 3, 3},
 	}
 	for _, data := range testData {
-		assert.Equal(t, data.expected, Min(data.a, data.b))
+		assert.Equal(data.expected, Min(data.a, data.b))
 	}
 }
 
 func TestMax(t *testing.T) {
+	assert := assert1.New(t)
 	var testData = []struct {
 		a        int
 		b        int
@@ -32,11 +34,12 @@ func TestMax(t *testing.T) {
 		{3, 3, 3},
 	}
 	for _, data := range testData {
-		assert.Equal(t, data.expected, Max(data.a, data.b))
+		assert.Equal(data.expected, Max(data.a, data.b))
 	}
 }
 
 func TestMaxv(t *testing.T) {
+	assert := assert1.New(t)
 	var testData = []struct {
 		data     []int
 		expected int
@@ -47,7 +50,7 @@ func TestMaxv(t *testing.T) {
 		{[]int{5, 5, 5, 5, 5}, 5},
 	}
 	for _, test := range testData {
-		assert.Equal(t, test.expected, Maxv(test.data...))
+		assert.Equal(test.expected, Maxv(test.data...))
 	}
 }
 

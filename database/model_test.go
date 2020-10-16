@@ -400,6 +400,7 @@ func TestDuplicateID(t *testing.T) {
 
 	record3 = NewTestDuper()
 	initDuper := &initDupe{base: record.ID}
+	initDuper.id()
 	record3.intializer = func() string { return initDuper.id() }
 
 	assert.NoError(spec.DB.Create(record3))

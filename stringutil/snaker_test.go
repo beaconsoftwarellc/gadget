@@ -1,12 +1,12 @@
 package stringutil
 
 import (
-	"testing"
-
 	assert1 "github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestUnderscore(t *testing.T) {
+	assert := assert1.New(t)
 	inputs := [][]string{
 		{"ILoveGoAndJSONSoMuch", "i_love_go_and_json_so_much"},
 		{"CamelCase", "camel_case"},
@@ -18,11 +18,12 @@ func TestUnderscore(t *testing.T) {
 	}
 	for _, input := range inputs {
 		output := Underscore(input[0])
-		assert.Equal(t, input[1], output)
+		assert.Equal(input[1], output)
 	}
 }
 
 func TestLowerCamelCase(t *testing.T) {
+	assert := assert1.New(t)
 	inputs := [][]string{
 		{"ILoveGoAndJSONSoMuch", "iLoveGoAndJSONSoMuch"},
 		{"CamelCase", "camelCase"},
@@ -36,11 +37,12 @@ func TestLowerCamelCase(t *testing.T) {
 	}
 	for _, input := range inputs {
 		output := LowerCamelCase(input[0])
-		assert.Equal(t, input[1], output)
+		assert.Equal(input[1], output)
 	}
 }
 
 func TestUpperCamelCase(t *testing.T) {
+	assert := assert1.New(t)
 	inputs := [][]string{
 		{"ILoveGoAndJSONSoMuch", "ILoveGoAndJSONSoMuch"},
 		{"CamelCase", "CamelCase"},
@@ -54,6 +56,6 @@ func TestUpperCamelCase(t *testing.T) {
 	}
 	for _, input := range inputs {
 		output := UpperCamelCase(input[0])
-		assert.Equal(t, input[1], output)
+		assert.Equal(input[1], output)
 	}
 }

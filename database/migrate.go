@@ -16,7 +16,7 @@ import (
 
 // generateSQLFiles writes temporary files from the migration map
 func generateSQLFiles(migrations map[string]string) (string, error) {
-	basepath := path.Join(os.TempDir(), "test_db", generator.ID("dbm"))
+	basepath := path.Join(os.TempDir(), "db_migrations", generator.ID("dbm"))
 	_, err := fileutil.EnsureDir(basepath, 0777)
 
 	if nil != err {

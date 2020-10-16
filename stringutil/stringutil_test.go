@@ -1,6 +1,7 @@
 package stringutil
 
 import (
+	"github.com/docker/docker/pkg/testutil/assert"
 	"reflect"
 	"strings"
 	"testing"
@@ -128,7 +129,7 @@ func TestClean(t *testing.T) {
 	input := []string{"", " ", "foo"}
 	expected := input[1:]
 
-	assert.Equal(t, expected, Clean(input))
+	assert1.Equal(t, expected, Clean(input))
 }
 
 var appendIfMissingData = []struct {
@@ -389,7 +390,7 @@ func TestPSPrint(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := strings.Split(PSPrint(tt.args.prefix, tt.args.m), "\n")
-			assert.ElementsMatch(t, tt.want, got, "want: %#v, got %#v", tt.want, got)
+			assert1.ElementsMatch(t, tt.want, got, "want: %#v, got %#v", tt.want, got)
 		})
 	}
 }

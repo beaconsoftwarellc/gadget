@@ -16,7 +16,7 @@ func TestGenerateSqlFiles(t *testing.T) {
 	assert := assert1.New(t)
 	migrations := make(map[string]string)
 
-	basedir := path.Join(os.TempDir(), "test_db")
+	basedir := path.Join(os.TempDir(), "db_migrations")
 
 	os.RemoveAll(basedir)
 	// Create the target directory as a file instead of a directory
