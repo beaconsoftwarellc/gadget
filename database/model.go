@@ -12,8 +12,26 @@ import (
 
 // Config defines the interface for a config to establish a database connection
 type Config interface {
+	// DatabaseDialect of SQL
 	DatabaseDialect() string
+	// DatabaseConnection string for addressing the database
 	DatabaseConnection() string
+}
+
+// InstanceConfig is a simple struct that satisfies the Config interface
+type InstanceConfig struct {
+	// Dialect of this instance
+	Dialect string
+	// Connection string for this instance
+	Connection string
+}
+
+func (config *InstanceConfig) DatabaseDialect() string {
+	return config.Dialect
+}
+
+func (config *InstanceConfig) DatabaseConnection() string {
+	return config.Connection
 }
 
 // Record defines a database enabled record
