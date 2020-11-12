@@ -29,6 +29,10 @@ type InstanceConfig struct {
 	Dialect string
 	// Connection string for this instance
 	Connection string
+	// ConnectRetries is the number of times to retry connecting
+	ConnectRetries int
+	// ConnectRetryWait is the time to wait between connection retries
+	ConnectRetryWait time.Duration
 }
 
 func (config *InstanceConfig) DatabaseDialect() string {
@@ -40,10 +44,13 @@ func (config *InstanceConfig) DatabaseConnection() string {
 }
 
 func (config *InstanceConfig) NumberOfRetries() int {
-	return 10
+	return config.ConnectRetries
 }
 
 func (config *InstanceConfig) WaitBetweenRetries() time.Duration {
+	if config.ConnectRetryWait == 0 {
+		config.ConnectRetryWait = time.Second
+	}
 	return time.Second
 }
 
