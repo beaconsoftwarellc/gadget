@@ -43,7 +43,7 @@ func (config *InstanceConfig) NumberOfRetries() int {
 	return 10
 }
 
-func (config *InstanceConfig) WaitSecondsBetweenRetries() time.Duration {
+func (config *InstanceConfig) WaitBetweenRetries() time.Duration {
 	return time.Second
 }
 
