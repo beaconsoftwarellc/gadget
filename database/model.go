@@ -2,6 +2,7 @@ package database
 
 import (
 	"reflect"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 
@@ -16,6 +17,10 @@ type Config interface {
 	DatabaseDialect() string
 	// DatabaseConnection string for addressing the database
 	DatabaseConnection() string
+	// NumberOfRetries for the connection before failing
+	NumberOfRetries() int
+	// WaitBetweenRetries before trying again
+	WaitBetweenRetries() time.Duration
 }
 
 // InstanceConfig is a simple struct that satisfies the Config interface
@@ -32,6 +37,14 @@ func (config *InstanceConfig) DatabaseDialect() string {
 
 func (config *InstanceConfig) DatabaseConnection() string {
 	return config.Connection
+}
+
+func (config *InstanceConfig) NumberOfRetries() int {
+	return 10
+}
+
+func (config *InstanceConfig) WaitSecondsBetweenRetries() time.Duration {
+	return time.Second
 }
 
 // Record defines a database enabled record
@@ -113,7 +126,15 @@ type Database struct {
 func Initialize(config Config) *Database {
 	logger := log.New("Database", log.FunctionFromEnv())
 	log.Infof("initializing database connection: %s, %s", config.DatabaseDialect(), config.DatabaseConnection())
-	conn, err := connect(config.DatabaseDialect(), config.DatabaseConnection(), logger)
+	var err errors.TracerError
+	var conn *sqlx.DB
+	for retries := 0; retries < config.NumberOfRetries(); retries++ {
+		conn, err = connect(config.DatabaseDialect(), config.DatabaseConnection(), logger)
+		if nil == err {
+			break
+		}
+		time.Sleep(config.WaitBetweenRetries())
+	}
 	if nil != err {
 		panic(err)
 	}
