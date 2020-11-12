@@ -21,6 +21,14 @@ type specification struct {
 	DB           *Database
 }
 
+func (spec specification) NumberOfRetries() int {
+	return 5
+}
+
+func (spec specification) WaitBetweenRetries() time.Duration {
+	return 1 * time.Millisecond
+}
+
 // DatabaseConnection return the connection string for the database
 func (spec specification) DatabaseConnection() string {
 	return spec.DatabaseURL

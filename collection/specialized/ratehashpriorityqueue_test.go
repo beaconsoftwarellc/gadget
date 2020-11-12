@@ -16,11 +16,14 @@ func TestRateHashPriorityQueue_Size(t *testing.T) {
 	sameHash := generator.String(20)
 	q.Push(NewMockHashPriority(2, sameHash))
 	assert.Equal(1, q.Size())
+
 	q.Push(NewMockHashPriority(2, sameHash))
 	assert.Equal(1, q.Size())
+
 	q.Push(NewMockHashPriority(3, generator.String(20)))
 	assert.Equal(2, q.Size())
-	q.Pop()
+	_, ok := q.Pop()
+	assert.True(ok)
 	assert.Equal(1, q.Size())
 }
 
