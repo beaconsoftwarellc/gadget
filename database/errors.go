@@ -13,10 +13,13 @@ import (
 )
 
 // ConnectionError  is returned when unable to connect to database
-type ConnectionError struct{ trace []string }
+type ConnectionError struct{
+	err error
+	trace []string
+}
 
 func (err *ConnectionError) Error() string {
-	return "database connection failed"
+	return err.err.Error()
 }
 
 // Trace returns the stack trace for the error
@@ -25,8 +28,8 @@ func (err *ConnectionError) Trace() []string {
 }
 
 // NewDatabaseConnectionError instantiates a DatabaseConnectionError with a stack trace
-func NewDatabaseConnectionError() errors.TracerError {
-	return &ConnectionError{trace: errors.GetStackTrace()}
+func NewDatabaseConnectionError(err error) errors.TracerError {
+	return &ConnectionError{err: err, trace: errors.GetStackTrace()}
 }
 
 // SQLQueryType indicates the type of query being executed that caused and error

@@ -43,7 +43,7 @@ func TestNewListOptions(t *testing.T) {
 func TestBadConnection(t *testing.T) {
 	assert := assert1.New(t)
 	_, err := connect("mysql", "baduser:badpassword@tcp(localhost:3306)/foo", log.NewStackLogger())
-	assert.EqualError(err, NewDatabaseConnectionError().Error())
+	assert.EqualError(err, NewDatabaseConnectionError(err).Error())
 }
 
 func TestBadRecordImplementation(t *testing.T) {

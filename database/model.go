@@ -51,7 +51,7 @@ func (config *InstanceConfig) WaitBetweenRetries() time.Duration {
 	if config.ConnectRetryWait == 0 {
 		config.ConnectRetryWait = time.Second
 	}
-	return time.Second
+	return config.ConnectRetryWait
 }
 
 // Record defines a database enabled record
@@ -152,13 +152,12 @@ func connect(dialect, url string, logger log.Logger) (*sqlx.DB, errors.TracerErr
 	conn, err := sqlx.Connect(dialect, url)
 
 	if nil != err {
-		logger.Fatalf("Could not connect to database\n%v", err)
-		return nil, NewDatabaseConnectionError()
+		return nil, NewDatabaseConnectionError(err)
 	}
 
 	if err = conn.Ping(); nil != err {
-		logger.Fatalf("Could not ping the database\n%v", err)
-		return nil, NewDatabaseConnectionError()
+		logger.Warnf("Could not ping the database\n%v", err)
+		return nil, NewDatabaseConnectionError(err)
 	}
 	return conn, nil
 }
