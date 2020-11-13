@@ -140,11 +140,13 @@ func Initialize(config Config) *Database {
 		if nil == err {
 			break
 		}
+		log.Warnf("database connection failed retrying in %s: %s", config.WaitBetweenRetries(), err)
 		time.Sleep(config.WaitBetweenRetries())
 	}
 	if nil != err {
 		panic(err)
 	}
+	log.Infof("database connection success: %s, %s", config.DatabaseDialect(), config.DatabaseConnection())
 	return &Database{DB: conn, Logger: logger}
 }
 
