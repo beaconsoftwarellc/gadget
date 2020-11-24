@@ -4,7 +4,6 @@ import (
     "crypto/sha1"
     "encoding/base32"
     assert1 "github.com/stretchr/testify/assert"
-    "os"
     "testing"
     "time"
 )
@@ -142,101 +141,95 @@ func TestNewOTPKey(t *testing.T) {
 }
 
 func TestTOTP(t *testing.T) {
-    type args struct {
-        key    string
-        step   int
-        vary   int
-        length int
-    }
-    tests := []struct {
-        name    string
-        args    args
-        want    string
-        wantErr bool
-    }{
-        // TODO: Add test cases.
-    }
-    for _, tt := range tests {
-        t.Run(tt.name, func(t *testing.T) {
-            got, err := TOTP(tt.args.key, tt.args.step, tt.args.vary, tt.args.length)
-            if (err != nil) != tt.wantErr {
-                t.Errorf("TOTP() error = %v, wantErr %v", err, tt.wantErr)
-                return
-            }
-            if got != tt.want {
-                t.Errorf("TOTP() got = %v, want %v", got, tt.want)
-            }
-        })
-    }
+    assert := assert1.New(t)
+    key, err := NewOTPKey()
+    assert.NoError(err)
+    _, err = TOTP(key, 30*time.Second, 0, 5)
+    assert.Error(err)
+    _, err = TOTP(key, 30*time.Second, 0, 9)
+    assert.Error(err)
+    totp, err := TOTP(key, 30*time.Second, 0, 6)
+    assert.NoError(err)
+    assert.Len(totp, 6)
+    totp1, err := TOTP(key, 30*time.Second, 2, 6)
+    assert.NoError(err)
+    assert.Len(totp1, 6)
+    assert.NotEqual(totp, totp1)
 }
 
 func TestTOTPCompare(t *testing.T) {
-    type args struct {
-        key       string
-        step      time.Duration
-        adjust    int
-        length    int
-        challenge string
-    }
-    tests := []struct {
-        name    string
-        args    args
-        want    bool
-        wantErr bool
-    }{
-        // TODO: Add test cases.
-    }
-    for _, tt := range tests {
-        t.Run(tt.name, func(t *testing.T) {
-            got, err := TOTPCompare(tt.args.key, tt.args.step, tt.args.adjust, tt.args.length, tt.args.challenge)
-            if (err != nil) != tt.wantErr {
-                t.Errorf("TOTPCompare() error = %v, wantErr %v", err, tt.wantErr)
-                return
-            }
-            if got != tt.want {
-                t.Errorf("TOTPCompare() got = %v, want %v", got, tt.want)
-            }
-        })
-    }
+    assert := assert1.New(t)
+    key, _ := NewOTPKey()
+    totp, _ := TOTP(key, 30*time.Second, 0, 6)
+    eq, err := TOTPCompare(key, 30*time.Second, 0, 6, totp)
+    assert.NoError(err)
+    assert.True(eq)
+
+    totp, _ = TOTP(key, 30*time.Second, 1, 6)
+    eq, err = TOTPCompare(key, 30*time.Second, 1, 6, totp)
+    assert.NoError(err)
+    assert.True(eq)
+
+    totp, _ = TOTP(key, 30*time.Second, 1, 6)
+    eq, err = TOTPCompare(key, 30*time.Second, -1, 6, totp)
+    assert.NoError(err)
+    assert.False(eq)
 }
 
 func TestTOTPCompareWithVariance(t *testing.T) {
-    type args struct {
-        key       string
-        step      time.Duration
-        length    int
-        variance  uint
-        challenge string
-    }
-    tests := []struct {
-        name    string
-        args    args
-        want    bool
-        wantErr bool
-    }{
-        // TODO: Add test cases.
-    }
-    for _, tt := range tests {
-        t.Run(tt.name, func(t *testing.T) {
-            got, err := TOTPCompareWithVariance(tt.args.key, tt.args.step, tt.args.length, tt.args.variance, tt.args.challenge)
-            if (err != nil) != tt.wantErr {
-                t.Errorf("TOTPCompareWithVariance() error = %v, wantErr %v", err, tt.wantErr)
-                return
-            }
-            if got != tt.want {
-                t.Errorf("TOTPCompareWithVariance() got = %v, want %v", got, tt.want)
-            }
-        })
-    }
+    assert := assert1.New(t)
+    key, _ := NewOTPKey()
+    totp, _ := TOTP(key, 30*time.Second, 0, 6)
+    eq, err := TOTPCompareWithVariance(key, 30*time.Second, 6, 0, totp)
+    assert.NoError(err)
+    assert.True(eq)
+
+    totp, _ = TOTP(key, 30*time.Second, 2, 6)
+    eq, err = TOTPCompareWithVariance(key, 30*time.Second, 6, 1, totp)
+    assert.NoError(err)
+    assert.False(eq)
+
+    eq, err = TOTPCompareWithVariance(key, 30*time.Second, 6, 2, totp)
+    assert.NoError(err)
+    assert.True(eq)
+
+    totp, _ = TOTP(key, 30*time.Second, -1, 6)
+    eq, err = TOTPCompareWithVariance(key, 30*time.Second, 6, 2, totp)
+    assert.NoError(err)
+    assert.True(eq)
 }
 
-func TestQRCode(t *testing.T) {
+func TestGenerateTOTPURI(t *testing.T) {
     assert := assert1.New(t)
-    f, _ := os.OpenFile("qrcode.png", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, os.ModePerm)
+    key := "RTR62KM24TFDNICOUL7DBTLMJS42E3UZ"
+    issuer := "Test Issuer"
+    user := "user@test.com"
+    period := 30*time.Second
+    length := 6
+    actual := GenerateTOTPURI(key, issuer, user, period, length)
+    expected := "otpauth://totp/user%40test.com?secret=RTR62KM24TFDNICOUL7DBTLMJS42E3UZ&issuer=Test+Issuer&algorithm=SHA1&digits=6&period=30"
+    assert.Equal(actual, expected)
+}
+
+func TestHOTPCompare(t *testing.T) {
+    assert := assert1.New(t)
     key, _ := NewOTPKey()
-    bytes, err := GenerateTOTPQRCodePNG(key, "eCatholic", "anthony@ecatholic.com", 30*time.Second, 6)
+    hotp, _ := HOTP(key, 0, 6)
+    actual, err := HOTPCompare(key, 0, 6, hotp)
     assert.NoError(err)
-    _, err = f.Write(bytes)
+    assert.True(actual)
+
+    actual, err = HOTPCompare(key, 0, 5, hotp)
+    assert.Error(err)
+    assert.False(actual)
+
+    hotp, _ = HOTP(key, 4, 6)
+    actual, err = HOTPCompare(key, 4, 6, hotp)
     assert.NoError(err)
-    f.Close()
+    assert.True(actual)
+
+    hotp, _ = HOTP(key, 2, 6)
+    actual, err = HOTPCompare(key, 4, 6, hotp)
+    assert.NoError(err)
+    assert.False(actual)
 }

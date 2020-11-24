@@ -79,16 +79,16 @@ func HOTPCompare(key string, counter uint64, length int, challenge string) (bool
     return subtle.ConstantTimeCompare([]byte(hotp), []byte(challenge)) == 1, nil
 }
 
-// TOTP for the passed key with the specified step size (in seconds) and number of digits, step will be adjusted
+// TOTP for the passed key with the specified period (step size) and number of digits, step will be adjusted
 // using the passed 'vary'
-func TOTP(key string, step, vary int, length int) (string, error) {
-    currentStep := uint64(math.Floor(float64(time.Now().Unix())/float64(step)))
+func TOTP(key string, period time.Duration, vary int, length int) (string, error) {
+    currentStep := uint64(math.Floor(float64(time.Now().Unix())/period.Seconds()))
     return HOTP(key, currentStep+uint64(vary), length)
 }
 
 // TOTPCompare the challenge to TOTP for a specific step dictated by period and adjust.
 func TOTPCompare(key string, period time.Duration, adjust int, length int, challenge string) (bool, error) {
-    totp, err := TOTP(key, int(period.Seconds()), adjust, length)
+    totp, err := TOTP(key, period, adjust, length)
     if nil != err {
         return false, err
     }
@@ -101,7 +101,7 @@ func TOTPCompareWithVariance(key string, period time.Duration, length int, varia
     var eq bool
     var err error
     // do 0, +1 && -1, +2 && -2, etc.
-    for vary := 0; vary < int(variance); vary++ {
+    for vary := 0; vary <= int(variance); vary++ {
         eq, err = TOTPCompare(key, period, vary, length, challenge)
         if nil != err || eq {
             return eq, err
@@ -121,7 +121,7 @@ func TOTPCompareWithVariance(key string, period time.Duration, length int, varia
 func GenerateTOTPURI(key, issuer, user string, period time.Duration, length int) string {
     issuer = url.QueryEscape(issuer)
     user = url.QueryEscape(user)
-    return fmt.Sprintf("otpauth://totp/%s?secret=%s&issuer=%s&algorithm=SHA1&digits=%d&period=%f",
+    return fmt.Sprintf("otpauth://totp/%s?secret=%s&issuer=%s&algorithm=SHA1&digits=%d&period=%2.f",
         user, key, issuer, length, period.Seconds())
 }
 
