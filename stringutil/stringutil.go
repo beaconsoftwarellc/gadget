@@ -34,15 +34,15 @@ func Reverse(s string) string {
 // RuneAtIndex returns the rune located at the specified index in the passed
 // string. Supports negative indexing.
 func RuneAtIndex(s string, i int) rune {
-	var runed = []rune(s)
+	var runes = []rune(s)
 	if i < 0 {
-		i = len(runed) + i
+		i = len(runes) + i
 	}
-	if i < 0 || i > len(runed) {
+	if i < 0 || i > len(runes) {
 		var r rune
 		return r
 	}
-	return runed[i]
+	return runes[i]
 }
 
 // LastRune returns the last rune in a string. If the string is Empty
@@ -128,7 +128,7 @@ func SprintHex(b []byte) string {
 // ByteToHexASCII returns a byte slice containing the hex representation of the
 // passed byte array in ASCII characters.
 func ByteToHexASCII(b []byte) []byte {
-	r := []byte{}
+	var r []byte
 	for _, b := range b {
 		for _, c := range fmt.Sprintf("%.2X", b) {
 			r = append(r, byte(c))
@@ -225,4 +225,16 @@ func PSPrint(prefix string, m map[string]string) string {
 // Pointer converts a string to a string pointer
 func Pointer(str string) *string {
 	return &str
+}
+
+// NumericOnly returns only the numeric characters, in order, in the passed string as a new string.
+func NumericOnly(s string) string {
+	runes := []rune(s)
+	var nRunes []rune
+	for i := 0; i < len(runes); i++ {
+		if runes[i] >= 48 && runes[i] <= 57 {
+			nRunes = append(nRunes, runes[i])
+		}
+	}
+	return string(nRunes)
 }
