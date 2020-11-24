@@ -16,6 +16,7 @@ require (
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/mattes/migrate v3.0.1+incompatible
 	github.com/opencontainers/go-digest v1.0.0 // indirect
+	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	github.com/stretchr/testify v1.5.1
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
 )

@@ -418,3 +418,39 @@ func TestPointer(t *testing.T) {
 		})
 	}
 }
+
+func TestNumericOnly(t *testing.T) {
+	tests := []struct {
+		name string
+		s string
+		want string
+	} {
+		{
+			"no numeric",
+			"the quick brown fox jumped over the lazy dog",
+			"",
+		},
+		{
+			"all numeric",
+			"0987654321234567890",
+			"0987654321234567890",
+		},
+		{
+			"mixed",
+			"0a9b8c7d6e5f4g3h21sdfg2rt3er 4t5*(&^@6)(*&+_7asd8eqr9q0/';",
+			"0987654321234567890",
+		},
+		{
+			"empty",
+			"",
+			"",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := NumericOnly(tt.s); got != tt.want {
+				t.Errorf("NumericOnly(\"%s\") = \"%v\", want \"%v\"", tt.s, got, tt.want)
+			}
+		})
+	}
+}
