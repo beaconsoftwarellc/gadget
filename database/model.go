@@ -311,19 +311,34 @@ func (db *Database) List(def Record, obj interface{}, options *ListOptions) erro
 }
 
 // ListWhere populates obj with a list of Records from the database
-func (db *Database) ListWhere(def Record, target interface{}, condition *qb.ConditionExpression) errors.TracerError {
-	return db.Select(target, db.buildListWhere(def, condition))
-}
-
-// ListWhereTx populates obj with a list of Records from the database using the transaction
-func (db *Database) ListWhereTx(tx *sqlx.Tx, def Record, obj interface{}, where *qb.ConditionExpression) errors.TracerError {
-	query, values, err := db.buildListWhere(def, where).SQL(qb.NoLimit, 0)
+func (db *Database) ListWhere(meta Record, target interface{}, condition *qb.ConditionExpression, options *ListOptions) errors.TracerError {
+	tx, err := db.Beginx()
 	if nil != err {
 		return errors.Wrap(err)
 	}
+	tracerErr := db.ListWhereTx(tx, meta, target, condition, options)
+	if nil != tracerErr {
+		log.Error(tx.Rollback())
+		return tracerErr
+	}
+	return errors.Wrap(tx.Commit())
+}
 
-	if err = tx.Select(obj, query, values...); nil != err {
-		return TranslateError(err, Select, query, db.Logger)
+// ListWhereTx populates target with a list of Records from the database using the transaction
+func (db *Database) ListWhereTx(tx *sqlx.Tx, meta Record, target interface{}, condition *qb.ConditionExpression,
+		options *ListOptions) errors.TracerError {
+	if nil == options {
+		options = &ListOptions{
+			Limit:  qb.NoLimit,
+			Offset: 0,
+		}
+	}
+	stmt, values, err := db.buildListWhere(meta, condition).SQL(options.Limit, options.Offset)
+	if nil != err {
+		return errors.Wrap(err)
+	}
+	if err = tx.Select(target, stmt, values...); nil != err {
+		return TranslateError(err, Select, stmt, db.Logger)
 	}
 	return nil
 }

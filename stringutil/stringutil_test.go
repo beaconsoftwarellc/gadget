@@ -182,7 +182,7 @@ func TestByteToASCIIHexValue(t *testing.T) {
 		// to ASCII HEX representation for each HEX char in encoded byte array. Input of byte array of "VOLUME +"
 		// is equivalent to ASCII HEX encoding of []byte{0x56, 0x4F, 0x4C, 0x55, 0x4D, 0x45, 0x20, 0x2B}.
 		{[]byte("564F4C554D45202B"), []byte("VOLUME +")},
-		{[]byte{}, []byte{}},
+		{},
 	}
 
 	for _, t := range byteToASCIIHexTests {

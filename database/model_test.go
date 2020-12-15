@@ -142,13 +142,13 @@ func TestWhere(t *testing.T) {
 
 	where := TestMeta.Name.Equal(records[0].Name)
 	var actual []*TestRecord
-	err := spec.DB.ListWhere(&TestRecord{}, &actual, where)
+	err := spec.DB.ListWhere(&TestRecord{}, &actual, where, nil)
 	if assert.NoError(err) {
 		assert.Equal(records[0], actual[0])
 		assert.Equal(1, len(actual))
 	}
 	where = TestMeta.Name.Equal(records[0])
-	err = spec.DB.ListWhere(&TestRecord{}, &actual, where)
+	err = spec.DB.ListWhere(&TestRecord{}, &actual, where, nil)
 	assert.Error(err)
 }
 
@@ -167,18 +167,18 @@ func TestWhereTx(t *testing.T) {
 
 	where := TestMeta.Name.Equal(records[0].Name)
 	var actual []*TestRecord
-	err := spec.DB.ListWhere(&TestRecord{}, &actual, where)
+	err := spec.DB.ListWhere(&TestRecord{}, &actual, where, nil)
 	if assert.NoError(err) {
 		assert.Equal(0, len(actual))
 	}
 
-	err = spec.DB.ListWhereTx(tx, &TestRecord{}, &actual, where)
+	err = spec.DB.ListWhereTx(tx, &TestRecord{}, &actual, where, nil)
 	if assert.NoError(err) {
 		assert.Equal(records[0], actual[0])
 		assert.Equal(1, len(actual))
 	}
 	where = TestMeta.Name.Equal(records[0])
-	err = spec.DB.ListWhereTx(tx, &TestRecord{}, &actual, where)
+	err = spec.DB.ListWhereTx(tx, &TestRecord{}, &actual, where, nil)
 	assert.Error(err)
 }
 
@@ -197,18 +197,18 @@ func TestWhereIn(t *testing.T) {
 	where := TestMeta.Name.In(records[0].Name, records[1].Name)
 
 	var actual []*TestRecord
-	err := spec.DB.ListWhere(&TestRecord{}, &actual, where)
+	err := spec.DB.ListWhere(&TestRecord{}, &actual, where, nil)
 	if assert.NoError(err) {
 		assert.Equal(records[0], actual[0])
 		assert.Equal(records[1], actual[1])
 		assert.Equal(2, len(actual))
 	}
 	where = TestMeta.Name.In(records[0])
-	assert.Error(spec.DB.ListWhere(&TestRecord{}, &actual, where))
+	assert.Error(spec.DB.ListWhere(&TestRecord{}, &actual, where, nil))
 
 	where = TestMeta.Name.In(records[0].Name, records[1].Name).And(TestMeta.ID.Equal(records[0].ID))
 	actual = []*TestRecord{}
-	err = spec.DB.ListWhere(&TestRecord{}, &actual, where)
+	err = spec.DB.ListWhere(&TestRecord{}, &actual, where, nil)
 	if assert.NoError(err) {
 		assert.Equal(records[0], actual[0])
 		assert.Equal(1, len(actual))
@@ -216,7 +216,7 @@ func TestWhereIn(t *testing.T) {
 
 	where = TestMeta.ID.Equal(records[1].ID).And(TestMeta.Name.In(records[0].Name, records[1].Name))
 	actual = []*TestRecord{}
-	err = spec.DB.ListWhere(&TestRecord{}, &actual, where)
+	err = spec.DB.ListWhere(&TestRecord{}, &actual, where, nil)
 	if assert.NoError(err) {
 		assert.Equal(records[1], actual[0])
 		assert.Equal(1, len(actual))
