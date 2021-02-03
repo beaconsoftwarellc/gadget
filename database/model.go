@@ -1,6 +1,7 @@
 package database
 
 import (
+	"fmt"
 	"reflect"
 	"time"
 
@@ -9,6 +10,15 @@ import (
 	"github.com/beaconsoftwarellc/gadget/database/qb"
 	"github.com/beaconsoftwarellc/gadget/errors"
 	"github.com/beaconsoftwarellc/gadget/log"
+)
+
+const (
+	// TableExistenceQueryFormat returns a single row and column indicating that the table
+	// exists and when it was created. Takes format vars 'table_schema' and 'table_name'
+	TableExistenceQueryFormat = `SELECT create_time ` +
+		`FROM information_schema.tables` +
+		`	WHERE table_schema = '%s'` +
+		`	AND table_name = '%s' LIMIT 1;`
 )
 
 // Config defines the interface for a config to establish a database connection
@@ -23,6 +33,12 @@ type Config interface {
 	WaitBetweenRetries() time.Duration
 }
 
+// CreateTime is a marker class to hold the result row from the existence query
+type CreateTime struct {
+	// CreateTime of the table
+	CreateTime string `db:"CREATE_TIME"`
+}
+
 // InstanceConfig is a simple struct that satisfies the Config interface
 type InstanceConfig struct {
 	// Dialect of this instance
@@ -35,18 +51,22 @@ type InstanceConfig struct {
 	ConnectRetryWait time.Duration
 }
 
+// DatabaseDialect indicates the type of SQL this database uses
 func (config *InstanceConfig) DatabaseDialect() string {
 	return config.Dialect
 }
 
+// DatabaseConnection string
 func (config *InstanceConfig) DatabaseConnection() string {
 	return config.Connection
 }
 
+// NumberOfRetries on a connection to the database before failing
 func (config *InstanceConfig) NumberOfRetries() int {
 	return config.ConnectRetries
 }
 
+// WaitBetweenRetries when trying to connect to the database
 func (config *InstanceConfig) WaitBetweenRetries() time.Duration {
 	if config.ConnectRetryWait == 0 {
 		config.ConnectRetryWait = time.Second
@@ -121,6 +141,28 @@ func NewListOptions(limit uint, offset uint) *ListOptions {
 		Limit:  limit,
 		Offset: offset,
 	}
+}
+
+// IsNotFoundError returns a boolean indicating that the passed error (can be nil) is of
+// type *database.NotFoundError
+func IsNotFoundError(err error) bool {
+	if nil == err {
+		return false
+	}
+	_, ok := err.(*NotFoundError)
+	return ok
+}
+
+// TableExists for the passed schema and table name on the passed database
+func TableExists(db *Database, schema, name string) (bool, error) {
+	var exists bool
+	var err error
+	var target []*CreateTime
+	err = db.DB.Select(&target, fmt.Sprintf(TableExistenceQueryFormat, schema, name))
+	if len(target) == 1 {
+		exists = true
+	}
+	return exists, err
 }
 
 // Database defines a connection to a database
@@ -326,7 +368,7 @@ func (db *Database) ListWhere(meta Record, target interface{}, condition *qb.Con
 
 // ListWhereTx populates target with a list of Records from the database using the transaction
 func (db *Database) ListWhereTx(tx *sqlx.Tx, meta Record, target interface{}, condition *qb.ConditionExpression,
-		options *ListOptions) errors.TracerError {
+	options *ListOptions) errors.TracerError {
 	if nil == options {
 		options = &ListOptions{
 			Limit:  qb.NoLimit,

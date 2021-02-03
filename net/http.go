@@ -20,6 +20,8 @@ const (
 	HeaderContentLength = "Content-Length"
 	// HeaderAccept is the HTTP header Accept
 	HeaderAccept = "Accept"
+	// HeaderAllow is the HTTP header for Allow which indicates which methods are allowed on the URL
+	HeaderAllow = "Allow"
 	// HeaderHost specifies the domain name of the server
 	HeaderHost = "Host"
 	// HeaderKeepAlive allows the sender to hint about how the connection may be used to set a timeout and max # of requests
