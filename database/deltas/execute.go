@@ -1,6 +1,8 @@
 package deltas
 
 import (
+	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/beaconsoftwarellc/gadget/database"
@@ -12,7 +14,9 @@ import (
 const (
 	// DeltaTableName for use in queries
 	DeltaTableName = "delta"
-
+	// LockName for preventing multiple executions of the sql delta's at the same time
+	LockName             = "delta_exec"
+	multiStatementTrueQS = "multiStatements=true"
 	// CreateDeltaTableSQL creates the delta's table in the database for use by
 	// this package.
 	CreateDeltaTableSQL = `CREATE TABLE ` + "`" + DeltaTableName + "`" + ` (
@@ -26,16 +30,43 @@ const (
 
 var mutex sync.Mutex
 
+func setMultiStatement(connString string) string {
+	split := strings.Split(connString, "?")
+	if len(split) == 1 {
+		connString = fmt.Sprintf("%s?%s", connString, multiStatementTrueQS)
+	} else if !strings.Contains(split[1], multiStatementTrueQS) {
+		connString = fmt.Sprintf("%s&%s", connString, multiStatementTrueQS)
+	}
+	return connString
+}
+
 // Execute the passed deltas sequentially if they have not already been applied to the database.
 // WARN: This function will create the table 'delta' which is needs to track changes if it does not
 //		 already exist.
 // NOTE: This function assumes that the database has fully transactional DDL
 // 		 (not MySQL). Using this function with a non-transactional DDL database
 // 		 will cause errors to leave the database in an indeterminate state.
-func Execute(db *database.Database, schema string, deltas []*Delta) errors.TracerError {
+func Execute(config database.InstanceConfig, schema string, deltas []*Delta) errors.TracerError {
 	mutex.Lock()
 	defer mutex.Unlock()
+	var err error
+	config.Connection = setMultiStatement(config.Connection)
+	db := database.Initialize(&config)
+
 	log.Infof("executing %d deltas on %s", len(deltas), schema)
+	// we want to just bail if someone else has the lock
+	locked, err := database.AcquireDatabaseLock(db, LockName, 0)
+	if nil != err {
+		return errors.Wrap(err)
+	}
+	if !locked {
+		log.Infof("cannot apply deltas: failed to acquire db lock")
+		return nil
+	}
+	log.Debugf("db lock acquired")
+	defer database.ReleaseDatabaseLock(db, LockName)
+
+	// get the lock first
 	tx, err := db.Beginx()
 	if nil != err {
 		return errors.Wrap(err)
@@ -60,19 +91,21 @@ func Execute(db *database.Database, schema string, deltas []*Delta) errors.Trace
 		}
 	}
 	log.Infof("all deltas processed")
-	return errors.Wrap(log.Error(tx.Commit()))
+	terr := errors.Wrap(log.Error(tx.Commit()))
+	log.Error(db.Close())
+	return terr
 }
 
 // ExecuteDelta checks if the passed delta has already been executed according to the Deltas table, and then executes
 // if it has not been using the passed transaction for both queries.
 func ExecuteDelta(tx *sqlx.Tx, db *database.Database, delta *Delta) errors.TracerError {
-	log.Infof("processing delta %s %s", delta.ID, delta.Name)
+	log.Infof("processing delta %d %s", delta.ID, delta.Name)
 	// check that the delta has not already been executed
 	existing := new(DeltaRecord)
 	var err error
 	err = db.ReadOneWhereTx(existing, tx, DeltaMeta.ID.Equal(delta.ID))
 	if nil == err {
-		log.Infof("%s %s already executed at %s", delta.ID, delta.Name, existing.Created)
+		log.Infof("%d %s already executed at %s", delta.ID, delta.Name, existing.Created)
 		return nil
 	}
 	if !database.IsNotFoundError(err) {
@@ -83,6 +116,6 @@ func ExecuteDelta(tx *sqlx.Tx, db *database.Database, delta *Delta) errors.Trace
 	if _, err = tx.Exec(delta.Script); nil != err {
 		return errors.Wrap(err)
 	}
-	log.Infof("successfully applied delta %s %s", delta.ID, delta.Name)
+	log.Infof("successfully applied delta %d %s", delta.ID, delta.Name)
 	return db.CreateTx(&DeltaRecord{ID: delta.ID, Name: delta.Name}, tx)
 }

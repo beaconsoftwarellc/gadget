@@ -19,6 +19,8 @@ const (
 		`FROM information_schema.tables` +
 		`	WHERE table_schema = '%s'` +
 		`	AND table_name = '%s' LIMIT 1;`
+	acquireLockQueryFormat = "SELECT GET_LOCK('%s', %d) AS STATUS"
+	releaseLockQueryFormat = "SELECT RELEASE_LOCK('%s') AS STATUS"
 )
 
 // Config defines the interface for a config to establish a database connection
@@ -33,10 +35,17 @@ type Config interface {
 	WaitBetweenRetries() time.Duration
 }
 
-// CreateTime is a marker class to hold the result row from the existence query
-type CreateTime struct {
+// CreateTimeResult is for holding the result row from the existence query
+type CreateTimeResult struct {
 	// CreateTime of the table
 	CreateTime string `db:"CREATE_TIME"`
+}
+
+// StatusResult is for capturing output from a function call on the database, you must use
+// an 'AS STATUS' clause in your query in order for mapping to work correctly.
+type StatusResult struct {
+	// Status as returned by a function call usually
+	Status int `db:"STATUS"`
 }
 
 // InstanceConfig is a simple struct that satisfies the Config interface
@@ -157,12 +166,35 @@ func IsNotFoundError(err error) bool {
 func TableExists(db *Database, schema, name string) (bool, error) {
 	var exists bool
 	var err error
-	var target []*CreateTime
+	var target []*CreateTimeResult
 	err = db.DB.Select(&target, fmt.Sprintf(TableExistenceQueryFormat, schema, name))
 	if len(target) == 1 {
 		exists = true
 	}
 	return exists, err
+}
+
+// AcquireDatabaseLock with the specified name and timeout. Returns boolean indicating whether the
+// lock was acquired or error on failure to execute.
+// See: https://dev.mysql.com/doc/refman/5.7/en/locking-functions.html
+func AcquireDatabaseLock(db *Database, name string, timeout time.Duration) (bool, errors.TracerError) {
+	var err error
+	var target []*StatusResult
+	err = db.DB.Select(&target, fmt.Sprintf(acquireLockQueryFormat, name, int(timeout.Seconds())))
+	if nil != err {
+		return false, errors.Wrap(err)
+	}
+	if len(target) < 1 {
+		return false, errors.New("no rows returned from acquire lock query")
+	}
+	return target[0].Status == 1, nil
+}
+
+// ReleaseDatabaseLock with the specified name
+// See: https://dev.mysql.com/doc/refman/5.7/en/locking-functions.html
+func ReleaseDatabaseLock(db *Database, name string) errors.TracerError {
+	var target []*StatusResult
+	return errors.Wrap(db.DB.Select(&target, fmt.Sprintf(releaseLockQueryFormat, name)))
 }
 
 // Database defines a connection to a database
