@@ -109,7 +109,7 @@ func Year() int32 {
 
 // Email returns a fake email address for testing
 func Email() string {
-	return fmt.Sprintf("fake+%s@kasita.com", random(10, letters))
+	return fmt.Sprintf("fake+%s@gadget.com", random(10, letters))
 }
 
 // Name returns a fake name for testing

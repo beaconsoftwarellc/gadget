@@ -180,7 +180,7 @@ func (r *RSAEncryption) Encrypt(plaintext []byte) (ciphertext []byte, err error)
 		return nil, NewRSAPublicKeyNotSetError()
 	}
 	hash := crypto.SHA256.New()
-	ciphertext, err = rsa.EncryptOAEP(hash, rand.Reader, r.publicKey, plaintext, []byte("kasita"))
+	ciphertext, err = rsa.EncryptOAEP(hash, rand.Reader, r.publicKey, plaintext, []byte("gadget"))
 	return ciphertext, err
 }
 
@@ -210,7 +210,7 @@ func (r *RSAEncryption) Decrypt(ciphertext []byte) (plaintext []byte, err error)
 	if nil == r.privateKey {
 		return nil, NewRSAPrivateKeyNotSetError()
 	}
-	plaintext, err = rsa.DecryptOAEP(sha256.New(), rand.Reader, r.privateKey, ciphertext, []byte("kasita"))
+	plaintext, err = rsa.DecryptOAEP(sha256.New(), rand.Reader, r.privateKey, ciphertext, []byte("gadget"))
 	return plaintext, err
 }
 
