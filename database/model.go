@@ -15,7 +15,8 @@ import (
 const (
 	// TableExistenceQueryFormat returns a single row and column indicating that the table
 	// exists and when it was created. Takes format vars 'table_schema' and 'table_name'
-	TableExistenceQueryFormat = `SELECT create_time ` +
+	// as MUST be there or MySQL will return CREATE_TIME and mapping will fail
+	TableExistenceQueryFormat = `SELECT create_time as "create_time" ` +
 		`FROM information_schema.tables` +
 		`	WHERE table_schema = '%s'` +
 		`	AND table_name = '%s' LIMIT 1;`
@@ -38,7 +39,7 @@ type Config interface {
 // CreateTimeResult is for holding the result row from the existence query
 type CreateTimeResult struct {
 	// CreateTime of the table
-	CreateTime string `db:"CREATE_TIME"`
+	CreateTime string `db:"create_time"`
 }
 
 // StatusResult is for capturing output from a function call on the database, you must use
