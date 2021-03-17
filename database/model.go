@@ -15,8 +15,9 @@ import (
 const (
 	// TableExistenceQueryFormat returns a single row and column indicating that the table
 	// exists and when it was created. Takes format vars 'table_schema' and 'table_name'
-	// as MUST be there or MySQL will return CREATE_TIME and mapping will fail
-	TableExistenceQueryFormat = `SELECT create_time as "create_time" ` +
+	// NOTE: 'as' clause MUST be there or MySQL will return TABLE_NAME for the column name and
+	//  mapping will fail
+	TableExistenceQueryFormat = `SELECT TABLE_NAME as "table_name" ` +
 		`FROM information_schema.tables` +
 		`	WHERE table_schema = '%s'` +
 		`	AND table_name = '%s' LIMIT 1;`
@@ -36,10 +37,10 @@ type Config interface {
 	WaitBetweenRetries() time.Duration
 }
 
-// CreateTimeResult is for holding the result row from the existence query
-type CreateTimeResult struct {
-	// CreateTime of the table
-	CreateTime string `db:"create_time"`
+// TableNameResult is for holding the result row from the existence query
+type TableNameResult struct {
+	// TableName of the table
+	TableName string `db:"table_name"`
 }
 
 // StatusResult is for capturing output from a function call on the database, you must use
@@ -167,7 +168,7 @@ func IsNotFoundError(err error) bool {
 func TableExists(db *Database, schema, name string) (bool, error) {
 	var exists bool
 	var err error
-	var target []*CreateTimeResult
+	var target []*TableNameResult
 	err = db.DB.Select(&target, fmt.Sprintf(TableExistenceQueryFormat, schema, name))
 	if len(target) == 1 {
 		exists = true
