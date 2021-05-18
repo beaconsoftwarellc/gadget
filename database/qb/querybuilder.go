@@ -249,9 +249,7 @@ func (wc *whereCondition) setExpression(left TableField, comparator Comparison, 
 func (wc *whereCondition) tables() []string {
 	tables := []string{}
 	if nil != wc.expression {
-		for _, table := range wc.expression.Tables() {
-			tables = append(tables, table)
-		}
+		tables = append(tables, wc.expression.Tables()...)
 	}
 	return tables
 }
@@ -334,11 +332,6 @@ func Select(selectExpressions ...SelectExpression) *SelectQuery {
 		groupBy:    []SelectExpression{},
 		where:      &whereCondition{},
 		Seperator:  " ",
-	}
-	for _, exp := range selectExpressions {
-		for _, table := range exp.GetTables() {
-			query.GetAlias(table)
-		}
 	}
 	return query
 }

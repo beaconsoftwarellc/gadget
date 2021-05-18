@@ -115,11 +115,9 @@ func (q *UpdateQuery) ParameterizedSQL(limit int) (string, error) {
 	}
 	sql := []string{fmt.Sprintf("UPDATE `%s` SET ", q.tableReference.GetName())}
 	alines := []string{}
-	values := []interface{}{}
 	for _, assignment := range q.assignments {
-		s, v := assignment.SQL()
+		s, _ := assignment.SQL()
 		alines = append(alines, s)
-		values = append(values, v...)
 	}
 	sql = append(sql, strings.Join(alines, ", "))
 	// WHERE
