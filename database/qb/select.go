@@ -95,6 +95,21 @@ type SelectQuery struct {
 	err        error
 }
 
+// SelectFrom this query but with different select expressions, not a deep copy
+func (q *SelectQuery) SelectFrom(selectExpressions ...SelectExpression) *SelectQuery {
+	query := Select(selectExpressions...)
+
+	query.distinct = q.distinct
+	query.from = q.from
+	query.joins = q.joins
+	query.orderBy = q.orderBy
+	query.groupBy = q.groupBy
+	query.where = q.where
+	query.Seperator = q.Seperator
+
+	return query
+}
+
 // GetAlias of the passed table name in this query.
 func (q *SelectQuery) GetAlias(tableName string) string {
 	return tableName

@@ -1,7 +1,6 @@
 package qb
 
 import (
-	"fmt"
 	"testing"
 
 	assert1 "github.com/stretchr/testify/assert"
@@ -123,7 +122,7 @@ func TestQueryBuilderSimple(t *testing.T) {
 	actual, values, err := query.SQL(0, 0)
 	assert.NoError(err)
 	assert.Empty(values)
-	expected := fmt.Sprintf("SELECT `person`.`id`, `person`.`name` FROM `person` AS `person`")
+	expected := "SELECT `person`.`id`, `person`.`name` FROM `person` AS `person`"
 	assert.Equal(expected, actual)
 }
 
@@ -134,7 +133,7 @@ func TestQueryBuilderTableAlias(t *testing.T) {
 	actual, values, err := query.SQL(0, 0)
 	assert.NoError(err)
 	assert.Empty(values)
-	expected := fmt.Sprintf("SELECT `p`.`id`, `p`.`name` FROM `person` AS `p`")
+	expected := "SELECT `p`.`id`, `p`.`name` FROM `person` AS `p`"
 	assert.Equal(expected, actual)
 }
 
@@ -337,4 +336,22 @@ func TestSelectNotNull(t *testing.T) {
 	assert.NoError(err)
 	assert.Empty(values)
 	assert.Equal("SELECT (`person`.`id` IS NOT NULL) AS `person_id_not_null`, `person`.`name` FROM `person` AS `person`", actual)
+}
+
+func TestSelectFrom(t *testing.T) {
+	assert := assert1.New(t)
+	query := Select(Person.ID, Person.Name, Person.AddressID).From(Person).GroupBy(Person.Name, Person.AddressID)
+	query2 := query.SelectFrom(Person.ID)
+
+	actual, values, err := query.SQL(0, 10)
+	assert.NoError(err)
+	assert.Empty(values)
+	assert.Equal("SELECT `person`.`id`, `person`.`name`, `person`.`address_id` FROM `person` AS `person`"+
+		" GROUP BY `person`.`name`, `person`.`address_id`", actual)
+
+	actual, values, err = query2.SQL(0, 10)
+	assert.NoError(err)
+	assert.Empty(values)
+	assert.Equal("SELECT `person`.`id` FROM `person` AS `person`"+
+		" GROUP BY `person`.`name`, `person`.`address_id`", actual)
 }
