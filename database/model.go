@@ -450,6 +450,40 @@ func (db *Database) SelectTx(tx *sqlx.Tx, target interface{}, query *qb.SelectQu
 	return nil
 }
 
+// SelectList populates obj with a list of Records from the database
+func (db *Database) SelectList(target interface{}, query *qb.SelectQuery,
+	options *ListOptions) errors.TracerError {
+	tx, err := db.Beginx()
+	if nil != err {
+		return errors.Wrap(err)
+	}
+	tracerErr := db.SelectListTx(tx, target, query, options)
+	if nil != tracerErr {
+		log.Error(tx.Rollback())
+		return tracerErr
+	}
+	return errors.Wrap(tx.Commit())
+}
+
+// SelectListTx populates target with a list of Records from the database using the transaction
+func (db *Database) SelectListTx(tx *sqlx.Tx, target interface{}, query *qb.SelectQuery,
+	options *ListOptions) errors.TracerError {
+	if nil == options {
+		options = &ListOptions{
+			Limit:  qb.NoLimit,
+			Offset: 0,
+		}
+	}
+	stmt, values, err := query.SQL(options.Limit, options.Offset)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+	if err = tx.Select(target, stmt, values...); nil != err {
+		return TranslateError(err, Select, stmt, db.Logger)
+	}
+	return nil
+}
+
 // Update replaces an entry in the database for the Record
 func (db *Database) Update(obj Record) errors.TracerError {
 	tx, err := db.Beginx()
