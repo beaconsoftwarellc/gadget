@@ -450,7 +450,7 @@ func (db *Database) SelectTx(tx *sqlx.Tx, target interface{}, query *qb.SelectQu
 	return nil
 }
 
-// SelectList populates obj with a list of Records from the database
+// SelectList of Records into target based upon the passed query
 func (db *Database) SelectList(target interface{}, query *qb.SelectQuery,
 	options *ListOptions) errors.TracerError {
 	tx, err := db.Beginx()
@@ -465,7 +465,7 @@ func (db *Database) SelectList(target interface{}, query *qb.SelectQuery,
 	return errors.Wrap(tx.Commit())
 }
 
-// SelectListTx populates target with a list of Records from the database using the transaction
+// SelectListTx of Records into target in a transaction based upon the passed query
 func (db *Database) SelectListTx(tx *sqlx.Tx, target interface{}, query *qb.SelectQuery,
 	options *ListOptions) errors.TracerError {
 	if nil == options {
