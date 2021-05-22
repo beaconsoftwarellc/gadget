@@ -8,6 +8,7 @@ import (
 
 	assert1 "github.com/stretchr/testify/assert"
 
+	"github.com/beaconsoftwarellc/gadget/database/qb"
 	"github.com/beaconsoftwarellc/gadget/generator"
 	"github.com/beaconsoftwarellc/gadget/log"
 )
@@ -220,6 +221,78 @@ func TestWhereIn(t *testing.T) {
 	if assert.NoError(err) {
 		assert.Equal(records[1], actual[0])
 		assert.Equal(1, len(actual))
+	}
+}
+
+func TestSelectList(t *testing.T) {
+	assert := assert1.New(t)
+	spec := newSpecification()
+
+	records := make([]*TestRecord, 5)
+	for i := range records {
+		name := fmt.Sprintf("%d%s", i, generator.Name())
+		record := &TestRecord{Name: name}
+		assert.NoError(spec.DB.Create(record))
+		records[i] = record
+	}
+
+	query := qb.Select(TestMeta.AllColumns()).From(TestMeta).
+		Where(TestMeta.Name.In(records[0].Name, records[1].Name)).
+		OrderBy(TestMeta.Name, qb.Ascending)
+	var actual []*TestRecord
+	err := spec.DB.SelectList(&actual, query, nil)
+	if assert.NoError(err) {
+		assert.Equal(2, len(actual))
+		assert.Equal(records[0], actual[0])
+		assert.Equal(records[1], actual[1])
+	}
+
+	actual = nil
+	options := NewListOptions(3, 1)
+	err = spec.DB.SelectList(&actual, query, options)
+	if assert.NoError(err) {
+		assert.Equal(1, len(actual))
+		assert.Equal(records[1], actual[0])
+	}
+}
+
+func TestSelectTxList(t *testing.T) {
+	assert := assert1.New(t)
+	spec := newSpecification()
+
+	tx := spec.DB.MustBegin()
+	defer func() { assert.NoError(tx.Commit()) }()
+	records := make([]*TestRecord, 5)
+	for i := range records {
+		name := fmt.Sprintf("%d%s", i, generator.Name())
+		record := &TestRecord{Name: name}
+		assert.NoError(spec.DB.CreateTx(record, tx))
+		records[i] = record
+	}
+
+	query := qb.Select(TestMeta.AllColumns()).From(TestMeta).
+		Where(TestMeta.Name.In(records[0].Name, records[1].Name)).
+		OrderBy(TestMeta.Name, qb.Ascending)
+	var actual []*TestRecord
+	err := spec.DB.SelectList(&actual, query, nil)
+	if assert.NoError(err) {
+		assert.Equal(0, len(actual))
+	}
+
+	actual = nil
+	err = spec.DB.SelectListTx(tx, &actual, query, nil)
+	if assert.NoError(err) {
+		assert.Equal(2, len(actual))
+		assert.Equal(records[0], actual[0])
+		assert.Equal(records[1], actual[1])
+	}
+
+	actual = nil
+	options := NewListOptions(3, 1)
+	err = spec.DB.SelectListTx(tx, &actual, query, options)
+	if assert.NoError(err) {
+		assert.Equal(1, len(actual))
+		assert.Equal(records[1], actual[0])
 	}
 }
 
