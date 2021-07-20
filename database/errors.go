@@ -13,8 +13,8 @@ import (
 )
 
 // ConnectionError  is returned when unable to connect to database
-type ConnectionError struct{
-	err error
+type ConnectionError struct {
+	err   error
 	trace []string
 }
 
@@ -73,6 +73,7 @@ func TranslateError(err error, action SQLQueryType, stmt string, logger log.Logg
 	if !ok {
 		return NewSystemError(action, stmt, err, logger)
 	}
+	err = errors.New(driverErr.Message)
 	switch driverErr.Number {
 	// Duplicate primary key
 	case mysqlDuplicateEntry:
@@ -117,7 +118,7 @@ func NewExecutionError(action SQLQueryType, stmt string, err error, logger log.L
 
 // Error prints a ExecutionError
 func (e *SQLExecutionError) Error() string {
-	return fmt.Sprintf("%s (%s)", e.message, e.ReferenceID)
+	return fmt.Sprintf("%s: %s (%s)", e.message, e.ErrMsg, e.ReferenceID)
 }
 
 // Trace returns the stack trace for the error
