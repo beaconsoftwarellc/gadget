@@ -6,8 +6,10 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 
 	"github.com/beaconsoftwarellc/gadget/generator"
+	"github.com/beaconsoftwarellc/gadget/log"
 )
 
 // FileExists exists and is accessible and the specified path.
@@ -94,4 +96,18 @@ func DownloadToMemory(url string) ([]byte, error) {
 		return nil, err
 	}
 	return contents, nil
+}
+
+// RemoveFileMatches for the given filepath pattern.
+func RemoveFileMatches(pattern string) error {
+	files, err := filepath.Glob(pattern)
+	if err != nil {
+		return err
+	}
+	for _, f := range files {
+		if err := os.Remove(f); err != nil {
+			log.Warnf("File removal failed for %s: %s", f, err)
+		}
+	}
+	return nil
 }
