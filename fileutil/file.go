@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/beaconsoftwarellc/gadget/generator"
+	"github.com/beaconsoftwarellc/gadget/log"
 )
 
 // FileExists exists and is accessible and the specified path.
@@ -105,7 +106,7 @@ func RemoveFileMatches(pattern string) error {
 	}
 	for _, f := range files {
 		if err := os.Remove(f); err != nil {
-			return err
+			log.Warnf("File removal failed for %s: %s", f, err)
 		}
 	}
 	return nil
