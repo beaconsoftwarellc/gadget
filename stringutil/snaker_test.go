@@ -1,8 +1,9 @@
 package stringutil
 
 import (
-	assert1 "github.com/stretchr/testify/assert"
 	"testing"
+
+	assert1 "github.com/stretchr/testify/assert"
 )
 
 func TestUnderscore(t *testing.T) {
@@ -15,9 +16,27 @@ func TestUnderscore(t *testing.T) {
 		{"camel", "camel"},
 		{"BIGCase", "big_case"},
 		{"SmallCASE", "small_case"},
+		{"My fancy alpaca", "my_fancy_alpaca"},
 	}
 	for _, input := range inputs {
 		output := Underscore(input[0])
+		assert.Equal(input[1], output)
+	}
+}
+
+func TestDash(t *testing.T) {
+	assert := assert1.New(t)
+	inputs := [][]string{
+		{"ILoveGoAndJSONSoMuch", "i-love-go-and-json-so-much"},
+		{"CamelCase", "camel-case"},
+		{"Camel", "camel"},
+		{"CAMEL", "camel"},
+		{"camel", "camel"},
+		{"BIGCase", "big-case"},
+		{"My fancy alpaca", "my-fancy-alpaca"},
+	}
+	for _, input := range inputs {
+		output := Dash(input[0])
 		assert.Equal(input[1], output)
 	}
 }
