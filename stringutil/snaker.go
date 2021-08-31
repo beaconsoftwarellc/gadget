@@ -11,6 +11,7 @@ var camel = regexp.MustCompile("(^[^A-Z]*|[A-Z]*)([A-Z][^A-Z]+|$)")
 // Underscore converts strings to underscored version (e.g. CamelCase to camel_case)
 func Underscore(s string) string {
 	var a []string
+	s = strings.ReplaceAll(s, " ", "_")
 	for _, sub := range camel.FindAllStringSubmatch(s, -1) {
 		if sub[1] != "" {
 			a = append(a, sub[1])
@@ -20,6 +21,11 @@ func Underscore(s string) string {
 		}
 	}
 	return strings.ToLower(strings.Join(a, "_"))
+}
+
+// Dash converts strings to dashed version (e.g. CamelCase to camel-case)
+func Dash(s string) string {
+	return strings.ReplaceAll(Underscore(s), "_", "-")
 }
 
 // LowerCamelCase converts a string to camel case with the first letter lowercase
