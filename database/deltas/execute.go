@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/beaconsoftwarellc/gadget/database"
 	"github.com/beaconsoftwarellc/gadget/errors"
 	"github.com/beaconsoftwarellc/gadget/log"
+	"github.com/beaconsoftwarellc/gadget/net"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -53,16 +55,23 @@ func Execute(config database.InstanceConfig, schema string, deltas []*Delta) err
 	config.Connection = setMultiStatement(config.Connection)
 	db := database.Initialize(&config)
 
+	getLock := func() error {
+		locked, err := database.AcquireDatabaseLock(db, LockName, 0)
+		if nil != err {
+			return err
+		}
+		if !locked {
+			return errors.New("unable to acquire lock")
+		}
+		return nil
+	}
+
 	log.Infof("executing %d deltas on %s", len(deltas), schema)
-	// we want to just bail if someone else has the lock
-	locked, err := database.AcquireDatabaseLock(db, LockName, 0)
+	err = net.BackoffExtended(getLock, 10, time.Second, 10*time.Second)
 	if nil != err {
 		return errors.Wrap(err)
 	}
-	if !locked {
-		log.Infof("cannot apply deltas: failed to acquire db lock")
-		return nil
-	}
+
 	log.Debugf("db lock acquired")
 	defer database.ReleaseDatabaseLock(db, LockName)
 
