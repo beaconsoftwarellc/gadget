@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/beaconsoftwarellc/gadget/database"
 	"github.com/beaconsoftwarellc/gadget/errors"
@@ -55,19 +54,8 @@ func Execute(config database.InstanceConfig, schema string, deltas []*Delta) err
 	config.Connection = setMultiStatement(config.Connection)
 	db := database.Initialize(&config)
 
-	getLock := func() error {
-		locked, err := database.AcquireDatabaseLock(db, LockName, 0)
-		if nil != err {
-			return err
-		}
-		if !locked {
-			return errors.New("unable to acquire lock")
-		}
-		return nil
-	}
-
 	log.Infof("executing %d deltas on %s", len(deltas), schema)
-	err = net.BackoffExtended(getLock, 10, time.Second, 10*time.Second)
+	err = net.BackoffExtended(getLock(db), config.NumberOfDeltaLockTries(), config.MinimumWaitBetweenDeltaLockRetries(), config.MaxWaitBetweenDeltaLockRetries())
 	if nil != err {
 		return errors.Wrap(err)
 	}
@@ -127,4 +115,17 @@ func ExecuteDelta(tx *sqlx.Tx, db *database.Database, delta *Delta) errors.Trace
 	}
 	log.Infof("successfully applied delta %d %s", delta.ID, delta.Name)
 	return db.CreateTx(&DeltaRecord{ID: delta.ID, Name: delta.Name}, tx)
+}
+
+func getLock(db *database.Database) func() error {
+	return func() error {
+		locked, err := database.AcquireDatabaseLock(db, LockName, 0)
+		if nil != err {
+			return err
+		}
+		if !locked {
+			return errors.New("unable to acquire lock")
+		}
+		return nil
+	}
 }

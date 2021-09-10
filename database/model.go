@@ -62,6 +62,12 @@ type InstanceConfig struct {
 	ConnectRetries int
 	// ConnectRetryWait is the time to wait between connection retries
 	ConnectRetryWait time.Duration
+	// DeltaLockMaxTries is used as the maximum retries when attempting to get a Lock during Delta execution
+	DeltaLockMaxTries int
+	// DeltaLockMinimumCycle is used as the minimum cycle duration when attempting to get a Lock during Delta execution
+	DeltaLockMinimumCycle time.Duration
+	// DeltaLockMaxCycle is used as the maximum wait time between executions when attempting to get a Lock during Delta execution
+	DeltaLockMaxCycle time.Duration
 }
 
 // DatabaseDialect indicates the type of SQL this database uses
@@ -83,6 +89,27 @@ func (config *InstanceConfig) NumberOfRetries() int {
 func (config *InstanceConfig) WaitBetweenRetries() time.Duration {
 	if config.ConnectRetryWait == 0 {
 		config.ConnectRetryWait = time.Second
+	}
+	return config.ConnectRetryWait
+}
+
+// NumberOfDeltaLockTries on a connection to the database before failing
+func (config *InstanceConfig) NumberOfDeltaLockTries() int {
+	return config.DeltaLockMaxTries
+}
+
+// MinimumWaitBetweenDeltaLockRetries when trying to connect to the database
+func (config *InstanceConfig) MinimumWaitBetweenDeltaLockRetries() time.Duration {
+	if config.DeltaLockMinimumCycle == 0 {
+		config.DeltaLockMinimumCycle = time.Second
+	}
+	return config.DeltaLockMinimumCycle
+}
+
+// WaitBetweenRetries when trying to connect to the database
+func (config *InstanceConfig) MaxWaitBetweenDeltaLockRetries() time.Duration {
+	if config.ConnectRetryWait == 0 {
+		config.ConnectRetryWait = 10 * time.Second
 	}
 	return config.ConnectRetryWait
 }
