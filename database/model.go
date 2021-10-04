@@ -95,6 +95,9 @@ func (config *InstanceConfig) WaitBetweenRetries() time.Duration {
 
 // NumberOfDeltaLockTries on a connection to the database before failing
 func (config *InstanceConfig) NumberOfDeltaLockTries() int {
+	if config.DeltaLockMaxTries < 10 {
+		return 10
+	}
 	return config.DeltaLockMaxTries
 }
 
