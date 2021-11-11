@@ -53,28 +53,66 @@ func Execute(config database.InstanceConfig, schema string, deltas []*Delta) err
 	mutex.Lock()
 	defer mutex.Unlock()
 	config.Connection = setMultiStatement(config.Connection)
-	db := database.Initialize(&config)
-
-	return execute(config, schema, deltas, db, getLock, database.AcquireDatabaseLock,
-		database.ReleaseDatabaseLock, database.TableExists, database.IsNotFoundError)
+	return execute(config, schema, deltas, &lockingDB{db: database.Initialize(&config)})
 }
 
-type dbGetLock func(*fakeDatabase) func() error
-type dbAcquireDatabaseLock func(*fakeDatabase, string, time.Duration) (bool, errors.TracerError)
-type dbReleaseDatabaseLock func(*fakeDatabase, string) errors.TracerError
-type dbTableExists func(*fakeDatabase, string, string) (bool, error)
-type dbIsNotFoundError func(err error) bool
+type lockingDB struct {
+	db *database.Database
+}
 
-type fakeDatabase interface {
+func (locker *lockingDB) AquireNamedLock(name string, timeout time.Duration) (bool, errors.TracerError) {
+	return database.AcquireDatabaseLock(locker.db, name, timeout)
+}
+
+func (locker *lockingDB) ReleaseNamedLock(name string) errors.TracerError {
+	return database.ReleaseDatabaseLock(locker.db, name)
+}
+
+func (locker *lockingDB) Beginx() (*sqlx.Tx, error) {
+	return locker.db.Beginx()
+}
+
+func (locker *lockingDB) CreateTx(record database.Record, tx *sqlx.Tx) errors.TracerError {
+	return locker.db.CreateTx(record, tx)
+}
+
+func (locker *lockingDB) Close() error {
+	return locker.db.Close()
+}
+
+func (locker *lockingDB) ReadOneWhereTx(record database.Record, tx *sqlx.Tx,
+	condition *qb.ConditionExpression) errors.TracerError {
+	return locker.db.ReadOneWhereTx(record, tx, condition)
+}
+
+func (locker *lockingDB) TableExists(schema, name string) (bool, error) {
+	return database.TableExists(locker.db, schema, name)
+}
+
+func getLock(db lockingDatabase) func() error {
+	return func() error {
+		locked, err := db.AquireNamedLock(LockName, 0)
+		if nil != err {
+			return err
+		}
+		if !locked {
+			return errors.New("unable to acquire lock")
+		}
+		return nil
+	}
+}
+
+type lockingDatabase interface {
+	AquireNamedLock(name string, ttl time.Duration) (bool, errors.TracerError)
+	ReleaseNamedLock(name string) errors.TracerError
 	Beginx() (*sqlx.Tx, error)
+	CreateTx(database.Record, *sqlx.Tx) errors.TracerError
 	Close() error
 	ReadOneWhereTx(database.Record, *sqlx.Tx, *qb.ConditionExpression) errors.TracerError
-	CreateTx(database.Record, *sqlx.Tx) errors.TracerError
+	TableExists(schema, name string) (bool, error)
 }
 
-func execute(config database.InstanceConfig, schema string, deltas []*Delta, db fakeDatabase,
-	getLock dbGetLock, acquireDatabaseLock dbAcquireDatabaseLock, releaseDatabaseLock dbReleaseDatabaseLock, tableExists dbTableExists,
-	isNotFoundError dbIsNotFoundError) errors.TracerError {
+func execute(config database.InstanceConfig, schema string, deltas []*Delta, db lockingDatabase) errors.TracerError {
 	var err error
 
 	log.Infof("executing %d deltas on %s", len(deltas), schema)
@@ -89,14 +127,14 @@ func execute(config database.InstanceConfig, schema string, deltas []*Delta, db 
 	}
 
 	log.Debugf("db lock acquired")
-	defer releaseDatabaseLock(db, LockName)
+	defer db.ReleaseNamedLock(LockName)
 
 	// get the lock first
 	tx, err := db.Beginx()
 	if nil != err {
 		return errors.Wrap(err)
 	}
-	exists, err := tableExists(db, schema, DeltaTableName)
+	exists, err := db.TableExists(schema, DeltaTableName)
 	if nil != err {
 		return errors.Wrap(err)
 	}
@@ -108,7 +146,7 @@ func execute(config database.InstanceConfig, schema string, deltas []*Delta, db 
 		}
 	}
 	for i, delta := range deltas {
-		if err := ExecuteDelta(tx, db, delta, isNotFoundError); nil != err {
+		if err := ExecuteDelta(tx, db, delta); nil != err {
 			log.Errorf("rolling back deltas: error encountered executing delta %d %s: %s",
 				i, delta.Name, err)
 			log.Error(tx.Rollback())
@@ -123,7 +161,7 @@ func execute(config database.InstanceConfig, schema string, deltas []*Delta, db 
 
 // ExecuteDelta checks if the passed delta has already been executed according to the Deltas table, and then executes
 // if it has not been using the passed transaction for both queries.
-func ExecuteDelta(tx *sqlx.Tx, db fakeDatabase, delta *Delta, isNotFoundError dbIsNotFoundError) errors.TracerError {
+func ExecuteDelta(tx *sqlx.Tx, db lockingDatabase, delta *Delta) errors.TracerError {
 	log.Infof("processing delta %d %s", delta.ID, delta.Name)
 	// check that the delta has not already been executed
 	existing := new(DeltaRecord)
@@ -133,7 +171,7 @@ func ExecuteDelta(tx *sqlx.Tx, db fakeDatabase, delta *Delta, isNotFoundError db
 		log.Infof("%d %s already executed at %s", delta.ID, delta.Name, existing.Created)
 		return nil
 	}
-	if !isNotFoundError(err) {
+	if !database.IsNotFoundError(err) {
 		return errors.Wrap(err)
 	}
 
@@ -143,17 +181,4 @@ func ExecuteDelta(tx *sqlx.Tx, db fakeDatabase, delta *Delta, isNotFoundError db
 	}
 	log.Infof("successfully applied delta %d %s", delta.ID, delta.Name)
 	return db.CreateTx(&DeltaRecord{ID: delta.ID, Name: delta.Name}, tx)
-}
-
-func getLock(db *fakeDatabase) func() error {
-	return func() error {
-		locked, err := database.AcquireDatabaseLock(db, LockName, 0)
-		if nil != err {
-			return err
-		}
-		if !locked {
-			return errors.New("unable to acquire lock")
-		}
-		return nil
-	}
 }
