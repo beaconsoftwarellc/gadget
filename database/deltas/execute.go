@@ -56,10 +56,10 @@ func Execute(config database.InstanceConfig, schema string, deltas []*Delta) err
 
 	log.Infof("executing %d deltas on %s", len(deltas), schema)
 	err = net.BackoffExtended(
-		getLock(db), 
-		config.NumberOfDeltaLockTries(), 
-		config.MinimumWaitBetweenDeltaLockRetries(), 
-		config.MaxWaitBetweenDeltaLockRetries()
+		getLock(db),
+		config.NumberOfDeltaLockTries(),
+		config.MinimumWaitBetweenDeltaLockRetries(),
+		config.MaxWaitBetweenDeltaLockRetries(),
 	)
 	if nil != err {
 		return errors.Wrap(err)

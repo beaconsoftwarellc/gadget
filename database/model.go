@@ -25,6 +25,8 @@ const (
 		`	AND table_name = '%s' LIMIT 1;`
 	acquireLockQueryFormat = "SELECT GET_LOCK('%s', %d) AS STATUS"
 	releaseLockQueryFormat = "SELECT RELEASE_LOCK('%s') AS STATUS"
+	// DefaultMaxTries documentation hur
+	DefaultMaxTries = 10
 )
 
 // Config defines the interface for a config to establish a database connection
@@ -95,8 +97,8 @@ func (config *InstanceConfig) WaitBetweenRetries() time.Duration {
 
 // NumberOfDeltaLockTries on a connection to the database before failing
 func (config *InstanceConfig) NumberOfDeltaLockTries() int {
-	if config.DeltaLockMaxTries < 10 {
-		return 10
+	if config.DeltaLockMaxTries == 0 {
+		config.DeltaLockMaxTries = DefaultMaxTries
 	}
 	return config.DeltaLockMaxTries
 }
