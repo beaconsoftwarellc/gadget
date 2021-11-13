@@ -1,6 +1,7 @@
 package deltas
 
 import (
+	"database/sql"
 	"fmt"
 	"strings"
 	"sync"
@@ -58,9 +59,10 @@ func Execute(config database.InstanceConfig, schema string, deltas []*Delta) err
 
 type lockingDB struct {
 	db *database.Database
+	tx *sqlx.Tx
 }
 
-func (locker *lockingDB) AquireNamedLock(name string, timeout time.Duration) (bool, errors.TracerError) {
+func (locker *lockingDB) AcquireNamedLock(name string, timeout time.Duration) (bool, errors.TracerError) {
 	return database.AcquireDatabaseLock(locker.db, name, timeout)
 }
 
@@ -68,21 +70,25 @@ func (locker *lockingDB) ReleaseNamedLock(name string) errors.TracerError {
 	return database.ReleaseDatabaseLock(locker.db, name)
 }
 
-func (locker *lockingDB) Beginx() (*sqlx.Tx, error) {
-	return locker.db.Beginx()
+func (locker *lockingDB) Beginx() (lockingDatabaseTx, error) {
+	tx, err := locker.db.Beginx()
+	if nil == err {
+		locker.tx = tx
+	}
+	return tx, err
 }
 
-func (locker *lockingDB) CreateTx(record database.Record, tx *sqlx.Tx) errors.TracerError {
-	return locker.db.CreateTx(record, tx)
+func (locker *lockingDB) CreateTx(record database.Record) errors.TracerError {
+	return locker.db.CreateTx(record, locker.tx)
 }
 
 func (locker *lockingDB) Close() error {
 	return locker.db.Close()
 }
 
-func (locker *lockingDB) ReadOneWhereTx(record database.Record, tx *sqlx.Tx,
+func (locker *lockingDB) ReadOneWhereTx(record database.Record,
 	condition *qb.ConditionExpression) errors.TracerError {
-	return locker.db.ReadOneWhereTx(record, tx, condition)
+	return locker.db.ReadOneWhereTx(record, locker.tx, condition)
 }
 
 func (locker *lockingDB) TableExists(schema, name string) (bool, error) {
@@ -91,7 +97,7 @@ func (locker *lockingDB) TableExists(schema, name string) (bool, error) {
 
 func getLock(db lockingDatabase) func() error {
 	return func() error {
-		locked, err := db.AquireNamedLock(LockName, 0)
+		locked, err := db.AcquireNamedLock(LockName, 0)
 		if nil != err {
 			return err
 		}
@@ -103,13 +109,19 @@ func getLock(db lockingDatabase) func() error {
 }
 
 type lockingDatabase interface {
-	AquireNamedLock(name string, ttl time.Duration) (bool, errors.TracerError)
+	AcquireNamedLock(name string, ttl time.Duration) (bool, errors.TracerError)
 	ReleaseNamedLock(name string) errors.TracerError
-	Beginx() (*sqlx.Tx, error)
-	CreateTx(database.Record, *sqlx.Tx) errors.TracerError
+	Beginx() (lockingDatabaseTx, error)
+	CreateTx(database.Record) errors.TracerError
 	Close() error
-	ReadOneWhereTx(database.Record, *sqlx.Tx, *qb.ConditionExpression) errors.TracerError
+	ReadOneWhereTx(database.Record, *qb.ConditionExpression) errors.TracerError
 	TableExists(schema, name string) (bool, error)
+}
+
+type lockingDatabaseTx interface {
+	Exec(query string, args ...interface{}) (sql.Result, error)
+	Rollback() error
+	Commit() error
 }
 
 func execute(config database.InstanceConfig, schema string, deltas []*Delta, db lockingDatabase) errors.TracerError {
@@ -161,12 +173,12 @@ func execute(config database.InstanceConfig, schema string, deltas []*Delta, db 
 
 // ExecuteDelta checks if the passed delta has already been executed according to the Deltas table, and then executes
 // if it has not been using the passed transaction for both queries.
-func ExecuteDelta(tx *sqlx.Tx, db lockingDatabase, delta *Delta) errors.TracerError {
+func ExecuteDelta(tx lockingDatabaseTx, db lockingDatabase, delta *Delta) errors.TracerError {
 	log.Infof("processing delta %d %s", delta.ID, delta.Name)
 	// check that the delta has not already been executed
 	existing := new(DeltaRecord)
 	var err error
-	err = db.ReadOneWhereTx(existing, tx, DeltaMeta.ID.Equal(delta.ID))
+	err = db.ReadOneWhereTx(existing, DeltaMeta.ID.Equal(delta.ID))
 	if nil == err {
 		log.Infof("%d %s already executed at %s", delta.ID, delta.Name, existing.Created)
 		return nil
@@ -180,5 +192,5 @@ func ExecuteDelta(tx *sqlx.Tx, db lockingDatabase, delta *Delta) errors.TracerEr
 		return errors.Wrap(err)
 	}
 	log.Infof("successfully applied delta %d %s", delta.ID, delta.Name)
-	return db.CreateTx(&DeltaRecord{ID: delta.ID, Name: delta.Name}, tx)
+	return db.CreateTx(&DeltaRecord{ID: delta.ID, Name: delta.Name})
 }
