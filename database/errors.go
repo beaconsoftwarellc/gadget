@@ -3,18 +3,23 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"os"
+	"runtime"
 	"strings"
 
 	"github.com/go-sql-driver/mysql"
 
+	"github.com/beaconsoftwarellc/gadget/database/qb"
 	"github.com/beaconsoftwarellc/gadget/errors"
 	"github.com/beaconsoftwarellc/gadget/generator"
 	"github.com/beaconsoftwarellc/gadget/log"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // ConnectionError  is returned when unable to connect to database
-type ConnectionError struct{
-	err error
+type ConnectionError struct {
+	err   error
 	trace []string
 }
 
@@ -287,4 +292,65 @@ func NewInvalidForeignKeyError(action SQLQueryType, stmt string, err error, logg
 	}
 	logger.Error(e)
 	return e
+}
+
+// DatabaseToApiError handles conversion from a database error to a GRPC friendly
+// error with code.
+func DatabaseToApiError(primary qb.Table, dbError error) error {
+	if nil == dbError {
+		return nil
+	}
+	var err error
+	prefix := getLogPrefix(2)
+	switch dbError.(type) {
+	case *NotFoundError:
+		err = status.Error(codes.NotFound, fmt.Sprintf("%s %s not found", prefix, primary.GetName()))
+	case *DataTooLongError:
+		err = status.Error(codes.InvalidArgument, fmt.Sprintf("%s %s field too long: %s",
+			prefix, primary.GetName(), dbError))
+	case *DuplicateRecordError:
+		err = status.Error(codes.AlreadyExists, fmt.Sprintf("%s %s record already exists: %s",
+			prefix, primary.GetName(), dbError))
+	case *UniqueConstraintError:
+		err = status.Error(codes.InvalidArgument, fmt.Sprintf("%s %s unique constraint violation: %s",
+			prefix, primary.GetName(), dbError))
+	case *ValidationError:
+		err = status.Error(codes.InvalidArgument, fmt.Sprintf("%s operation on %s had a validation error: %s",
+			prefix, primary.GetName(), dbError))
+	case *ConnectionError, *NotAPointerError:
+		_ = log.Errorf("[GAD.DAT.321] unexpected run time database error: %s", dbError)
+		err = status.Error(codes.Internal, fmt.Sprintf("%s internal system error encountered", prefix))
+	default:
+		_ = log.Errorf("[GAD.DAT.324] unhandled error type %T: %s", dbError, dbError.Error())
+		err = status.Error(codes.Aborted, fmt.Sprintf("%s (%s) database error encountered: %s",
+			prefix, primary.GetName(), dbError))
+	}
+	return err
+}
+
+func getLogPrefix(frameSkip int) string {
+	_, filePath, lineNumber, ok := runtime.Caller(frameSkip)
+	if !ok {
+		_ = log.Warnf("failed to lookup runtime.Caller(%d) lookup failed", frameSkip)
+		return "[UNK]"
+	}
+	pathSplit := strings.Split(filePath, string(os.PathSeparator))
+	var a, b string
+	if len(pathSplit) > 2 {
+		a = getPrefixPart(pathSplit[len(pathSplit)-2])
+		b = getPrefixPart(pathSplit[len(pathSplit)-3])
+	} else {
+		a = "UNK"
+		b = getPrefixPart(filePath)
+	}
+	return fmt.Sprintf("[%s.%s.%d]", b, a, lineNumber)
+}
+
+func getPrefixPart(s string) string {
+	runes := []rune(strings.TrimSpace(s))
+	part := []rune{'_', '_', '_'}
+	for i := 0; i < len(part) && i < len(runes); i++ {
+		part[i] = runes[i]
+	}
+	return strings.ToUpper(string(part))
 }
