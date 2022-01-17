@@ -8,9 +8,11 @@ import (
 	"github.com/go-sql-driver/mysql"
 	assert1 "github.com/stretchr/testify/assert"
 
+	"github.com/beaconsoftwarellc/gadget/database/qb"
 	"github.com/beaconsoftwarellc/gadget/errors"
 	"github.com/beaconsoftwarellc/gadget/generator"
 	"github.com/beaconsoftwarellc/gadget/log"
+	"github.com/beaconsoftwarellc/gadget/stringutil"
 )
 
 func TestExecutionError(t *testing.T) {
@@ -85,5 +87,180 @@ func TestTranslateError(t *testing.T) {
 	}
 	for _, data := range testData {
 		assert.IsType(data.expected, TranslateError(data.err, Select, generator.String(5), log.NewStackLogger()))
+	}
+}
+
+func Test_getLogPrefix(t *testing.T) {
+	assert := assert1.New(t)
+	expected := "[GAD.DAT.96]"
+	actual := getLogPrefix(1)
+	assert.Equal(expected, actual)
+}
+
+func Test_getPrefixPart(t *testing.T) {
+	tests := []struct {
+		name     string
+		s        string
+		expected string
+	}{
+		{
+			name:     "empty",
+			s:        "",
+			expected: "___",
+		},
+		{
+			name:     "single",
+			s:        "a",
+			expected: "A__",
+		},
+		{
+			name:     "double",
+			s:        "ab",
+			expected: "AB_",
+		},
+		{
+			name:     "triple",
+			s:        "abc",
+			expected: "ABC",
+		},
+		{
+			name:     "spaces are removed",
+			s:        "    abc    ",
+			expected: "ABC",
+		},
+		{
+			name:     "all whitespace",
+			s:        "        ",
+			expected: "___",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert := assert1.New(t)
+			assert.Equal(tt.expected, getPrefixPart(tt.s))
+		})
+	}
+}
+
+type action struct {
+	alias      string
+	ID         qb.TableField
+	Name       qb.TableField
+	allColumns qb.TableField
+}
+
+func (a *action) GetName() string {
+	return "action"
+}
+
+func (a *action) GetAlias() string {
+	return a.alias
+}
+
+func (a *action) PrimaryKey() qb.TableField {
+	return a.ID
+}
+
+func (a *action) SortBy() (qb.TableField, qb.OrderDirection) {
+	return a.ID, qb.Ascending
+}
+
+func (a *action) AllColumns() qb.TableField {
+	return a.allColumns
+}
+
+func (a *action) ReadColumns() []qb.TableField {
+	return []qb.TableField{
+		a.ID,
+		a.Name,
+	}
+}
+
+func (a *action) WriteColumns() []qb.TableField {
+	return a.ReadColumns()
+}
+
+func (a *action) Alias(alias string) *action {
+	return &action{
+		alias:      alias,
+		ID:         qb.TableField{Name: "id", Table: alias},
+		Name:       qb.TableField{Name: "name", Table: alias},
+		allColumns: qb.TableField{Name: "*", Table: alias},
+	}
+}
+
+var Action = (&action{}).Alias("action")
+
+func TestDatabaseToApiError(t *testing.T) {
+	tests := []struct {
+		name     string
+		primary  qb.Table
+		err      error
+		expected string
+	}{
+		{
+			name:     "nil error",
+			primary:  Action,
+			err:      nil,
+			expected: "",
+		},
+		{
+			name:     "not db error",
+			primary:  Action,
+			err:      errors.New("foo"),
+			expected: "rpc error: code = Aborted desc = [GAD.DAT.262] (action) database error encountered: foo",
+		},
+		{
+			name:     "data too long error",
+			primary:  Action,
+			err:      &DataTooLongError{},
+			expected: "rpc error: code = InvalidArgument desc = [GAD.DAT.262] action field too long:  ()",
+		},
+		{
+			name:     "not found",
+			primary:  Action,
+			err:      NewNotFoundError(),
+			expected: "rpc error: code = NotFound desc = [GAD.DAT.262] action not found",
+		},
+		{
+			name:     "duplicate record",
+			primary:  Action,
+			err:      &DuplicateRecordError{},
+			expected: "rpc error: code = AlreadyExists desc = [GAD.DAT.262] action record already exists:  ()",
+		},
+		{
+			name:     "unique constraint",
+			primary:  Action,
+			err:      &UniqueConstraintError{},
+			expected: "rpc error: code = InvalidArgument desc = [GAD.DAT.262] action unique constraint violation:  ()",
+		},
+		{
+			name:     "validation",
+			primary:  Action,
+			err:      &ValidationError{},
+			expected: "rpc error: code = InvalidArgument desc = [GAD.DAT.262] operation on action had a validation error: ",
+		},
+		{
+			name:     "not a pointer",
+			primary:  Action,
+			err:      &NotAPointerError{},
+			expected: "rpc error: code = Internal desc = [GAD.DAT.262] internal system error encountered",
+		},
+		{
+			name:     "connection",
+			primary:  Action,
+			err:      &ConnectionError{},
+			expected: "rpc error: code = Internal desc = [GAD.DAT.262] internal system error encountered",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert := assert1.New(t)
+			if stringutil.IsEmpty(tt.expected) {
+				assert.NoError(DatabaseToApiError(tt.primary, tt.err))
+			} else {
+				assert.EqualError(DatabaseToApiError(tt.primary, tt.err), tt.expected)
+			}
+		})
 	}
 }
