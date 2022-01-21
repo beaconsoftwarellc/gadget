@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"regexp"
 	"runtime"
 	"strings"
 
@@ -353,4 +354,22 @@ func getPrefixPart(s string) string {
 		part[i] = runes[i]
 	}
 	return strings.ToUpper(string(part))
+}
+
+type assertion interface {
+	EqualError(theError error, errString string, msgAndArgs ...interface{}) bool
+}
+
+var logPrefixRegex = regexp.MustCompile(`^(.*\[\w{1,3}\.\w{1,3}\.)(\d+)(\].*)$`)
+
+// EqualLogError asserts that a function returned an error (i.e. not `nil`)
+// and that it is equal to the provided error, ignoring line number in the log prefix.
+func EqualLogError(assert assertion, theError error, errString string, msgAndArgs ...interface{}) bool {
+	//normalize log prefix line number
+	if nil == theError {
+		return false
+	}
+	line := logPrefixRegex.ReplaceAllString(theError.Error(), "${2}")
+	newErrStr := logPrefixRegex.ReplaceAllString(errString, "${1}"+line+"${3}")
+	return assert.EqualError(theError, newErrStr, msgAndArgs...)
 }
