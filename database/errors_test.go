@@ -288,6 +288,12 @@ func TestEqualLogError(t *testing.T) {
 			equal:    false,
 		},
 		{
+			name:     "empty error",
+			err:      errors.New(""),
+			expected: "",
+			equal:    true,
+		},
+		{
 			name:     "line number match",
 			err:      errors.New("[GAD.DAT.123]"),
 			expected: "[GAD.DAT.123]",
