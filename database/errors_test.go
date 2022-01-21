@@ -268,6 +268,9 @@ func TestDatabaseToApiError(t *testing.T) {
 type MockAssertion struct{}
 
 func (ma *MockAssertion) EqualError(theError error, errString string, msgAndArgs ...interface{}) bool {
+	if nil == theError {
+		return false
+	}
 	return theError.Error() == errString
 }
 
