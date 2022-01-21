@@ -323,6 +323,42 @@ func TestEqualLogError(t *testing.T) {
 			expected: "foo[GAD.DAT.567]baz",
 			equal:    false,
 		},
+		{
+			name:     "no log prefix",
+			err:      errors.New("foo bar"),
+			expected: "foo bar",
+			equal:    true,
+		},
+		{
+			name:     "no log prefix mismatch",
+			err:      errors.New("foo bar"),
+			expected: "foo baz",
+			equal:    false,
+		},
+		{
+			name:     "multiple brackets",
+			err:      errors.New("foo bar [ABC.DEF.123] [QWE.ZXC.456]"),
+			expected: "foo bar [ABC.DEF.345] [QWE.ZXC.678]",
+			equal:    true,
+		},
+		{
+			name:     "multiple brackets line number mismatch",
+			err:      errors.New("foo bar [ABC.DEF.123] [QWE.ZXC.256]"),
+			expected: "foo bar [ABC.DEF.123] boo [QWE.ZXC.256]",
+			equal:    false,
+		},
+		{
+			name:     "random brackets",
+			err:      errors.New("foo ]bar issue[ with '[blah]'"),
+			expected: "foo ]bar issue[ with '[blah]'",
+			equal:    true,
+		},
+		{
+			name:     "random brackets mismatch",
+			err:      errors.New("foo ]bar issue[ with '[blah]'"),
+			expected: "foo bar issue[ with '[blah]'",
+			equal:    false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

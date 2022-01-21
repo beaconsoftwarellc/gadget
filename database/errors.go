@@ -360,16 +360,17 @@ type assertion interface {
 	EqualError(theError error, errString string, msgAndArgs ...interface{}) bool
 }
 
-var logPrefixRegex = regexp.MustCompile(`^(.*\[\w{1,3}\.\w{1,3}\.)(\d+)(\].*)$`)
+var logPrefixRegex = regexp.MustCompile(`([^\[]*\[\w{1,3}\.\w{1,3}\.)(\d+)(\][^\[]*)`)
 
 // EqualLogError asserts that a function returned an error (i.e. not `nil`)
 // and that it is equal to the provided error, ignoring line number in the log prefix.
 func EqualLogError(assert assertion, theError error, errString string, msgAndArgs ...interface{}) bool {
-	var newErrStr string
-	//normalize log prefix line number
+	normError := theError
+	normErrorStr := errString
+	//remove log prefix line numbers
 	if nil != theError {
-		line := logPrefixRegex.ReplaceAllString(theError.Error(), "${2}")
-		newErrStr = logPrefixRegex.ReplaceAllString(errString, "${1}"+line+"${3}")
+		normErrorStr = logPrefixRegex.ReplaceAllString(errString, "${1}${3}")
+		normError = errors.New(logPrefixRegex.ReplaceAllString(theError.Error(), "${1}${3}"))
 	}
-	return assert.EqualError(theError, newErrStr, msgAndArgs...)
+	return assert.EqualError(normError, normErrorStr, msgAndArgs...)
 }
