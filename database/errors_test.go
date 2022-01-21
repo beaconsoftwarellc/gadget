@@ -264,3 +264,121 @@ func TestDatabaseToApiError(t *testing.T) {
 		})
 	}
 }
+
+type MockAssertion struct{}
+
+func (ma *MockAssertion) EqualError(theError error, errString string, msgAndArgs ...interface{}) bool {
+	if nil == theError {
+		return false
+	}
+	return theError.Error() == errString
+}
+
+func TestEqualLogError(t *testing.T) {
+	tests := []struct {
+		name     string
+		err      error
+		expected string
+		equal    bool
+	}{
+		{
+			name:     "nil error",
+			err:      nil,
+			expected: "",
+			equal:    false,
+		},
+		{
+			name:     "empty error",
+			err:      errors.New(""),
+			expected: "",
+			equal:    true,
+		},
+		{
+			name:     "line number match",
+			err:      errors.New("[GAD.DAT.123]"),
+			expected: "[GAD.DAT.123]",
+			equal:    true,
+		},
+		{
+			name:     "line number mismatch",
+			err:      errors.New("[GAD.DAT.123]"),
+			expected: "[GAD.DAT.456]",
+			equal:    true,
+		},
+		{
+			name:     "file prefix mismatch",
+			err:      errors.New("[GAD.DAT.123]"),
+			expected: "[GAD.QB.123]",
+			equal:    false,
+		},
+		{
+			name:     "short prefix",
+			err:      errors.New("foo[A.B.1]bar"),
+			expected: "foo[A.B.2]bar",
+			equal:    true,
+		},
+		{
+			name:     "error message",
+			err:      errors.New("foo[GAD.DAT.123]bar"),
+			expected: "foo[GAD.DAT.567]bar",
+			equal:    true,
+		},
+		{
+			name:     "error message mismatch",
+			err:      errors.New("foo[GAD.DAT.123]bar"),
+			expected: "foo[GAD.DAT.567]baz",
+			equal:    false,
+		},
+		{
+			name:     "no log prefix",
+			err:      errors.New("foo bar"),
+			expected: "foo bar",
+			equal:    true,
+		},
+		{
+			name:     "no log prefix mismatch",
+			err:      errors.New("foo bar"),
+			expected: "foo baz",
+			equal:    false,
+		},
+		{
+			name:     "multiple brackets",
+			err:      errors.New("foo bar [ABC.DEF.123] [QWE.ZXC.456]"),
+			expected: "foo bar [ABC.DEF.345] [QWE.ZXC.678]",
+			equal:    true,
+		},
+		{
+			name:     "multiple brackets line number mismatch",
+			err:      errors.New("foo bar [ABC.DEF.123] [QWE.ZXC.256]"),
+			expected: "foo bar [ABC.DEF.123] boo [QWE.ZXC.256]",
+			equal:    false,
+		},
+		{
+			name:     "random brackets",
+			err:      errors.New("foo ]bar issue[ with '[blah]'"),
+			expected: "foo ]bar issue[ with '[blah]'",
+			equal:    true,
+		},
+		{
+			name:     "random brackets mismatch",
+			err:      errors.New("foo ]bar issue[ with '[blah]'"),
+			expected: "foo bar issue[ with '[blah]'",
+			equal:    false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert := assert1.New(t)
+			if tt.equal {
+				EqualLogError(assert, tt.err, tt.expected)
+			} else {
+				mockAssert := &MockAssertion{}
+				// if log errors are incorrectly equal, run again using the real
+				// assert obj so test output shows useful information
+				if EqualLogError(mockAssert, tt.err, tt.expected) {
+					EqualLogError(assert, tt.err, tt.expected)
+				}
+			}
+		})
+	}
+}
