@@ -1,7 +1,6 @@
 package stringutil
 
 import (
-	"github.com/docker/docker/pkg/testutil/assert"
 	"reflect"
 	"strings"
 	"testing"
@@ -209,7 +208,7 @@ func TestMakeASCIIZeros(t *testing.T) {
 }
 
 func TestConstantTimeComparison(t *testing.T) {
-
+	assert := assert1.New(t)
 	var testData = []struct {
 		Expected string
 		Actual   string
@@ -221,7 +220,7 @@ func TestConstantTimeComparison(t *testing.T) {
 		{"abc", "ba"},
 	}
 	for _, data := range testData {
-		assert.Equal(t, data.Expected == data.Actual, ConstantTimeComparison(data.Expected, data.Actual))
+		assert.Equal(data.Expected == data.Actual, ConstantTimeComparison(data.Expected, data.Actual))
 	}
 }
 func TestSafeSubstringIndexing(t *testing.T) {
@@ -422,9 +421,9 @@ func TestPointer(t *testing.T) {
 func TestNumericOnly(t *testing.T) {
 	tests := []struct {
 		name string
-		s string
+		s    string
 		want string
-	} {
+	}{
 		{
 			"no numeric",
 			"the quick brown fox jumped over the lazy dog",
@@ -452,5 +451,161 @@ func TestNumericOnly(t *testing.T) {
 				t.Errorf("NumericOnly(\"%s\") = \"%v\", want \"%v\"", tt.s, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestObfuscateString(t *testing.T) {
+	assert := assert1.New(t)
+	var testData = []struct {
+		str      string
+		expected string
+	}{
+		{
+			str:      "",
+			expected: "",
+		},
+		{
+			str:      "1",
+			expected: "*",
+		},
+		{
+			str:      "12",
+			expected: "1*",
+		},
+		{
+			str:      "123",
+			expected: "12*",
+		},
+		{
+			str:      "1234",
+			expected: "12**",
+		},
+		{
+			str:      "12345",
+			expected: "123**",
+		},
+		{
+			str:      "123456",
+			expected: "123***",
+		},
+		{
+			str:      "1234567",
+			expected: "123****",
+		},
+		{
+			str:      "spaces and characters !@#$%^&*()",
+			expected: "spa*****************************",
+		},
+	}
+	for _, data := range testData {
+		assert.Equal(data.expected, ObfuscateString(data.str))
+	}
+}
+
+func TestObfuscateEmailAddress(t *testing.T) {
+	assert := assert1.New(t)
+	var testData = []struct {
+		email    string
+		expected string
+	}{
+		{
+			email:    "",
+			expected: "",
+		},
+		{
+			email:    "not an email address",
+			expected: "not*****************",
+		},
+		{
+			email:    "myemail@emails.com",
+			expected: "mye****@ema*******",
+		},
+		{
+			email:    "1@1",
+			expected: "*@*",
+		},
+		{
+			email:    "12@12",
+			expected: "1*@1*",
+		},
+		{
+			email:    "123@123",
+			expected: "12*@12*",
+		},
+		{
+			email:    "1234@1234",
+			expected: "12**@12**",
+		},
+		{
+			email:    "1@emailprovider.bar",
+			expected: "*@ema**************",
+		},
+	}
+	for _, data := range testData {
+		assert.Equal(data.expected, ObfuscateEmailAddress(data.email))
+	}
+}
+
+func TestObfuscatePhoneNumber(t *testing.T) {
+	assert := assert1.New(t)
+	var testData = []struct {
+		phone    string
+		expected string
+	}{
+		{
+			phone:    "",
+			expected: "",
+		},
+		{
+			phone:    "1",
+			expected: "*",
+		},
+		{
+			phone:    "12",
+			expected: "1*",
+		},
+		{
+			phone:    "123",
+			expected: "12*",
+		},
+		{
+			phone:    "1234",
+			expected: "12**",
+		},
+		{
+			phone:    "12345",
+			expected: "123**",
+		},
+		{
+			phone:    "123456",
+			expected: "123***",
+		},
+		{
+			phone:    "1234567",
+			expected: "123****",
+		},
+		{
+			phone:    "1234567",
+			expected: "123****",
+		},
+		{
+			phone:    "12345678",
+			expected: "123*****",
+		},
+		{
+			phone:    "123456789",
+			expected: "123******",
+		},
+		{
+			phone:    "1234567890",
+			expected: "123456****",
+		},
+		{
+			phone:    "reallylongstring",
+			expected: "reallylongst****",
+		},
+	}
+	for _, data := range testData {
+		assert.Equal(data.expected, ObfuscatePhoneNumber(data.phone))
 	}
 }
