@@ -239,38 +239,30 @@ func NumericOnly(s string) string {
 	return string(nRunes)
 }
 
-// ObfuscateString with asterisks in place of all characters except the first 3
-// characters, fewer if string is shorter than 5 characters
-func ObfuscateString(raw string) string {
-	var obscure int
-	switch len(raw) {
-	case 0, 1:
-		obscure = len(raw)
-	case 2, 3, 4:
-		obscure = len(raw) / 2
-	default:
-		// obscure all but the first 3 characters
-		obscure = len(raw) - 3
+// Obfuscate the raw string from the given direction, 'left' or 'right', with the
+// given number of repitions of the obfuscator string.
+func Obfuscate(raw string, number int, direction string, obfuscator string) string {
+	obfuscation := strings.Repeat(obfuscator, number)
+	if len(raw) <= number {
+		return obfuscation
 	}
-	return fmt.Sprintf("%s%s", raw[0:len(raw)-obscure], strings.Repeat("*", obscure))
+	switch direction {
+	case "left":
+		return fmt.Sprintf("%s%s", obfuscation, raw[number:])
+	case "right":
+		return fmt.Sprintf("%s%s", raw[:len(raw)-number], obfuscation)
+	}
+	return raw
 }
 
-// ObfuscateEmailAddress with asterisks in place of all but the first 3 characters
-// on both sides of the '@' symbol
-func ObfuscateEmailAddress(email string) string {
-	atSplit := strings.Split(email, "@")
-	if len(atSplit) != 2 {
-		// address isn't valid
-		return ObfuscateString(email)
-	}
-	return fmt.Sprintf("%s@%s", ObfuscateString(atSplit[0]), ObfuscateString(atSplit[1]))
+// ObfuscateLeft will obfuscate the raw string from the left hand side with the
+// given number of repitions of the obfuscator string.
+func ObfuscateLeft(raw string, number int, obfuscator string) string {
+	return Obfuscate(raw, number, "left", obfuscator)
 }
 
-// ObfuscatePhoneNumber with asterisks in place of the last 4 characters
-func ObfuscatePhoneNumber(phone string) string {
-	if len(phone) < 10 {
-		// number isn't valid
-		return ObfuscateString(phone)
-	}
-	return fmt.Sprintf("%s%s", phone[0:len(phone)-4], strings.Repeat("*", 4))
+// ObfuscateRight will obfuscate the raw string from the right hand side with the
+// given number of repitions of the obfuscator string.
+func ObfuscateRight(raw string, number int, obfuscator string) string {
+	return Obfuscate(raw, number, "right", obfuscator)
 }
