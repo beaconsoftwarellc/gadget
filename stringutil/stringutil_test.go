@@ -1,7 +1,6 @@
 package stringutil
 
 import (
-	"github.com/docker/docker/pkg/testutil/assert"
 	"reflect"
 	"strings"
 	"testing"
@@ -209,7 +208,7 @@ func TestMakeASCIIZeros(t *testing.T) {
 }
 
 func TestConstantTimeComparison(t *testing.T) {
-
+	assert := assert1.New(t)
 	var testData = []struct {
 		Expected string
 		Actual   string
@@ -221,7 +220,7 @@ func TestConstantTimeComparison(t *testing.T) {
 		{"abc", "ba"},
 	}
 	for _, data := range testData {
-		assert.Equal(t, data.Expected == data.Actual, ConstantTimeComparison(data.Expected, data.Actual))
+		assert.Equal(data.Expected == data.Actual, ConstantTimeComparison(data.Expected, data.Actual))
 	}
 }
 func TestSafeSubstringIndexing(t *testing.T) {
@@ -422,9 +421,9 @@ func TestPointer(t *testing.T) {
 func TestNumericOnly(t *testing.T) {
 	tests := []struct {
 		name string
-		s string
+		s    string
 		want string
-	} {
+	}{
 		{
 			"no numeric",
 			"the quick brown fox jumped over the lazy dog",
@@ -453,4 +452,223 @@ func TestNumericOnly(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestObfuscate(t *testing.T) {
+	assert := assert1.New(t)
+	type testCase struct {
+		Name string
+
+		str        string
+		length     int
+		direction  Direction
+		obfuscator string
+
+		Expected string
+	}
+
+	validate := func(t *testing.T, tc *testCase) {
+		t.Run(tc.Name, func(t *testing.T) {
+			actual := Obfuscate(tc.str, tc.length, tc.direction, tc.obfuscator)
+
+			assert.Equal(tc.Expected, actual, tc.Name)
+		})
+	}
+
+	validate(t, &testCase{
+		Name: "Empty",
+
+		str:        "",
+		length:     0,
+		direction:  Left,
+		obfuscator: "*",
+
+		Expected: "",
+	})
+	validate(t, &testCase{
+		Name: "Obfuscate none",
+
+		str:        "foo bar",
+		length:     0,
+		direction:  Left,
+		obfuscator: "*",
+
+		Expected: "foo bar",
+	})
+	validate(t, &testCase{
+		Name: "Invalid direction",
+
+		str:        "foo bar",
+		length:     5,
+		direction:  -1,
+		obfuscator: "*",
+
+		Expected: "foo bar",
+	})
+	validate(t, &testCase{
+		Name: "Empty obfuscator",
+
+		str:        "foo bar",
+		length:     5,
+		direction:  Left,
+		obfuscator: "",
+
+		Expected: "ar",
+	})
+	validate(t, &testCase{
+		Name: "Long obfuscator",
+
+		str:        "foober",
+		length:     3,
+		direction:  Left,
+		obfuscator: "bar",
+
+		Expected: "barbarbarber",
+	})
+	validate(t, &testCase{
+		Name: "Obfuscation longer than input string",
+
+		str:        "foo",
+		length:     5,
+		direction:  Left,
+		obfuscator: "X",
+
+		Expected: "XXXXX",
+	})
+	validate(t, &testCase{
+		Name: "Obfuscate left",
+
+		str:        "foo bar foo",
+		length:     6,
+		direction:  Left,
+		obfuscator: "*",
+
+		Expected: "******r foo",
+	})
+	validate(t, &testCase{
+		Name: "Obfuscate right",
+
+		str:        "this is redacted",
+		length:     8,
+		direction:  Right,
+		obfuscator: "█",
+
+		Expected: "this is ████████",
+	})
+}
+
+func TestObfuscateLeft(t *testing.T) {
+	assert := assert1.New(t)
+	type testCase struct {
+		Name string
+
+		str        string
+		length     int
+		obfuscator string
+
+		Expected string
+	}
+
+	validate := func(t *testing.T, tc *testCase) {
+		t.Run(tc.Name, func(t *testing.T) {
+			actual := ObfuscateLeft(tc.str, tc.length, tc.obfuscator)
+
+			assert.Equal(tc.Expected, actual, tc.Name)
+		})
+	}
+
+	validate(t, &testCase{
+		Name: "Empty",
+
+		str:        "",
+		length:     0,
+		obfuscator: "*",
+
+		Expected: "",
+	})
+	validate(t, &testCase{
+		Name: "Obfuscation longer than input string",
+
+		str:        "foo",
+		length:     5,
+		obfuscator: "X",
+
+		Expected: "XXXXX",
+	})
+	validate(t, &testCase{
+		Name: "Obfuscate left",
+
+		str:        "foo bar foo",
+		length:     6,
+		obfuscator: "*",
+
+		Expected: "******r foo",
+	})
+	validate(t, &testCase{
+		Name: "Obfuscate left v2",
+
+		str:        "this is redacted",
+		length:     8,
+		obfuscator: "█",
+
+		Expected: "████████redacted",
+	})
+}
+
+func TestObfuscateRight(t *testing.T) {
+	assert := assert1.New(t)
+	type testCase struct {
+		Name string
+
+		str        string
+		length     int
+		obfuscator string
+
+		Expected string
+	}
+
+	validate := func(t *testing.T, tc *testCase) {
+		t.Run(tc.Name, func(t *testing.T) {
+			actual := ObfuscateRight(tc.str, tc.length, tc.obfuscator)
+
+			assert.Equal(tc.Expected, actual, tc.Name)
+		})
+	}
+
+	validate(t, &testCase{
+		Name: "Empty",
+
+		str:        "",
+		length:     0,
+		obfuscator: "*",
+
+		Expected: "",
+	})
+	validate(t, &testCase{
+		Name: "Obfuscation longer than input string",
+
+		str:        "foo",
+		length:     5,
+		obfuscator: "X",
+
+		Expected: "XXXXX",
+	})
+	validate(t, &testCase{
+		Name: "Obfuscate right",
+
+		str:        "foo bar foo",
+		length:     6,
+		obfuscator: "*",
+
+		Expected: "foo b******",
+	})
+	validate(t, &testCase{
+		Name: "Obfuscate right v2",
+
+		str:        "this is redacted",
+		length:     8,
+		obfuscator: "█",
+
+		Expected: "this is ████████",
+	})
 }

@@ -13,6 +13,15 @@ import (
 	"github.com/beaconsoftwarellc/gadget/log"
 )
 
+type Direction int
+
+const (
+	// Left specifies the Direction left
+	Left Direction = iota
+	// Right specifies the Direction right
+	Right
+)
+
 // AnonymizeRunes converts an array of runes to an array of anonymous interfaces
 func AnonymizeRunes(arr []rune) []interface{} {
 	ia := make([]interface{}, len(arr))
@@ -237,4 +246,32 @@ func NumericOnly(s string) string {
 		}
 	}
 	return string(nRunes)
+}
+
+// Obfuscate the raw string from the given Direction, with the given number of
+// repitions of the obfuscator string.
+func Obfuscate(raw string, number int, direction Direction, obfuscator string) string {
+	obfuscation := strings.Repeat(obfuscator, number)
+	if len(raw) <= number {
+		return obfuscation
+	}
+	switch direction {
+	case Left:
+		return fmt.Sprintf("%s%s", obfuscation, raw[number:])
+	case Right:
+		return fmt.Sprintf("%s%s", raw[:len(raw)-number], obfuscation)
+	}
+	return raw
+}
+
+// ObfuscateLeft will obfuscate the raw string from the left hand side with the
+// given number of repitions of the obfuscator string.
+func ObfuscateLeft(raw string, number int, obfuscator string) string {
+	return Obfuscate(raw, number, Left, obfuscator)
+}
+
+// ObfuscateRight will obfuscate the raw string from the right hand side with the
+// given number of repitions of the obfuscator string.
+func ObfuscateRight(raw string, number int, obfuscator string) string {
+	return Obfuscate(raw, number, Right, obfuscator)
 }
