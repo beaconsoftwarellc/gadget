@@ -13,8 +13,12 @@ import (
 	"github.com/beaconsoftwarellc/gadget/log"
 )
 
+type Direction int
+
 const (
-	Left int = 1 + iota
+	// Left specifies the Direction left
+	Left Direction = iota
+	// Right specifies the Direction right
 	Right
 )
 
@@ -244,9 +248,9 @@ func NumericOnly(s string) string {
 	return string(nRunes)
 }
 
-// Obfuscate the raw string from the given direction, left or right, with the
-// given number of repitions of the obfuscator string.
-func Obfuscate(raw string, number int, direction int, obfuscator string) string {
+// Obfuscate the raw string from the given Direction, with the given number of
+// repitions of the obfuscator string.
+func Obfuscate(raw string, number int, direction Direction, obfuscator string) string {
 	obfuscation := strings.Repeat(obfuscator, number)
 	if len(raw) <= number {
 		return obfuscation

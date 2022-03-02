@@ -461,7 +461,7 @@ func TestObfuscate(t *testing.T) {
 
 		str        string
 		length     int
-		direction  int
+		direction  Direction
 		obfuscator string
 
 		Expected string
