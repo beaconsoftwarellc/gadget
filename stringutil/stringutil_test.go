@@ -461,7 +461,7 @@ func TestObfuscate(t *testing.T) {
 
 		str        string
 		length     int
-		direction  string
+		direction  int
 		obfuscator string
 
 		Expected string
@@ -480,7 +480,7 @@ func TestObfuscate(t *testing.T) {
 
 		str:        "",
 		length:     0,
-		direction:  "left",
+		direction:  Left,
 		obfuscator: "*",
 
 		Expected: "",
@@ -490,7 +490,7 @@ func TestObfuscate(t *testing.T) {
 
 		str:        "foo bar",
 		length:     0,
-		direction:  "left",
+		direction:  Left,
 		obfuscator: "*",
 
 		Expected: "foo bar",
@@ -500,7 +500,7 @@ func TestObfuscate(t *testing.T) {
 
 		str:        "foo bar",
 		length:     5,
-		direction:  "middle",
+		direction:  -1,
 		obfuscator: "*",
 
 		Expected: "foo bar",
@@ -510,7 +510,7 @@ func TestObfuscate(t *testing.T) {
 
 		str:        "foo bar",
 		length:     5,
-		direction:  "left",
+		direction:  Left,
 		obfuscator: "",
 
 		Expected: "ar",
@@ -520,7 +520,7 @@ func TestObfuscate(t *testing.T) {
 
 		str:        "foober",
 		length:     3,
-		direction:  "left",
+		direction:  Left,
 		obfuscator: "bar",
 
 		Expected: "barbarbarber",
@@ -530,7 +530,7 @@ func TestObfuscate(t *testing.T) {
 
 		str:        "foo",
 		length:     5,
-		direction:  "left",
+		direction:  Left,
 		obfuscator: "X",
 
 		Expected: "XXXXX",
@@ -540,7 +540,7 @@ func TestObfuscate(t *testing.T) {
 
 		str:        "foo bar foo",
 		length:     6,
-		direction:  "left",
+		direction:  Left,
 		obfuscator: "*",
 
 		Expected: "******r foo",
@@ -550,7 +550,7 @@ func TestObfuscate(t *testing.T) {
 
 		str:        "this is redacted",
 		length:     8,
-		direction:  "right",
+		direction:  Right,
 		obfuscator: "█",
 
 		Expected: "this is ████████",
