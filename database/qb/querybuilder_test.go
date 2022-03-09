@@ -158,6 +158,38 @@ func TestQueryBuilderSelectQuery_Where(t *testing.T) {
 	assert.Equal("SELECT `person`.`id`, `person`.`name` FROM `person` AS `person` WHERE `person`.`id` = `person`.`name`", actual)
 }
 
+func TestQueryBuilderSelectQuery_WhereAllConditions(t *testing.T) {
+	assert := assert1.New(t)
+	query := Select(Person.ID, Person.Name).From(Person)
+	query.Where(Person.ID.Equal(Person.Name).
+		And(Person.ID.NotEqual(Person.AddressID)).
+		And(Person.ID.LessThan(1)).
+		And(Person.ID.LessThanEqual(2)).
+		And(Person.ID.GreaterThan(3)).
+		And(Person.ID.GreaterThanEqual(4)).
+		And(Person.ID.NullSafeEqual(Person.Name)).
+		And(Person.ID.In(Person.Name)).
+		And(Person.ID.Like(Person.Name)).
+		And(Person.AddressID.IsNull()).
+		And(Person.ID.IsNotNull()))
+
+	actual, values, err := query.SQL(0, 0)
+	assert.NotEmpty(values)
+	assert.NoError(err)
+	assert.Equal("SELECT `person`.`id`, `person`.`name` FROM `person` AS `person` "+
+		"WHERE ((((((((((`person`.`id` = `person`.`name` "+
+		"AND `person`.`id` != `person`.`address_id`) "+
+		"AND `person`.`id` < ?) "+
+		"AND `person`.`id` <= ?) "+
+		"AND `person`.`id` > ?) "+
+		"AND `person`.`id` >= ?) "+
+		"AND `person`.`id` <=> `person`.`name`) "+
+		"AND `person`.`id` = `person`.`name`) "+
+		"AND `person`.`id` LIKE `person`.`name`) "+
+		"AND `person`.`address_id` IS NULL) "+
+		"AND `person`.`id` IS NOT NULL)", actual)
+}
+
 func TestQueryBuilderSelectQuery_WhereError(t *testing.T) {
 	assert := assert1.New(t)
 	query := Select(Person.ID, Person.Name).From(Person)
