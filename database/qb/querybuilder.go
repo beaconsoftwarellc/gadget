@@ -81,6 +81,8 @@ const (
 	IsNot Comparison = "IS NOT"
 	// In Comparison Operator
 	In Comparison = "IN"
+	// LIKE Comparison Operator
+	Like Comparison = "LIKE"
 	// Inner JoinType
 	Inner JoinType = "INNER"
 	// Outer JoinType
@@ -187,6 +189,11 @@ func (tf TableField) NullSafeEqual(obj interface{}) *ConditionExpression {
 // In returns a condition expression for this table field in to the passed objs.
 func (tf TableField) In(objs ...interface{}) *ConditionExpression {
 	return FieldIn(tf, objs...)
+}
+
+// Like returns a condition expression for this table field Like to the passed obj.
+func (tf TableField) Like(obj interface{}) *ConditionExpression {
+	return FieldComparison(tf, Like, obj)
 }
 
 // IsNull returns a condition expression for this table field when it is NULL
