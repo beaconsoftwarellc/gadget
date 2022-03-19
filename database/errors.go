@@ -361,16 +361,21 @@ type assertion interface {
 }
 
 var logPrefixRegex = regexp.MustCompile(`([^\[]*\[\w{1,3}\.\w{1,3}\.)(\d+)(\][^\[]*)`)
+var dbErrRegex = regexp.MustCompile(fmt.Sprintf("\\b%s_?[^\\W]*", dbErrPrefix))
 
 // EqualLogError asserts that a function returned an error (i.e. not `nil`)
-// and that it is equal to the provided error, ignoring line number in the log prefix.
+// and that it is equal to the provided error, ignoring line number in the log prefix
+// and any database error ids.
 func EqualLogError(assert assertion, theError error, errString string, msgAndArgs ...interface{}) bool {
 	normError := theError
 	normErrorStr := errString
-	//remove log prefix line numbers
 	if nil != theError {
+		// remove log prefix line numbers
 		normErrorStr = logPrefixRegex.ReplaceAllString(errString, "${1}${3}")
 		normError = errors.New(logPrefixRegex.ReplaceAllString(theError.Error(), "${1}${3}"))
+		// remove db error string
+		normErrorStr = dbErrRegex.ReplaceAllString(normErrorStr, "")
+		normError = errors.New(dbErrRegex.ReplaceAllString(normError.Error(), ""))
 	}
 	return assert.EqualError(normError, normErrorStr, msgAndArgs...)
 }

@@ -365,6 +365,24 @@ func TestEqualLogError(t *testing.T) {
 			expected: "foo bar issue[ with '[blah]'",
 			equal:    false,
 		},
+		{
+			name:     "db error prefix match",
+			err:      errors.New("dberr123"),
+			expected: "dberr123",
+			equal:    true,
+		},
+		{
+			name:     "db error prefix mismatch",
+			err:      errors.New("dberr123"),
+			expected: "dberr456",
+			equal:    false,
+		},
+		{
+			name:     "match with multiple db errors",
+			err:      errors.New("[GAD.DAT.123] failed with dberr_123 message (dberr_456)"),
+			expected: "[GAD.DAT.123] failed with dberr_123456 message (dberr_foobar)",
+			equal:    true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
