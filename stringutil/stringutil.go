@@ -249,8 +249,11 @@ func NumericOnly(s string) string {
 }
 
 // Obfuscate the raw string from the given Direction, with the given number of
-// repitions of the obfuscator string.
+// repetition of the obfuscator string.
 func Obfuscate(raw string, number int, direction Direction, obfuscator string) string {
+	if number < 0 {
+		number = 0
+	}
 	obfuscation := strings.Repeat(obfuscator, number)
 	if len(raw) <= number {
 		return obfuscation

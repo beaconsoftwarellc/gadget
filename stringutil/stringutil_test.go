@@ -555,6 +555,16 @@ func TestObfuscate(t *testing.T) {
 
 		Expected: "this is ████████",
 	})
+	validate(t, &testCase{
+		Name: "Obfuscate negative repeat",
+
+		str:        "this isnt redacted",
+		length:     -8,
+		direction:  Right,
+		obfuscator: "█",
+
+		Expected: "this isnt redacted",
+	})
 }
 
 func TestObfuscateLeft(t *testing.T) {
