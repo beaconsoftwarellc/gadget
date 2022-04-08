@@ -4,7 +4,7 @@ services:
         # Uncomment to suppress logging
         # logging:
         #     driver: none
-        image: arm64v8/mariadb
+        image: mariadb:latest
         ports:
             - "3306:3306"
         environment:
