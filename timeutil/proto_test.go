@@ -16,6 +16,11 @@ func TestTimeToTimestamp(t *testing.T) {
 	tm := time.Now()
 	ts := TimeToTimestamp(tm)
 	assert.Equal(tm.Unix(), ts.Seconds)
+
+	// test uninitialized time
+	tm = time.Time{}
+	ts = TimeToTimestamp(tm)
+	assert.Equal(int64(0), ts.Seconds)
 }
 
 func TestTimestampToTime(t *testing.T) {
@@ -28,6 +33,9 @@ func TestTimestampToTime(t *testing.T) {
 
 	tm = TimestampToTime(nil)
 	assert.True(tm.IsZero())
+
+	tm = TimestampToTime(&timestamp.Timestamp{})
+	assert.Equal(int64(0), tm.Unix())
 }
 
 func TestTimestampToNullTime(t *testing.T) {

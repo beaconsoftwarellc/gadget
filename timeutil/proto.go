@@ -12,6 +12,11 @@ import (
 
 // TimeToTimestamp returns a protobuf Timestamp from a Time object
 func TimeToTimestamp(t time.Time) *timestamp.Timestamp {
+
+	if t.IsZero() {
+		return &timestamp.Timestamp{}
+	}
+
 	ts, err := ptypes.TimestampProto(t)
 	if nil != err {
 		log.Errorf("Time to Timestamp error: %s", err.Error())
