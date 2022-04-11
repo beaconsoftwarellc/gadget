@@ -1,6 +1,7 @@
 package errors
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -82,4 +83,12 @@ func (err *wrapErrorTracer) Error() string {
 
 func (err *wrapErrorTracer) Trace() []string {
 	return err.trace
+}
+
+func Is(err, target error) bool {
+	return errors.Is(err, target)
+}
+
+func As(err error, target any) bool {
+	return errors.As(err, target)
 }

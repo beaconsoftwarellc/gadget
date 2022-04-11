@@ -4,7 +4,7 @@ services:
         # Uncomment to suppress logging
         # logging:
         #     driver: none
-        image: mysql:8.0.21
+        image: mariadb:latest
         ports:
             - "3306:3306"
         environment:

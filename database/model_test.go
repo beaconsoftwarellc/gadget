@@ -6,9 +6,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	assert1 "github.com/stretchr/testify/assert"
 
 	"github.com/beaconsoftwarellc/gadget/database/qb"
+	"github.com/beaconsoftwarellc/gadget/errors"
 	"github.com/beaconsoftwarellc/gadget/generator"
 	"github.com/beaconsoftwarellc/gadget/log"
 )
@@ -479,4 +481,143 @@ func TestDuplicateID(t *testing.T) {
 	assert.NoError(spec.DB.Create(record3))
 	assert.Equal("nodupe", record3.ID[:6])
 	assert.NotEqual(record3.ID, record.ID)
+}
+
+func TestIsNotFoundError(t *testing.T) {
+	tcs := []struct {
+		name string
+		err  error
+		res  bool
+	}{
+		{
+			name: "is not found",
+			err:  &NotFoundError{},
+			res:  true,
+		},
+		{
+			name: "is other error",
+			err:  errors.New("other error"),
+			res:  false,
+		}, {
+			name: "is nil",
+			err:  nil,
+			res:  false,
+		},
+	}
+
+	for _, tc := range tcs {
+		assert := assert1.New(t)
+
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(tc.res, IsNotFoundError(tc.err))
+		})
+	}
+}
+
+func TestTableExists(t *testing.T) {
+	spec := newSpecification()
+
+	tcs := []struct {
+		name       string
+		schemaName string
+		tableName  string
+		res        bool
+	}{
+		{
+			name:       "table exists",
+			schemaName: "test_db",
+			tableName:  "test_duper",
+			res:        true,
+		},
+		{
+			name:       "table not exists",
+			schemaName: "test_db",
+			tableName:  "no_such_table",
+			res:        false,
+		},
+		{
+			name:       "schema not exists",
+			schemaName: "no_such_schema",
+			tableName:  "test_duper",
+			res:        false,
+		},
+		{
+			name:       "table and schema not exists",
+			schemaName: "no_such_schema",
+			tableName:  "no_such_table",
+			res:        false,
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			assert := assert1.New(t)
+			ok, err := TableExists(spec.DB, tc.schemaName, tc.tableName)
+			assert.NoError(err)
+			assert.Equal(tc.res, ok)
+		})
+	}
+
+}
+
+func TestDatabaseLock(t *testing.T) {
+	assert := assert1.New(t)
+	spec1 := newSpecification()
+	spec2 := newSpecification()
+
+	lockName := uuid.New().String()
+
+	// session 1 should acquire lock
+	ok, err := AcquireDatabaseLock(spec1.DB, lockName, 5)
+	assert.NoError(err)
+	assert.True(ok)
+
+	// session 2 should fail to acquire same lock
+	ok, err = AcquireDatabaseLock(spec2.DB, lockName, 5)
+	assert.NoError(err)
+	assert.False(ok)
+
+	// session 2 should acquire different lock
+	ok, err = AcquireDatabaseLock(spec2.DB, uuid.New().String(), 5)
+	assert.NoError(err)
+	assert.True(ok)
+
+	// session 1 should release lock
+	err = ReleaseDatabaseLock(spec1.DB, lockName)
+	assert.NoError(err)
+
+	// session 2 should acquire lock
+	ok, err = AcquireDatabaseLock(spec2.DB, lockName, 5)
+	assert.NoError(err)
+	assert.True(ok)
+}
+
+func TestSelect(t *testing.T) {
+	assert := assert1.New(t)
+	spec := newSpecification()
+
+	tx := spec.DB.MustBegin()
+	defer func() { assert.NoError(tx.Commit()) }()
+	records := make([]*TestRecord, 5)
+	for i := range records {
+		name := fmt.Sprintf("%d%s", i, generator.Name())
+		record := &TestRecord{Name: name}
+		assert.NoError(spec.DB.CreateTx(record, tx))
+		records[i] = record
+	}
+
+	query := qb.Select(TestMeta.AllColumns()).From(TestMeta).
+		Where(TestMeta.Name.In(records[0].Name, records[1].Name)).
+		OrderBy(TestMeta.Name, qb.Ascending)
+	var actual []*TestRecord
+	err := spec.DB.Select(&actual, query)
+	if assert.NoError(err) {
+		assert.Equal(0, len(actual))
+	}
+
+	actual = nil
+	err = spec.DB.SelectTx(tx, &actual, query)
+	if assert.NoError(err) {
+		assert.Equal(2, len(actual))
+	}
 }

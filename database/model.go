@@ -191,11 +191,8 @@ func NewListOptions(limit uint, offset uint) *ListOptions {
 // IsNotFoundError returns a boolean indicating that the passed error (can be nil) is of
 // type *database.NotFoundError
 func IsNotFoundError(err error) bool {
-	if nil == err {
-		return false
-	}
-	_, ok := err.(*NotFoundError)
-	return ok
+	var dst *NotFoundError
+	return errors.As(err, &dst)
 }
 
 // TableExists for the passed schema and table name on the passed database
@@ -476,7 +473,8 @@ func (db *Database) SelectTx(tx *sqlx.Tx, target interface{}, query *qb.SelectQu
 	if err != nil {
 		return errors.Wrap(err)
 	}
-	if err = db.DB.Select(target, stmt, values...); nil != err {
+
+	if err = tx.Select(target, stmt, values...); nil != err {
 		return TranslateError(err, Select, stmt, db.Logger)
 	}
 	return nil
