@@ -49,7 +49,7 @@ func GetStackTrace() []string {
 	for _, t := range trace {
 		tf := fmt.Sprintf("%+v", t)
 		// only remove frames that originate in this file
-		if !strings.HasPrefix(tf, "github.com/beaconsoftwarellc/gadget/errors/interface.go") {
+		if !strings.HasPrefix(tf, "github.com/beaconsoftwarellc/gadget/v2/errors/interface.go") {
 			longTrace = append(longTrace, tf)
 		}
 	}

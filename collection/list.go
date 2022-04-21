@@ -3,7 +3,7 @@ package collection
 import (
 	"sync"
 
-	"github.com/beaconsoftwarellc/gadget/errors"
+	"github.com/beaconsoftwarellc/gadget/v2/errors"
 )
 
 // EmptyListError is returned when a operation is called on an empty list that requires at least one element in the list.

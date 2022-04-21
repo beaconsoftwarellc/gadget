@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/beaconsoftwarellc/gadget/generator"
+	"github.com/beaconsoftwarellc/gadget/v2/generator"
 )
 
 func getTestPath() string {

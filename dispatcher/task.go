@@ -3,8 +3,8 @@ package dispatcher
 import (
 	"time"
 
-	"github.com/beaconsoftwarellc/gadget/errors"
-	"github.com/beaconsoftwarellc/gadget/generator"
+	"github.com/beaconsoftwarellc/gadget/v2/errors"
+	"github.com/beaconsoftwarellc/gadget/v2/generator"
 )
 
 // Task is the unit of work to be executed by a worker in the pool.

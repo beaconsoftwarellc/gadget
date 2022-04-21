@@ -7,10 +7,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/beaconsoftwarellc/gadget/collection"
-	"github.com/beaconsoftwarellc/gadget/intutil"
-	"github.com/beaconsoftwarellc/gadget/log"
-	"github.com/beaconsoftwarellc/gadget/timeutil"
+	"github.com/beaconsoftwarellc/gadget/v2/collection"
+	"github.com/beaconsoftwarellc/gadget/v2/intutil"
+	"github.com/beaconsoftwarellc/gadget/v2/log"
+	"github.com/beaconsoftwarellc/gadget/v2/timeutil"
 )
 
 // Status is the how the dispatcher is currently functioning.

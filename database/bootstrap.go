@@ -17,9 +17,9 @@ import (
 	_ "github.com/mattes/migrate/source/file"    // imported for side effect as driver for migrate
 	yaml "gopkg.in/yaml.v3"
 
-	"github.com/beaconsoftwarellc/gadget/database/qb"
-	"github.com/beaconsoftwarellc/gadget/log"
-	"github.com/beaconsoftwarellc/gadget/stringutil"
+	"github.com/beaconsoftwarellc/gadget/v2/database/qb"
+	"github.com/beaconsoftwarellc/gadget/v2/log"
+	"github.com/beaconsoftwarellc/gadget/v2/stringutil"
 )
 
 const (

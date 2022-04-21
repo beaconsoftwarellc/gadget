@@ -8,8 +8,8 @@ import (
 
 	"net/url"
 
-	"github.com/beaconsoftwarellc/gadget/collection"
-	"github.com/beaconsoftwarellc/gadget/errors"
+	"github.com/beaconsoftwarellc/gadget/v2/collection"
+	"github.com/beaconsoftwarellc/gadget/v2/errors"
 )
 
 // SimpleDoRequest allows for providing a function as a client.

@@ -9,9 +9,9 @@ import (
 	_ "github.com/mattes/migrate/database/mysql" // imported for side effect as driver for mysql
 	_ "github.com/mattes/migrate/source/file"    // imported for side effect as driver for migrate
 
-	"github.com/beaconsoftwarellc/gadget/fileutil"
-	"github.com/beaconsoftwarellc/gadget/generator"
-	"github.com/beaconsoftwarellc/gadget/log"
+	"github.com/beaconsoftwarellc/gadget/v2/fileutil"
+	"github.com/beaconsoftwarellc/gadget/v2/generator"
+	"github.com/beaconsoftwarellc/gadget/v2/log"
 )
 
 // generateSQLFiles writes temporary files from the migration map

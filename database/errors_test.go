@@ -8,11 +8,11 @@ import (
 	"github.com/go-sql-driver/mysql"
 	assert1 "github.com/stretchr/testify/assert"
 
-	"github.com/beaconsoftwarellc/gadget/database/qb"
-	"github.com/beaconsoftwarellc/gadget/errors"
-	"github.com/beaconsoftwarellc/gadget/generator"
-	"github.com/beaconsoftwarellc/gadget/log"
-	"github.com/beaconsoftwarellc/gadget/stringutil"
+	"github.com/beaconsoftwarellc/gadget/v2/database/qb"
+	"github.com/beaconsoftwarellc/gadget/v2/errors"
+	"github.com/beaconsoftwarellc/gadget/v2/generator"
+	"github.com/beaconsoftwarellc/gadget/v2/log"
+	"github.com/beaconsoftwarellc/gadget/v2/stringutil"
 )
 
 func TestExecutionError(t *testing.T) {

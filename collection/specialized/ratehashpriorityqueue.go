@@ -4,7 +4,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/beaconsoftwarellc/gadget/timeutil"
+	"github.com/beaconsoftwarellc/gadget/v2/timeutil"
 )
 
 // RateHashPriorityQueue allows prioritized unique elements to be emitted

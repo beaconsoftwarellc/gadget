@@ -3,7 +3,7 @@ package log
 import (
 	"fmt"
 
-	"github.com/beaconsoftwarellc/gadget/collection"
+	"github.com/beaconsoftwarellc/gadget/v2/collection"
 )
 
 // StackLogger implements the tiered logging interface with a string stack for the messages

@@ -3,7 +3,7 @@ package collection
 import (
 	"sync"
 
-	"github.com/beaconsoftwarellc/gadget/errors"
+	"github.com/beaconsoftwarellc/gadget/v2/errors"
 )
 
 // ListNonEmptyError is returned when a empty list is required for the operation.

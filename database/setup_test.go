@@ -9,10 +9,10 @@ import (
 
 	"github.com/mattes/migrate"
 
-	"github.com/beaconsoftwarellc/gadget/database/qb"
-	"github.com/beaconsoftwarellc/gadget/environment"
-	"github.com/beaconsoftwarellc/gadget/generator"
-	"github.com/beaconsoftwarellc/gadget/log"
+	"github.com/beaconsoftwarellc/gadget/v2/database/qb"
+	"github.com/beaconsoftwarellc/gadget/v2/environment"
+	"github.com/beaconsoftwarellc/gadget/v2/generator"
+	"github.com/beaconsoftwarellc/gadget/v2/log"
 )
 
 type specification struct {
@@ -47,7 +47,7 @@ func (spec specification) DatabaseDialectURL() string {
 func newSpecification() *specification {
 	config := &specification{
 		DatabaseType: "mysql",
-		DatabaseURL: "test:test@/test_db?parseTime=true",
+		DatabaseURL:  "test:test@/test_db?parseTime=true",
 	}
 	environment.Process(config)
 	config.DB = Initialize(config)

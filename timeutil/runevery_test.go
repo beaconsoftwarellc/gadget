@@ -7,7 +7,7 @@ import (
 
 	assert1 "github.com/stretchr/testify/assert"
 
-	"github.com/beaconsoftwarellc/gadget/log"
+	"github.com/beaconsoftwarellc/gadget/v2/log"
 )
 
 func Test_RunEvery(t *testing.T) {

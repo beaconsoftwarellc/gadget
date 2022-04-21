@@ -5,9 +5,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/beaconsoftwarellc/gadget/dispatcher"
-	"github.com/beaconsoftwarellc/gadget/log"
-	"github.com/beaconsoftwarellc/gadget/timeutil"
+	"github.com/beaconsoftwarellc/gadget/v2/dispatcher"
+	"github.com/beaconsoftwarellc/gadget/v2/log"
+	"github.com/beaconsoftwarellc/gadget/v2/timeutil"
 )
 
 // Sensible Defaults

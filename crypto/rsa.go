@@ -8,7 +8,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 
-	"github.com/beaconsoftwarellc/gadget/errors"
+	"github.com/beaconsoftwarellc/gadget/v2/errors"
 )
 
 const privateSlug = "RSA PRIVATE KEY"

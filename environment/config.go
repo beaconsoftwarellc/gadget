@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/beaconsoftwarellc/gadget/errors"
-	"github.com/beaconsoftwarellc/gadget/stringutil"
+	"github.com/beaconsoftwarellc/gadget/v2/errors"
+	"github.com/beaconsoftwarellc/gadget/v2/stringutil"
 )
 
 // NoS3EnvVar is the environment variable to set when you so not want to try and pull from S3.

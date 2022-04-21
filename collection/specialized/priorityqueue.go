@@ -1,6 +1,6 @@
 package specialized
 
-import "github.com/beaconsoftwarellc/gadget/collection"
+import "github.com/beaconsoftwarellc/gadget/v2/collection"
 
 // Priority is for use in collections that require elements to resolve
 // their own priority.

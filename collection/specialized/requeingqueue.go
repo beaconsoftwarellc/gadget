@@ -1,6 +1,6 @@
 package specialized
 
-import "github.com/beaconsoftwarellc/gadget/collection"
+import "github.com/beaconsoftwarellc/gadget/v2/collection"
 
 // NewRequeueingQueue for a queue that never loses elements, they are just
 // added back onto the end of the queue on pop. Useful for when you don't want

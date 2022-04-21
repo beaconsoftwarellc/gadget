@@ -7,10 +7,10 @@ import (
 )
 
 type fileOutput struct {
-	level LevelFlag
-	file *os.File
+	level    LevelFlag
+	file     *os.File
 	filepath string
-	mutex sync.Mutex
+	mutex    sync.Mutex
 }
 
 // NewFileOutput that writes messages of the passed level to the passed file path.
@@ -21,7 +21,7 @@ func NewFileOutput(level LevelFlag, path string) (Output, error) {
 	}
 	return &fileOutput{
 		level:    level,
-		file: 		fd,
+		file:     fd,
 		filepath: path,
 	}, nil
 }
@@ -38,4 +38,3 @@ func (o *fileOutput) Log(message Message) {
 		fmt.Printf("failed to write to log file '%s': %s\n", o.filepath, err)
 	}
 }
-

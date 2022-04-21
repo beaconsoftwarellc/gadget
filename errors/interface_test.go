@@ -11,7 +11,7 @@ func Test_getStackTrace(t *testing.T) {
 		want []string
 	}{
 		{want: []string{
-			"github.com/beaconsoftwarellc/gadget/errors/interface_test.go:19",
+			"github.com/beaconsoftwarellc/gadget/v2/errors/interface_test.go:19",
 		}},
 	}
 	for _, tt := range tests {
@@ -38,7 +38,7 @@ func TestNew(t *testing.T) {
 			want: &errorTracer{
 				message: "foo",
 				trace: []string{
-					"github.com/beaconsoftwarellc/gadget/errors/interface_test.go:57",
+					"github.com/beaconsoftwarellc/gadget/v2/errors/interface_test.go:57",
 				},
 			},
 		},
@@ -47,7 +47,7 @@ func TestNew(t *testing.T) {
 			want: &errorTracer{
 				message: "foo a b",
 				trace: []string{
-					"github.com/beaconsoftwarellc/gadget/errors/interface_test.go:57",
+					"github.com/beaconsoftwarellc/gadget/v2/errors/interface_test.go:57",
 				},
 			},
 		},

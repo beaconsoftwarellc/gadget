@@ -1,6 +1,6 @@
 package deltas
 
-import "github.com/beaconsoftwarellc/gadget/database/qb"
+import "github.com/beaconsoftwarellc/gadget/v2/database/qb"
 
 type deltaMeta struct {
 	alias    string
