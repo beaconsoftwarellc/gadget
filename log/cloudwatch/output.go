@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/beaconsoftwarellc/gadget/collection"
 	"github.com/beaconsoftwarellc/gadget/timeutil"
 
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -153,7 +154,7 @@ func (cwa *administration) GetOutput(groupName, streamName string, logLevel log.
 			stream:   stream,
 			logLevel: logLevel,
 			admin:    cwa,
-			buffer:   NewEventQueue(),
+			buffer:   collection.NewQueue[*cloudwatchlogs.InputLogEvent](),
 		}
 	}
 	return logOutput, errors.Wrap(err)
@@ -276,7 +277,7 @@ type output struct {
 	logLevel log.LevelFlag
 	group    *cloudwatchlogs.LogGroup
 	stream   *cloudwatchlogs.LogStream
-	buffer   EventQueue
+	buffer   collection.Queue[*cloudwatchlogs.InputLogEvent]
 	// token is unique to the stream and must be set to sequence the events correctly
 	token *string
 }

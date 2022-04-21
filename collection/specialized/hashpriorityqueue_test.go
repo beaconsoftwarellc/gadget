@@ -60,7 +60,7 @@ func TestHashPriorityQueue_Peek(t *testing.T) {
 func TestHashPriorityQueue(t *testing.T) {
 	assert := assert1.New(t)
 	type fields struct {
-		list collection.List
+		list collection.List[string]
 	}
 	tests := []struct {
 		name      string

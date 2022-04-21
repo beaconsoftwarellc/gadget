@@ -53,7 +53,7 @@ func TestPriorityQueue_Peek(t *testing.T) {
 func Test_priorityQueue_Pop(t *testing.T) {
 	assert := assert1.New(t)
 	type fields struct {
-		list collection.List
+		list collection.List[int]
 	}
 	tests := []struct {
 		name     string

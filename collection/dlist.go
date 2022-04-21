@@ -41,81 +41,81 @@ func NewNoMemberError() errors.TracerError {
 }
 
 // DListElement is the primary element for use inside of a DList
-type DListElement struct {
-	prev *DListElement
-	next *DListElement
-	data interface{}
+type DListElement[T any] struct {
+	prev *DListElement[T]
+	next *DListElement[T]
+	data T
 }
 
 // Previous element in the Dlist
-func (element DListElement) Previous() *DListElement { return element.prev }
+func (element DListElement[T]) Previous() *DListElement[T] { return element.prev }
 
 // Next element in the DList.
-func (element DListElement) Next() *DListElement { return element.next }
+func (element DListElement[T]) Next() *DListElement[T] { return element.next }
 
-// Data in this DListElement
-func (element DListElement) Data() interface{} { return element.data }
+// Data in this DListElement[T]
+func (element DListElement[T]) Data() T { return element.data }
 
 // DList is an implementation of a doubly linked list data structure.
-type DList interface {
+type DList[T any] interface {
 	// Size of the this dlist as a count of the elements in it.
 	Size() int
 	// Head of the list.
-	Head() *DListElement
+	Head() *DListElement[T]
 	// IsHead of the list.
-	IsHead(element *DListElement) bool
+	IsHead(element *DListElement[T]) bool
 	// Tail of the list.
-	Tail() *DListElement
+	Tail() *DListElement[T]
 	// IsTail of the list.
-	IsTail(element *DListElement) bool
+	IsTail(element *DListElement[T]) bool
 	// InsertNext inserts the passed data after the passed element. If the list is empty a 'nil' element is allowed
 	// otherwise an error will be returned.
-	InsertNext(element *DListElement, data interface{}) (*DListElement, error)
+	InsertNext(element *DListElement[T], data T) (*DListElement[T], error)
 	// InsertPrevious inserts the passed data before the passed element in the list. If the list is empty a 'nil' element
 	// is allowed, otherwise an error will be returned.
-	InsertPrevious(element *DListElement, data interface{}) (*DListElement, error)
+	InsertPrevious(element *DListElement[T], data T) (*DListElement[T], error)
 	// Remove the element from the list.
-	Remove(element *DListElement) (data interface{}, err error)
+	Remove(element *DListElement[T]) (data T, err error)
 }
 
 // dlinkedList is a threadsafe implementation of a doubly linked list
-type dlinkedList struct {
+type dlinkedList[T any] struct {
 	mutex *sync.Mutex
-	head  *DListElement
-	tail  *DListElement
+	head  *DListElement[T]
+	tail  *DListElement[T]
 	size  int
 }
 
 // NewDList returns a new initialized empty DList
-func NewDList() DList {
-	return &dlinkedList{mutex: &sync.Mutex{}}
+func NewDList[T any]() DList[T] {
+	return &dlinkedList[T]{mutex: &sync.Mutex{}}
 }
 
 // Size of the this dlist as a count of the elements in it.
-func (list dlinkedList) Size() int { return list.size }
+func (list dlinkedList[T]) Size() int { return list.size }
 
 // Head of the list.
-func (list dlinkedList) Head() *DListElement { return list.head }
+func (list dlinkedList[T]) Head() *DListElement[T] { return list.head }
 
 // IsHead of the list.
-func (list dlinkedList) IsHead(element *DListElement) bool { return element == list.head }
+func (list dlinkedList[T]) IsHead(element *DListElement[T]) bool { return element == list.head }
 
 // Tail of the list.
-func (list dlinkedList) Tail() *DListElement { return list.tail }
+func (list dlinkedList[T]) Tail() *DListElement[T] { return list.tail }
 
 // IsTail of the list.
-func (list dlinkedList) IsTail(element *DListElement) bool { return element == list.tail }
+func (list dlinkedList[T]) IsTail(element *DListElement[T]) bool { return element == list.tail }
 
 // InsertNext inserts the passed data after the passed element. If the list is empty a 'nil' element is allowed
 // otherwise an error will be returned.
-func (list *dlinkedList) InsertNext(element *DListElement, data interface{}) (newElement *DListElement, err error) {
+func (list *dlinkedList[T]) InsertNext(element *DListElement[T], data T) (newElement *DListElement[T], err error) {
 	list.mutex.Lock()
 	defer list.mutex.Unlock()
 	if 0 != list.Size() && nil == element {
 		err = NewListNonEmptyError()
 		return
 	}
-	newElement = &DListElement{data: data}
+	newElement = &DListElement[T]{data: data}
 	if 0 == list.Size() {
 		list.head = newElement
 		list.tail = newElement
@@ -135,14 +135,14 @@ func (list *dlinkedList) InsertNext(element *DListElement, data interface{}) (ne
 
 // InsertPrevious inserts the passed data before the passed element in the list. If the list is empty a 'nil' element
 // is allowed, otherwise an error will be returned.
-func (list *dlinkedList) InsertPrevious(element *DListElement, data interface{}) (newElement *DListElement, err error) {
+func (list *dlinkedList[T]) InsertPrevious(element *DListElement[T], data T) (newElement *DListElement[T], err error) {
 	list.mutex.Lock()
 	defer list.mutex.Unlock()
 	if 0 != list.Size() && nil == element {
 		err = NewListNonEmptyError()
 		return
 	}
-	newElement = &DListElement{data: data}
+	newElement = &DListElement[T]{data: data}
 	if 0 == list.Size() {
 		list.head = newElement
 		list.tail = newElement
@@ -161,7 +161,7 @@ func (list *dlinkedList) InsertPrevious(element *DListElement, data interface{})
 }
 
 // Remove the element from the list.
-func (list *dlinkedList) Remove(element *DListElement) (data interface{}, err error) {
+func (list *dlinkedList[T]) Remove(element *DListElement[T]) (data T, err error) {
 	list.mutex.Lock()
 	defer list.mutex.Unlock()
 	if 0 == list.size {
@@ -173,8 +173,6 @@ func (list *dlinkedList) Remove(element *DListElement) (data interface{}, err er
 		err = NewNoElementError()
 		return
 	}
-
-	data = element.data
 
 	if list.IsHead(element) {
 		list.head = element.next
@@ -193,10 +191,10 @@ func (list *dlinkedList) Remove(element *DListElement) (data interface{}, err er
 	} else {
 		// the element is not the head and has nil for it's prev so it is not a member
 		err = NewNoMemberError()
-		data = nil
 		return
 	}
 
+	data = element.data
 	element.next = nil
 	element.prev = nil
 

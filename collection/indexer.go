@@ -20,13 +20,13 @@ type Index interface {
 
 type index struct {
 	name        string
-	valuesToIDs map[interface{}]Set
+	valuesToIDs map[interface{}]Set[string]
 }
 
 // NewIndex for the passed field name, objects added to this index will be
 // indexed by the value in this field.
 func NewIndex(fieldName string) Index {
-	return &index{name: fieldName, valuesToIDs: make(map[interface{}]Set)}
+	return &index{name: fieldName, valuesToIDs: make(map[interface{}]Set[string])}
 }
 
 func (idx *index) Add(obj Indexable) {
@@ -84,7 +84,7 @@ func (idx *index) LookupValue(fieldValue interface{}) []string {
 	set, ok := idx.valuesToIDs[fieldValue]
 	var v []string
 	if ok {
-		v = stringify(set.Elements())
+		v = set.Elements()
 	} else {
 		v = make([]string, 0)
 	}

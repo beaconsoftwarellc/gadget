@@ -26,7 +26,7 @@ type HashPriorityQueue interface {
 // NewHashPriorityQueue for queueing unique elements by priority.
 func NewHashPriorityQueue() HashPriorityQueue {
 	return &hashPriorityQueue{
-		set:    collection.NewSet(),
+		set:    collection.NewSet[interface{}](),
 		pqueue: NewPriorityQueue(),
 	}
 }
@@ -52,7 +52,7 @@ func newHashPriorityWrapper(element HashPriority) *hashPriorityWrapper {
 }
 
 type hashPriorityQueue struct {
-	set    collection.Set
+	set    collection.Set[interface{}]
 	pqueue PriorityQueue
 }
 

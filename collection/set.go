@@ -1,25 +1,27 @@
 package collection
 
-import "sync"
+import (
+	"sync"
+)
 
 // Set data structure methods.
-type Set interface {
+type Set[T any] interface {
 	// Add the passed objects to the set
-	Add(objs ...interface{}) Set
+	Add(objs ...T) Set[T]
 	// Remove the passed objects from the set
-	Remove(objs ...interface{}) Set
+	Remove(objs ...T) Set[T]
 	// Contains the passed object
-	Contains(interface{}) bool
+	Contains(T) bool
 	// Elements in this set
-	Elements() []interface{}
+	Elements() []T
 	// Size of this set (number of elements)
 	Size() int
 	// New set of the same type as this set
-	New() Set
+	New() Set[T]
 }
 
 // Union of sets a and b as a new set of the same type as a.
-func Union(a Set, b Set) Set {
+func Union[T any](a, b Set[T]) Set[T] {
 	result := a.New()
 	result.Add(a.Elements()...)
 	result.Add(b.Elements()...)
@@ -27,12 +29,12 @@ func Union(a Set, b Set) Set {
 }
 
 // Disjunction of sets a and b as a new set of the same type as a.
-func Disjunction(a Set, b Set) Set {
+func Disjunction[T any](a, b Set[T]) Set[T] {
 	return Union(a, b).Remove(Intersection(a, b).Elements()...)
 }
 
 // Intersection of sets a and b as a new set of the same type as a.
-func Intersection(a Set, b Set) Set {
+func Intersection[T any](a, b Set[T]) Set[T] {
 	result := a.New()
 	for _, e := range b.Elements() {
 		if a.Contains(e) {
@@ -47,23 +49,23 @@ func Intersection(a Set, b Set) Set {
 	return result
 }
 
-type mapSet struct {
+type mapSet[T any] struct {
 	mutex sync.RWMutex
 	// empty interface with nil stored is smaller than bool
 	m map[interface{}]interface{}
 }
 
 // NewSet instance.
-func NewSet(objs ...interface{}) Set {
-	ms := &mapSet{m: make(map[interface{}]interface{}, len(objs))}
+func NewSet[T any](objs ...T) Set[T] {
+	ms := &mapSet[T]{m: make(map[interface{}]interface{}, len(objs))}
 	return ms.Add(objs...)
 }
 
-func (ms *mapSet) New() Set {
-	return NewSet()
+func (ms *mapSet[T]) New() Set[T] {
+	return NewSet[T]()
 }
 
-func (ms *mapSet) Add(objs ...interface{}) Set {
+func (ms *mapSet[T]) Add(objs ...T) Set[T] {
 	ms.mutex.Lock()
 	defer ms.mutex.Unlock()
 	for _, o := range objs {
@@ -72,7 +74,7 @@ func (ms *mapSet) Add(objs ...interface{}) Set {
 	return ms
 }
 
-func (ms *mapSet) Remove(objs ...interface{}) Set {
+func (ms *mapSet[T]) Remove(objs ...T) Set[T] {
 	ms.mutex.Lock()
 	defer ms.mutex.Unlock()
 	for _, o := range objs {
@@ -81,26 +83,26 @@ func (ms *mapSet) Remove(objs ...interface{}) Set {
 	return ms
 }
 
-func (ms *mapSet) Contains(obj interface{}) bool {
+func (ms *mapSet[T]) Contains(obj T) bool {
 	ms.mutex.RLock()
 	defer ms.mutex.RUnlock()
 	_, ok := ms.m[obj]
 	return ok
 }
 
-func (ms *mapSet) Elements() []interface{} {
+func (ms *mapSet[T]) Elements() []T {
 	ms.mutex.RLock()
 	defer ms.mutex.RUnlock()
 	i := 0
-	keys := make([]interface{}, len(ms.m))
+	keys := make([]T, len(ms.m))
 	for k := range ms.m {
-		keys[i] = k
+		keys[i] = k.(T)
 		i++
 	}
 	return keys
 }
 
-func (ms *mapSet) Size() int {
+func (ms *mapSet[T]) Size() int {
 	ms.mutex.RLock()
 	defer ms.mutex.RUnlock()
 	return len(ms.m)

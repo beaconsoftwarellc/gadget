@@ -48,8 +48,8 @@ func (m *SimpleDoRequest) SetCookies(url *url.URL, cookies []*http.Cookie) {
 
 // MockHTTPClient mocks the DoHTTPRequest interface
 type MockHTTPClient struct {
-	DoReturn  collection.Stack
-	DoCalled  collection.Stack
+	DoReturn  collection.Stack[interface{}]
+	DoCalled  collection.Stack[interface{}]
 	cookieJar map[string][]*http.Cookie
 }
 
@@ -109,7 +109,7 @@ func (client *MockHTTPClient) SetCookies(url *url.URL, cookies []*http.Cookie) {
 
 // NewMockHTTPClient returns a mocked version of the DoHTTPRequest interface
 func NewMockHTTPClient(returnStackItems ...interface{}) *MockHTTPClient {
-	c := &MockHTTPClient{DoReturn: collection.NewStack(), DoCalled: collection.NewStack()}
+	c := &MockHTTPClient{DoReturn: collection.NewStack[interface{}](), DoCalled: collection.NewStack[interface{}]()}
 	for _, item := range returnStackItems {
 		c.DoReturn.Push(item)
 	}

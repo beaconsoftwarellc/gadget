@@ -10,7 +10,7 @@ func TestListHead(t *testing.T) {
 	assert := assert1.New(t)
 
 	// test list initialization
-	list := NewList()
+	list := NewList[string]()
 	assert.Nil(list.Head())
 
 	// test first insertion is the head
@@ -53,7 +53,7 @@ func TestListHead(t *testing.T) {
 
 func TestListIsHead(t *testing.T) {
 	assert := assert1.New(t)
-	list := NewList()
+	list := NewList[string]()
 	elm := list.InsertNext(nil, "foo")
 	assert.True(list.IsHead(elm))
 	elm1 := list.InsertNext(nil, "bar")
@@ -66,7 +66,7 @@ func TestListIsHead(t *testing.T) {
 func TestListTail(t *testing.T) {
 	assert := assert1.New(t)
 	// test list initialization
-	list := NewList()
+	list := NewList[string]()
 	assert.Nil(list.Tail())
 
 	// test first insertion is the tail
@@ -115,7 +115,7 @@ func TestListTail(t *testing.T) {
 
 func TestListIsTail(t *testing.T) {
 	assert := assert1.New(t)
-	list := NewList()
+	list := NewList[string]()
 	elm := list.InsertNext(nil, "foo")
 	assert.True(list.IsTail(elm))
 	elm1 := list.InsertNext(elm, "bar")
@@ -127,7 +127,7 @@ func TestListIsTail(t *testing.T) {
 
 func TestInsertNext(t *testing.T) {
 	assert := assert1.New(t)
-	list := NewList()
+	list := NewList[string]()
 	assert.Equal(0, list.Size())
 	elm := list.InsertNext(nil, "fun")
 	assert.Equal(1, list.Size())
@@ -143,14 +143,14 @@ func TestInsertNext(t *testing.T) {
 
 func TestRemoveNext(t *testing.T) {
 	assert := assert1.New(t)
-	list := NewList()
+	list := NewList[string]()
 	data, err := list.RemoveNext(nil)
-	assert.Nil(data)
+	assert.Empty(data)
 	assert.EqualError(err, NewEmptyListError().Error())
 
 	elm := list.InsertNext(nil, "foo")
 	data, err = list.RemoveNext(elm)
-	assert.Nil(data)
+	assert.Empty(data)
 	assert.EqualError(err, NewNoElementError().Error())
 
 	expected := "bar"
@@ -171,7 +171,7 @@ func TestRemoveNext(t *testing.T) {
 	assert.Equal(1, list.Size())
 }
 
-func insert(list List, ia []int, done chan bool) {
+func insert[T any](list List[T], ia []T, done chan bool) {
 	for _, i := range ia {
 		list.InsertNext(nil, i)
 	}
@@ -183,7 +183,7 @@ func TestListConcurrentInsert(t *testing.T) {
 	var done = make(chan bool, 2)
 	elms := []int{1, 2, 3}
 	elms1 := []int{4, 5, 6}
-	list := NewList()
+	list := NewList[int]()
 	go insert(list, elms, done)
 	go insert(list, elms1, done)
 	<-done

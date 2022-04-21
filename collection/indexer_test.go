@@ -141,8 +141,8 @@ func TestIndex_IdsForValue(t *testing.T) {
 	fieldValue := generator.String(20)
 	indexFace := NewIndex(fieldName)
 	index := indexFace.(*index)
-	expected := NewSet()
-	actual := NewSet(anonymize(index.LookupValue(fieldValue)...)...)
+	expected := NewSet[string]()
+	actual := NewSet(index.LookupValue(fieldValue)...)
 	assert.Equal(expected, actual)
 
 	for i := 0; i < 10; i++ {
@@ -151,7 +151,7 @@ func TestIndex_IdsForValue(t *testing.T) {
 		index.Add(indexable)
 		expected.Add(id)
 	}
-	actual = NewSet(anonymize(index.LookupValue(fieldValue)...)...)
+	actual = NewSet(index.LookupValue(fieldValue)...)
 	assert.Equal(expected, actual)
 }
 

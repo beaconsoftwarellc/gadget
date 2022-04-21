@@ -7,6 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/beaconsoftwarellc/gadget/collection"
 	"github.com/beaconsoftwarellc/gadget/intutil"
 	"github.com/beaconsoftwarellc/gadget/log"
 	"github.com/beaconsoftwarellc/gadget/timeutil"
@@ -56,7 +57,7 @@ type dispatcher struct {
 	queue      chan *internalTask
 	pool       chan Worker
 	complete   chan *internalTask
-	overflow   TaskStack
+	overflow   collection.Stack[*internalTask]
 	workers    []Worker
 	exit       chan bool
 	exited     chan bool
@@ -103,7 +104,7 @@ func NewDispatcher(maxBufferedMessage int, minWorkers int, maxWorkers int) Dispa
 		complete:   make(chan *internalTask, maxBufferedMessage),
 		// don't set min below 0
 		minWorkers:                 intutil.Maxv(0, minWorkers),
-		overflow:                   NewTaskStack(),
+		overflow:                   collection.NewStack[*internalTask](),
 		waitBetweenScaleDowns:      DefaultWaitBetweenScaleDowns,
 		consecutiveScaleDownMisses: DefaultDispatchMissesBeforeDraining,
 		executingTasks:             make(map[string]*internalTask),

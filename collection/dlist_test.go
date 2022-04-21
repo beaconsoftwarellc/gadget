@@ -10,7 +10,7 @@ func TestDListHead(t *testing.T) {
 	assert := assert1.New(t)
 
 	// test list initialization
-	list := NewDList()
+	list := NewDList[string]()
 	assert.Nil(list.Head())
 	assert.Equal(0, list.Size())
 
@@ -62,7 +62,7 @@ func TestDListHead(t *testing.T) {
 
 func TestDListIsHead(t *testing.T) {
 	assert := assert1.New(t)
-	list := NewDList()
+	list := NewDList[string]()
 	elm, err := list.InsertNext(nil, "foo")
 	assert.NoError(err)
 	assert.True(list.IsHead(elm))
@@ -77,7 +77,7 @@ func TestDListIsHead(t *testing.T) {
 func TestDListTail(t *testing.T) {
 	assert := assert1.New(t)
 	// test list initialization
-	list := NewDList()
+	list := NewDList[string]()
 	assert.Nil(list.Tail())
 
 	// test first insertion is the tail
@@ -129,7 +129,7 @@ func TestDListTail(t *testing.T) {
 
 func TestDListIsTail(t *testing.T) {
 	assert := assert1.New(t)
-	list := NewDList()
+	list := NewDList[string]()
 	elm, err := list.InsertNext(nil, "foo")
 	assert.NoError(err)
 	assert.True(list.IsTail(elm))
@@ -143,7 +143,7 @@ func TestDListIsTail(t *testing.T) {
 
 func TestDListInsertNext(t *testing.T) {
 	assert := assert1.New(t)
-	list := NewDList()
+	list := NewDList[string]()
 	assert.Equal(0, list.Size())
 	elm, err := list.InsertNext(nil, "fun")
 	assert.NoError(err)
@@ -163,7 +163,7 @@ func TestDListInsertNext(t *testing.T) {
 
 func TestDListInsertPrevious(t *testing.T) {
 	assert := assert1.New(t)
-	list := NewDList()
+	list := NewDList[string]()
 	assert.Equal(0, list.Size())
 	elm, err := list.InsertPrevious(nil, "fun")
 	assert.NoError(err)
@@ -202,7 +202,7 @@ func TestDListInsertPrevious(t *testing.T) {
 
 func TestDListRemove(t *testing.T) {
 	assert := assert1.New(t)
-	list := NewDList()
+	list := NewDList[string]()
 	data := "foo"
 	data1 := "bar"
 	data2 := "baz"
@@ -217,7 +217,7 @@ func TestDListRemove(t *testing.T) {
 	assert.NotNil(el2)
 
 	n, err := list.Remove(nil)
-	assert.Nil(n)
+	assert.Empty(n)
 	assert.EqualError(err, NewNoElementError().Error())
 
 	actual, err := list.Remove(el1)
@@ -232,7 +232,7 @@ func TestDListRemove(t *testing.T) {
 
 	actual, err = list.Remove(el1)
 	assert.EqualError(err, NewNoMemberError().Error())
-	assert.Nil(actual)
+	assert.Empty(actual)
 	assert.Equal(1, list.Size())
 
 	actual, err = list.Remove(el2)
@@ -242,5 +242,5 @@ func TestDListRemove(t *testing.T) {
 
 	actual, err = list.Remove(el1)
 	assert.EqualError(err, NewEmptyListError().Error())
-	assert.Nil(actual)
+	assert.Empty(actual)
 }
