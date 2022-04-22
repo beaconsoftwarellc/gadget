@@ -85,7 +85,7 @@ type linkedList[T any] struct {
 	tail  *ListElement[T]
 }
 
-// // NewList returns a new initialized list.
+// NewList returns a new initialized list.
 func NewList[T any]() List[T] {
 	return &linkedList[T]{head: nil, tail: nil}
 }
