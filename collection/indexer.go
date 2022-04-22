@@ -65,21 +65,6 @@ func (idx *index) Remove(obj Indexable) {
 	}
 }
 
-func stringify(objs []interface{}) []string {
-	i := 0
-	strs := make([]string, len(objs))
-	for _, o := range objs {
-		str, ok := o.(string)
-		if ok {
-			strs[i] = str
-		} else {
-			strs[i] = ""
-		}
-		i++
-	}
-	return strs
-}
-
 func (idx *index) LookupValue(fieldValue interface{}) []string {
 	set, ok := idx.valuesToIDs[fieldValue]
 	var v []string

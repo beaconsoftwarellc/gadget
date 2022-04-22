@@ -1,7 +1,6 @@
 package collection
 
 import (
-	"reflect"
 	"strconv"
 	"testing"
 
@@ -102,37 +101,6 @@ func TestIndex_Remove(t *testing.T) {
 	set, ok := index.valuesToIDs[fieldValue]
 	assert.True(ok)
 	assert.False(set.Contains(id))
-}
-
-func Test_stringify(t *testing.T) {
-	type args struct {
-		objs []interface{}
-	}
-	tests := []struct {
-		name string
-		args args
-		want []string
-	}{
-		{
-			args: args{objs: []interface{}{}},
-			want: []string{},
-		},
-		{
-			args: args{objs: []interface{}{"a", "b"}},
-			want: []string{"a", "b"},
-		},
-		{
-			args: args{objs: []interface{}{"a", 1}},
-			want: []string{"a", ""},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := stringify(tt.args.objs); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("stringify() = %v, want %v", got, tt.want)
-			}
-		})
-	}
 }
 
 func TestIndex_IdsForValue(t *testing.T) {
