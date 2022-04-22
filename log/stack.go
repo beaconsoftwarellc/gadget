@@ -3,12 +3,12 @@ package log
 import (
 	"fmt"
 
-	"github.com/beaconsoftwarellc/gadget/collection"
+	"github.com/beaconsoftwarellc/gadget/v2/collection"
 )
 
 // StackLogger implements the tiered logging interface with a string stack for the messages
 type StackLogger struct {
-	messages collection.StringStack
+	messages collection.Stack[string]
 }
 
 // New returns this logger
@@ -28,7 +28,7 @@ func (l *StackLogger) SetSessionID(id string) {
 
 // NewStackLogger puts the log messages onto a stack
 func NewStackLogger() *StackLogger {
-	return &StackLogger{messages: collection.NewStringStack()}
+	return &StackLogger{messages: collection.NewStack[string]()}
 }
 
 // AddOutput StackLogger does not support this for obvious reasons

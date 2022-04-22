@@ -3,7 +3,7 @@ package collection
 import (
 	"sync"
 
-	"github.com/beaconsoftwarellc/gadget/errors"
+	"github.com/beaconsoftwarellc/gadget/v2/errors"
 )
 
 // EmptyListError is returned when a operation is called on an empty list that requires at least one element in the list.
@@ -42,84 +42,84 @@ func NewNoElementError() errors.TracerError {
 }
 
 // ListElement is a singly linked node in a list.
-type ListElement struct {
-	next *ListElement
-	data interface{}
+type ListElement[T any] struct {
+	next *ListElement[T]
+	data T
 }
 
 // Next returns the element the follows this element.
-func (listElement ListElement) Next() (element *ListElement) {
+func (listElement ListElement[T]) Next() (element *ListElement[T]) {
 	return listElement.next
 }
 
 // Data returns the data contained in this element.
-func (listElement ListElement) Data() interface{} {
+func (listElement ListElement[T]) Data() T {
 	return listElement.data
 }
 
 // List is a singly linked list implementation
-type List interface {
+type List[T any] interface {
 	// Head (first element) of the list.
-	Head() *ListElement
+	Head() *ListElement[T]
 	// Tail (last element) of the list.
-	Tail() (element *ListElement)
+	Tail() (element *ListElement[T])
 	// IsHead returns a boolean indicating whether the passed element is the first element in the list.
-	IsHead(element *ListElement) bool
+	IsHead(element *ListElement[T]) bool
 	// IsTail returns a boolean indicating if the passed element is the last element in the list.
-	IsTail(element *ListElement) bool
+	IsTail(element *ListElement[T]) bool
 	// Size of the list (number of elements).
 	Size() int
 	// InsertNext data into the list after the passed element. If the element is nil, the data will be inserted at
 	// the head of the list.
-	InsertNext(element *ListElement, data interface{}) *ListElement
+	InsertNext(element *ListElement[T], data T) *ListElement[T]
 	// RemoveNext element from the list and return it's data. If passed element is 'nil' the head will be removed
 	// from the list.
-	RemoveNext(element *ListElement) (data interface{}, err error)
+	RemoveNext(element *ListElement[T]) (data T, err error)
 }
 
 // linkedList is an implementation of a thread safe singly linked list.
-type linkedList struct {
+type linkedList[T any] struct {
 	mutex sync.RWMutex
 	size  int
-	head  *ListElement
-	tail  *ListElement
+	head  *ListElement[T]
+	tail  *ListElement[T]
 }
 
 // NewList returns a new initialized list.
-func NewList() List {
-	return &linkedList{head: nil, tail: nil}
+func NewList[T any]() List[T] {
+	return &linkedList[T]{head: nil, tail: nil}
 }
 
 // Head (first element) of the list.
-func (list *linkedList) Head() *ListElement {
+func (list *linkedList[T]) Head() *ListElement[T] {
 	list.mutex.RLock()
 	defer list.mutex.RUnlock()
 	return list.head
 }
 
 // Tail (last element) of the list.
-func (list *linkedList) Tail() (element *ListElement) {
+func (list *linkedList[T]) Tail() (element *ListElement[T]) {
 	list.mutex.RLock()
 	defer list.mutex.RUnlock()
 	return list.tail
 }
 
 // IsHead returns a boolean indicating whether the passed element is the first element in the list.
-func (list *linkedList) IsHead(element *ListElement) bool {
+func (list *linkedList[T]) IsHead(element *ListElement[T]) bool {
 	list.mutex.RLock()
 	defer list.mutex.RUnlock()
 	return element == list.head
 }
 
 // IsTail returns a boolean indicating if the passed element is the last element in the list.
-func (list *linkedList) IsTail(element *ListElement) bool {
+func (list *linkedList[T]) IsTail(element *ListElement[T]) bool {
 	list.mutex.RLock()
 	defer list.mutex.RUnlock()
 	return element == list.tail
 }
 
 // Size of the list (number of elements).
-func (list *linkedList) Size() int {
+func (list *linkedList[T]) Size() int {
 	list.mutex.RLock()
 	defer list.mutex.RUnlock()
 	return list.size
@@ -127,10 +127,10 @@ func (list *linkedList) Size() int {
 
 // InsertNext data into the list after the passed element. If the element is nil, the data will be inserted at
 // the head of the list.
-func (list *linkedList) InsertNext(element *ListElement, data interface{}) *ListElement {
+func (list *linkedList[T]) InsertNext(element *ListElement[T], data T) *ListElement[T] {
 	list.mutex.Lock()
 	defer list.mutex.Unlock()
-	newElement := &ListElement{data: data}
+	newElement := &ListElement[T]{data: data}
 	if nil == element {
 		if 0 == list.size {
 			list.tail = newElement
@@ -150,11 +150,12 @@ func (list *linkedList) InsertNext(element *ListElement, data interface{}) *List
 
 // RemoveNext element from the list and return it's data. If passed element is 'nil' the head will be removed
 // from the list.
-func (list *linkedList) RemoveNext(element *ListElement) (data interface{}, err error) {
+func (list *linkedList[T]) RemoveNext(element *ListElement[T]) (data T, err error) {
 	list.mutex.Lock()
 	defer list.mutex.Unlock()
+
 	if 0 == list.size {
-		return nil, NewEmptyListError()
+		return data, NewEmptyListError()
 	}
 
 	if nil == element {
@@ -165,7 +166,7 @@ func (list *linkedList) RemoveNext(element *ListElement) (data interface{}, err 
 		}
 	} else {
 		if nil == element.next {
-			return nil, NewNoElementError()
+			return data, NewNoElementError()
 		}
 		data = element.next.data
 		element.next = element.next.next

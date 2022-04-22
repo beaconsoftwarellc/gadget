@@ -9,8 +9,8 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
-	"github.com/beaconsoftwarellc/gadget/intutil"
-	"github.com/beaconsoftwarellc/gadget/log"
+	"github.com/beaconsoftwarellc/gadget/v2/intutil"
+	"github.com/beaconsoftwarellc/gadget/v2/log"
 )
 
 type Direction int

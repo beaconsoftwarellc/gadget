@@ -7,16 +7,17 @@ import (
 	"sync"
 	"time"
 
-	"github.com/beaconsoftwarellc/gadget/timeutil"
+	"github.com/beaconsoftwarellc/gadget/v2/collection"
+	"github.com/beaconsoftwarellc/gadget/v2/timeutil"
 
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 
-	"github.com/beaconsoftwarellc/gadget/dispatcher"
-	"github.com/beaconsoftwarellc/gadget/errors"
-	"github.com/beaconsoftwarellc/gadget/log"
-	"github.com/beaconsoftwarellc/gadget/stringutil"
+	"github.com/beaconsoftwarellc/gadget/v2/dispatcher"
+	"github.com/beaconsoftwarellc/gadget/v2/errors"
+	"github.com/beaconsoftwarellc/gadget/v2/log"
+	"github.com/beaconsoftwarellc/gadget/v2/stringutil"
 )
 
 // 1 mebibyte is the actual max, but pad with a tenth so we don't have to be
@@ -153,7 +154,7 @@ func (cwa *administration) GetOutput(groupName, streamName string, logLevel log.
 			stream:   stream,
 			logLevel: logLevel,
 			admin:    cwa,
-			buffer:   NewEventQueue(),
+			buffer:   collection.NewQueue[*cloudwatchlogs.InputLogEvent](),
 		}
 	}
 	return logOutput, errors.Wrap(err)
@@ -276,7 +277,7 @@ type output struct {
 	logLevel log.LevelFlag
 	group    *cloudwatchlogs.LogGroup
 	stream   *cloudwatchlogs.LogStream
-	buffer   EventQueue
+	buffer   collection.Queue[*cloudwatchlogs.InputLogEvent]
 	// token is unique to the stream and must be set to sequence the events correctly
 	token *string
 }

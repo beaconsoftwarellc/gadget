@@ -1,66 +1,66 @@
 package specialized
 
 import (
-	"github.com/beaconsoftwarellc/gadget/collection"
+	"github.com/beaconsoftwarellc/gadget/v2/collection"
 )
 
 // HashPriority exposes both a priority function and Hash function.
-type HashPriority interface {
+type HashPriority[T comparable] interface {
 	Priority
-	GetHash() interface{}
+	GetHash() T
 }
 
 // HashPriorityQueue prevents duplicate prioritized entries in a queue.
-type HashPriorityQueue interface {
+type HashPriorityQueue[T comparable] interface {
 	// Size of this queue
 	Size() int
 	// Push the passed element onto this queue if it does not already exist in
 	// the queue.
-	Push(element HashPriority)
+	Push(element HashPriority[T])
 	// Pop the highest priority element off the queue
-	Pop() (HashPriority, bool)
+	Pop() (HashPriority[T], bool)
 	// Peek at the highest priority element without modifying the queue
-	Peek() (HashPriority, bool)
+	Peek() (HashPriority[T], bool)
 }
 
 // NewHashPriorityQueue for queueing unique elements by priority.
-func NewHashPriorityQueue() HashPriorityQueue {
-	return &hashPriorityQueue{
-		set:    collection.NewSet(),
+func NewHashPriorityQueue[T comparable]() HashPriorityQueue[T] {
+	return &hashPriorityQueue[T]{
+		set:    collection.NewSet[T](),
 		pqueue: NewPriorityQueue(),
 	}
 }
 
-type hashPriorityWrapper struct {
+type hashPriorityWrapper[T comparable] struct {
 	priority int
-	element  HashPriority
+	element  HashPriority[T]
 }
 
-func (hpw *hashPriorityWrapper) GetPriority() int {
+func (hpw *hashPriorityWrapper[T]) GetPriority() int {
 	return hpw.priority
 }
 
-func (hpw *hashPriorityWrapper) GetHash() interface{} {
+func (hpw *hashPriorityWrapper[T]) GetHash() T {
 	return hpw.element.GetHash()
 }
 
-func newHashPriorityWrapper(element HashPriority) *hashPriorityWrapper {
-	return &hashPriorityWrapper{
+func newHashPriorityWrapper[T comparable](element HashPriority[T]) *hashPriorityWrapper[T] {
+	return &hashPriorityWrapper[T]{
 		priority: element.GetPriority(),
 		element:  element,
 	}
 }
 
-type hashPriorityQueue struct {
-	set    collection.Set
+type hashPriorityQueue[T comparable] struct {
+	set    collection.Set[T]
 	pqueue PriorityQueue
 }
 
-func (hpq *hashPriorityQueue) Size() int {
+func (hpq *hashPriorityQueue[T]) Size() int {
 	return hpq.pqueue.Size()
 }
 
-func (hpq *hashPriorityQueue) Push(element HashPriority) {
+func (hpq *hashPriorityQueue[T]) Push(element HashPriority[T]) {
 	hash := element.GetHash()
 	wrappedElement := newHashPriorityWrapper(element)
 	if hpq.set.Contains(hash) {
@@ -76,29 +76,29 @@ func (hpq *hashPriorityQueue) Push(element HashPriority) {
 	hpq.set.Add(hash)
 }
 
-func (hpq *hashPriorityQueue) convert(data interface{}) HashPriority {
-	p, _ := data.(HashPriority)
+func (hpq *hashPriorityQueue[T]) convert(data interface{}) HashPriority[T] {
+	p, _ := data.(HashPriority[T])
 	return p
 }
 
-func (hpq *hashPriorityQueue) nextElement(next func() (Priority, bool), remove bool) (HashPriority, bool) {
+func (hpq *hashPriorityQueue[T]) nextElement(next func() (Priority, bool), remove bool) (HashPriority[T], bool) {
 	p, ok := next()
-	var hp *hashPriorityWrapper
+	var hp *hashPriorityWrapper[T]
 	if !ok {
 		return nil, false
 	}
 
-	hp, _ = p.(*hashPriorityWrapper)
+	hp, _ = p.(*hashPriorityWrapper[T])
 	if remove {
 		hpq.set.Remove(hp.GetHash())
 	}
 	return hp.element, true
 }
 
-func (hpq *hashPriorityQueue) Pop() (HashPriority, bool) {
+func (hpq *hashPriorityQueue[T]) Pop() (HashPriority[T], bool) {
 	return hpq.nextElement(hpq.pqueue.Pop, true)
 }
 
-func (hpq *hashPriorityQueue) Peek() (HashPriority, bool) {
+func (hpq *hashPriorityQueue[T]) Peek() (HashPriority[T], bool) {
 	return hpq.nextElement(hpq.pqueue.Peek, false)
 }

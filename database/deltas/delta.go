@@ -3,8 +3,8 @@ package deltas
 import (
 	"time"
 
-	"github.com/beaconsoftwarellc/gadget/database"
-	"github.com/beaconsoftwarellc/gadget/database/qb"
+	"github.com/beaconsoftwarellc/gadget/v2/database"
+	"github.com/beaconsoftwarellc/gadget/v2/database/qb"
 )
 
 // Delta represents a set of changes that are to be applied to the database as an atomic unit

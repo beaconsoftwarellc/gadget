@@ -5,19 +5,19 @@ import (
 
 	assert1 "github.com/stretchr/testify/assert"
 
-	"github.com/beaconsoftwarellc/gadget/collection"
+	"github.com/beaconsoftwarellc/gadget/v2/collection"
 )
 
 func TestReuqueingQueue(t *testing.T) {
 	assert := assert1.New(t)
-	rqq := NewRequeueingQueue()
+	rqq := NewRequeueingQueue[string]()
 	assert.Equal(0, rqq.Size())
 	actual, err := rqq.Peek()
-	assert.Nil(actual)
+	assert.Empty(actual)
 	assert.Error(err, collection.NewEmptyListError().Error())
 
 	actual, err = rqq.Pop()
-	assert.Nil(actual)
+	assert.Empty(actual)
 	assert.Error(err, collection.NewEmptyListError().Error())
 	assert.Equal(0, rqq.Size())
 

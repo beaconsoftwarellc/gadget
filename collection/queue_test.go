@@ -8,14 +8,14 @@ import (
 
 func TestQueue(t *testing.T) {
 	assert := assert1.New(t)
-	queue := NewQueue()
+	queue := NewQueue[string]()
 	assert.Equal(0, queue.Size())
 	actual, err := queue.Peek()
-	assert.Nil(actual)
+	assert.Empty(actual)
 	assert.Error(err, NewEmptyListError().Error())
 
 	actual, err = queue.Pop()
-	assert.Nil(actual)
+	assert.Empty(actual)
 	assert.Error(err, NewEmptyListError().Error())
 	assert.Equal(0, queue.Size())
 
@@ -51,6 +51,6 @@ func TestQueue(t *testing.T) {
 
 	actual, err = queue.Pop()
 	assert.Error(err, NewEmptyListError().Error())
-	assert.Nil(actual)
+	assert.Empty(actual)
 	assert.Equal(0, queue.Size())
 }

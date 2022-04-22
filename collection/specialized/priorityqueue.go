@@ -1,6 +1,6 @@
 package specialized
 
-import "github.com/beaconsoftwarellc/gadget/collection"
+import "github.com/beaconsoftwarellc/gadget/v2/collection"
 
 // Priority is for use in collections that require elements to resolve
 // their own priority.
@@ -23,12 +23,12 @@ type PriorityQueue interface {
 }
 
 type priorityQueue struct {
-	list collection.DList
+	list collection.DList[Priority]
 }
 
 // NewPriorityQueue for queueing elements according to their priority
 func NewPriorityQueue() PriorityQueue {
-	return &priorityQueue{list: collection.NewDList()}
+	return &priorityQueue{list: collection.NewDList[Priority]()}
 }
 
 func (q *priorityQueue) Size() int {
@@ -36,7 +36,8 @@ func (q *priorityQueue) Size() int {
 }
 
 func (q *priorityQueue) Push(p Priority) {
-	var e *collection.DListElement
+	var e *collection.DListElement[Priority]
+
 	for elm := q.list.Head(); elm != nil; elm = elm.Next() {
 		d := q.convert(elm.Data())
 		if d.GetPriority() > p.GetPriority() {

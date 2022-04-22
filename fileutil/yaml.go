@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 
 	yaml "gopkg.in/yaml.v3"
-
 )
 
 // ReadYamlFromFile at path filename into the target interface.

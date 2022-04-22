@@ -1,13 +1,12 @@
 package collection
 
 import (
-	"reflect"
 	"strconv"
 	"testing"
 
 	assert1 "github.com/stretchr/testify/assert"
 
-	"github.com/beaconsoftwarellc/gadget/generator"
+	"github.com/beaconsoftwarellc/gadget/v2/generator"
 )
 
 type TestIndexable struct {
@@ -104,45 +103,14 @@ func TestIndex_Remove(t *testing.T) {
 	assert.False(set.Contains(id))
 }
 
-func Test_stringify(t *testing.T) {
-	type args struct {
-		objs []interface{}
-	}
-	tests := []struct {
-		name string
-		args args
-		want []string
-	}{
-		{
-			args: args{objs: []interface{}{}},
-			want: []string{},
-		},
-		{
-			args: args{objs: []interface{}{"a", "b"}},
-			want: []string{"a", "b"},
-		},
-		{
-			args: args{objs: []interface{}{"a", 1}},
-			want: []string{"a", ""},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := stringify(tt.args.objs); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("stringify() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestIndex_IdsForValue(t *testing.T) {
 	assert := assert1.New(t)
 	fieldName := generator.String(20)
 	fieldValue := generator.String(20)
 	indexFace := NewIndex(fieldName)
 	index := indexFace.(*index)
-	expected := NewSet()
-	actual := NewSet(anonymize(index.LookupValue(fieldValue)...)...)
+	expected := NewSet[string]()
+	actual := NewSet(index.LookupValue(fieldValue)...)
 	assert.Equal(expected, actual)
 
 	for i := 0; i < 10; i++ {
@@ -151,7 +119,7 @@ func TestIndex_IdsForValue(t *testing.T) {
 		index.Add(indexable)
 		expected.Add(id)
 	}
-	actual = NewSet(anonymize(index.LookupValue(fieldValue)...)...)
+	actual = NewSet(index.LookupValue(fieldValue)...)
 	assert.Equal(expected, actual)
 }
 

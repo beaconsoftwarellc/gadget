@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-stack/stack"
 
-	"github.com/beaconsoftwarellc/gadget/errors"
+	"github.com/beaconsoftwarellc/gadget/v2/errors"
 )
 
 // Message encapsulates all fields that can possibly be a log message.

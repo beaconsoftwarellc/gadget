@@ -8,14 +8,14 @@ import (
 
 func TestStack(t *testing.T) {
 	assert := assert1.New(t)
-	stack := NewStack()
+	stack := NewStack[string]()
 	assert.Equal(0, stack.Size())
 	actual, err := stack.Peek()
-	assert.Nil(actual)
+	assert.Empty(actual)
 	assert.Error(err, NewEmptyListError().Error())
 
 	actual, err = stack.Pop()
-	assert.Nil(actual)
+	assert.Empty(actual)
 	assert.Error(err, NewEmptyListError().Error())
 	assert.Equal(0, stack.Size())
 
@@ -51,13 +51,13 @@ func TestStack(t *testing.T) {
 
 	actual, err = stack.Pop()
 	assert.Error(err, NewEmptyListError().Error())
-	assert.Nil(actual)
+	assert.Empty(actual)
 	assert.Equal(0, stack.Size())
 }
 
 func TestStringStack(t *testing.T) {
 	assert := assert1.New(t)
-	stack := NewStringStack()
+	stack := NewStack[string]()
 	assert.Equal(0, stack.Size())
 	actual, err := stack.Peek()
 	assert.Equal("", actual)

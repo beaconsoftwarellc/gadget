@@ -1,45 +1,67 @@
 package collection
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
 
+type args[T comparable] struct {
+	a Set[T]
+	b Set[T]
+}
+
+type testCase[T comparable] struct {
+	args args[T]
+	want Set[T]
+}
+
 func TestUnion(t *testing.T) {
-	type args struct {
-		a Set
-		b Set
-	}
-	tests := []struct {
-		name string
-		args args
-		want Set
-	}{
-		{
-			args: args{a: NewSet(), b: NewSet()},
-			want: NewSet(),
-		},
-		{
-			args: args{a: NewSet(1, 2), b: NewSet(2, 3, 4)},
-			want: NewSet(1, 2, 3, 4),
-		},
-		{
-			args: args{a: NewSet("a"), b: NewSet()},
-			want: NewSet("a"),
-		},
-		{
-			args: args{a: NewSet(), b: NewSet(1)},
-			want: NewSet(1),
-		},
-		{
-			args: args{a: NewSet(1), b: NewSet("a")},
-			want: NewSet(1, "a"),
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := Union(tt.args.a, tt.args.b); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Union() = %v, want %v", got, tt.want)
+	t.Run("ints", func(t *testing.T) {
+		testCases := []testCase[int]{
+			{
+				args: args[int]{a: NewSet(1, 2), b: NewSet(2, 3, 4)},
+				want: NewSet(1, 2, 3, 4),
+			},
+			{
+				args: args[int]{a: NewSet[int](), b: NewSet(1)},
+				want: NewSet(1),
+			},
+			{
+				args: args[int]{a: NewSet[int](), b: NewSet[int]()},
+				want: NewSet[int](),
+			},
+		}
+
+		runUnionTests(t, testCases)
+	})
+
+	t.Run("strings", func(t *testing.T) {
+		testCases := []testCase[string]{
+			{
+				args: args[string]{a: NewSet("1", "2"), b: NewSet("2", "3", "4")},
+				want: NewSet("1", "2", "3", "4"),
+			},
+			{
+				args: args[string]{a: NewSet("b"), b: NewSet("b")},
+				want: NewSet("b"),
+			},
+			{
+				args: args[string]{a: NewSet[string](), b: NewSet[string]()},
+				want: NewSet[string](),
+			},
+		}
+
+		runUnionTests(t, testCases)
+	})
+
+}
+
+func runUnionTests[T comparable](t *testing.T, tcs []testCase[T]) {
+	for i, tc := range tcs {
+		t.Run(fmt.Sprintf("%v", i), func(t *testing.T) {
+			if got := Union(tc.args.a, tc.args.b); !reflect.DeepEqual(got, tc.want) {
+				t.Errorf("Union() = %v, want %v", got, tc.want)
 			}
 		})
 	}
@@ -47,17 +69,17 @@ func TestUnion(t *testing.T) {
 
 func TestDisjunction(t *testing.T) {
 	type args struct {
-		a Set
-		b Set
+		a Set[string]
+		b Set[string]
 	}
 	tests := []struct {
 		name string
 		args args
-		want Set
+		want Set[string]
 	}{
 		{
 			args: args{a: NewSet("a"), b: NewSet("a")},
-			want: NewSet(),
+			want: NewSet[string](),
 		},
 		{
 			args: args{a: NewSet("a", "b"), b: NewSet("a", "b", "c")},
@@ -83,13 +105,13 @@ func TestDisjunction(t *testing.T) {
 
 func TestIntersection(t *testing.T) {
 	type args struct {
-		a Set
-		b Set
+		a Set[string]
+		b Set[string]
 	}
 	tests := []struct {
 		name string
 		args args
-		want Set
+		want Set[string]
 	}{
 		{
 			args: args{a: NewSet("a"), b: NewSet("a")},
@@ -120,11 +142,11 @@ func TestIntersection(t *testing.T) {
 func Test_mapSet_Size(t *testing.T) {
 	tests := []struct {
 		name string
-		ms   Set
+		ms   Set[string]
 		want int
 	}{
 		{
-			ms:   NewSet(),
+			ms:   NewSet[string](),
 			want: 0,
 		},
 		{
@@ -132,7 +154,7 @@ func Test_mapSet_Size(t *testing.T) {
 			want: 1,
 		},
 		{
-			ms:   NewSet(1, 2),
+			ms:   NewSet("1", "2"),
 			want: 2,
 		},
 	}

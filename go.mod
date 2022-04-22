@@ -1,4 +1,4 @@
-module github.com/beaconsoftwarellc/gadget
+module github.com/beaconsoftwarellc/gadget/v2
 
 go 1.18
 

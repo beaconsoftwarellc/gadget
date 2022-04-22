@@ -6,12 +6,12 @@ import (
 
 	assert1 "github.com/stretchr/testify/assert"
 
-	"github.com/beaconsoftwarellc/gadget/generator"
+	"github.com/beaconsoftwarellc/gadget/v2/generator"
 )
 
 func TestRateHashPriorityQueue_Size(t *testing.T) {
 	assert := assert1.New(t)
-	q := NewRateHashPriorityQueue(1, time.Microsecond)
+	q := NewRateHashPriorityQueue[string](1, time.Microsecond)
 	assert.Equal(0, q.Size())
 	sameHash := generator.String(20)
 	q.Push(NewMockHashPriority(2, sameHash))
@@ -31,7 +31,7 @@ func TestRateHashPriorityQueue_Peek(t *testing.T) {
 	assert := assert1.New(t)
 	// this needs to be slow enough that it does not elapse before size is called,
 	// but fast enough that Pop does not take too long to return
-	q := NewRateHashPriorityQueue(1, 10*time.Millisecond)
+	q := NewRateHashPriorityQueue[string](1, 10*time.Millisecond)
 	expected := NewMockHashPriority(3, generator.String(20))
 	q.Push(expected)
 	actual, ok := q.Peek()
@@ -47,8 +47,8 @@ func TestRateHashPriorityQueue_Peek(t *testing.T) {
 
 func TestRateHashPriorityQueue_Stop(t *testing.T) {
 	assert := assert1.New(t)
-	obj := NewRateHashPriorityQueue(1, time.Microsecond)
-	q, ok := obj.(*rhpQueue)
+	obj := NewRateHashPriorityQueue[string](1, time.Microsecond)
+	q, ok := obj.(*rhpQueue[string])
 	assert.True(ok)
 	// making sure Stop is reentrant and does not block forever.
 	q.Stop()
@@ -57,10 +57,10 @@ func TestRateHashPriorityQueue_Stop(t *testing.T) {
 
 func TestRateHashPriorityQueue_Channel(t *testing.T) {
 	assert := assert1.New(t)
-	q := NewRateHashPriorityQueue(1, 1*time.Microsecond)
+	q := NewRateHashPriorityQueue[string](1, 1*time.Microsecond)
 	expected := NewMockHashPriority(3, generator.String(20))
 	q.Push(expected)
-	var actual HashPriority
+	var actual HashPriority[string]
 	select {
 	case actual = <-q.Channel():
 		// noop
@@ -73,7 +73,7 @@ func TestRateHashPriorityQueue_Channel(t *testing.T) {
 func TestRateHashPriorityQueue_Pop(t *testing.T) {
 	assert := assert1.New(t)
 	// we have to get all the elements in before this time elapses once
-	q := NewRateHashPriorityQueue(1, 55*time.Millisecond)
+	q := NewRateHashPriorityQueue[string](1, 55*time.Millisecond)
 	for i := 0; i < 10; i++ {
 		q.Push(NewMockHashPriority(i, generator.String(20)))
 	}
@@ -91,7 +91,7 @@ func TestRateHashPriorityQueue_Pop(t *testing.T) {
 func TestRateHashPriorityQueue_NoLimitPop(t *testing.T) {
 	assert := assert1.New(t)
 	// we have to get all the elements in before this time elapses once
-	q := NewRateHashPriorityQueue(1, 50*time.Millisecond)
+	q := NewRateHashPriorityQueue[string](1, 50*time.Millisecond)
 	for i := 0; i < 10; i++ {
 		q.Push(NewMockHashPriority(i, generator.String(20)))
 	}

@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/beaconsoftwarellc/gadget/database"
-	"github.com/beaconsoftwarellc/gadget/database/qb"
-	"github.com/beaconsoftwarellc/gadget/errors"
-	"github.com/beaconsoftwarellc/gadget/generator"
+	"github.com/beaconsoftwarellc/gadget/v2/database"
+	"github.com/beaconsoftwarellc/gadget/v2/database/qb"
+	"github.com/beaconsoftwarellc/gadget/v2/errors"
+	"github.com/beaconsoftwarellc/gadget/v2/generator"
 	assert1 "github.com/stretchr/testify/assert"
 )
 

@@ -4,28 +4,28 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/beaconsoftwarellc/gadget/timeutil"
+	"github.com/beaconsoftwarellc/gadget/v2/timeutil"
 )
 
 // RateHashPriorityQueue allows prioritized unique elements to be emitted
 // at a specific rate.
-type RateHashPriorityQueue interface {
-	HashPriorityQueue
+type RateHashPriorityQueue[T comparable] interface {
+	HashPriorityQueue[T]
 	// NoLimitPop the highest priority element off the queue ignoring the rate limit
 	// for the purpose of batching commands
-	NoLimitPop() (HashPriority, bool)
+	NoLimitPop() (HashPriority[T], bool)
 	// Channel that can be used instead of Pop
-	Channel() <-chan HashPriority
+	Channel() <-chan HashPriority[T]
 	// Stop this RateHashPriorityQueue so that it can be garbage collected.
 	Stop()
 }
 
 // NewRateHashPriorityQueue that will return at max 'n' elements per 'rate' duration.
-func NewRateHashPriorityQueue(n int, rate time.Duration) RateHashPriorityQueue {
-	q := &rhpQueue{
+func NewRateHashPriorityQueue[T comparable](n int, rate time.Duration) RateHashPriorityQueue[T] {
+	q := &rhpQueue[T]{
 		rate:    rate,
-		queue:   NewHashPriorityQueue(),
-		channel: make(chan HashPriority, n),
+		queue:   NewHashPriorityQueue[T](),
+		channel: make(chan HashPriority[T], n),
 		stop:    make(chan bool),
 	}
 	go q.run()
@@ -33,15 +33,15 @@ func NewRateHashPriorityQueue(n int, rate time.Duration) RateHashPriorityQueue {
 }
 
 // rhpQueue implementes the RateHashPriorityQueue interface
-type rhpQueue struct {
+type rhpQueue[T comparable] struct {
 	rate    time.Duration
-	queue   HashPriorityQueue
+	queue   HashPriorityQueue[T]
 	size    int32
-	channel chan HashPriority
+	channel chan HashPriority[T]
 	stop    chan bool
 }
 
-func (q *rhpQueue) run() {
+func (q *rhpQueue[T]) run() {
 	ticker := timeutil.NewTicker(q.rate).Start()
 	for {
 		select {
@@ -62,28 +62,28 @@ func (q *rhpQueue) run() {
 	}
 }
 
-func (q *rhpQueue) Size() int {
+func (q *rhpQueue[T]) Size() int {
 	return int(atomic.LoadInt32(&q.size))
 }
 
-func (q *rhpQueue) Push(element HashPriority) {
+func (q *rhpQueue[T]) Push(element HashPriority[T]) {
 	q.queue.Push(element)
 	atomic.StoreInt32(&q.size, int32(q.queue.Size()))
 }
 
-func (q *rhpQueue) Pop() (HashPriority, bool) {
+func (q *rhpQueue[T]) Pop() (HashPriority[T], bool) {
 	return <-q.channel, true
 }
 
-func (q *rhpQueue) Channel() <-chan HashPriority {
+func (q *rhpQueue[T]) Channel() <-chan HashPriority[T] {
 	return q.channel
 }
 
-func (q *rhpQueue) Peek() (HashPriority, bool) {
+func (q *rhpQueue[T]) Peek() (HashPriority[T], bool) {
 	return q.queue.Peek()
 }
 
-func (q *rhpQueue) NoLimitPop() (HashPriority, bool) {
+func (q *rhpQueue[T]) NoLimitPop() (HashPriority[T], bool) {
 	select {
 	case elm := <-q.channel:
 		return elm, true
@@ -96,7 +96,7 @@ func (q *rhpQueue) NoLimitPop() (HashPriority, bool) {
 	}
 }
 
-func (q *rhpQueue) Stop() {
+func (q *rhpQueue[T]) Stop() {
 	// non-blocking so that this is reentrant
 	select {
 	case q.stop <- true:
