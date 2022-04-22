@@ -18,7 +18,7 @@ func (mp *MockHashPriority) GetPriority() int {
 	return mp.priority
 }
 
-func (mp *MockHashPriority) GetHash() interface{} {
+func (mp *MockHashPriority) GetHash() string {
 	return mp.hash
 }
 
@@ -28,7 +28,7 @@ func NewMockHashPriority(p int, s string) *MockHashPriority {
 
 func TestHashPriorityQueue_Size(t *testing.T) {
 	assert := assert1.New(t)
-	q := NewHashPriorityQueue()
+	q := NewHashPriorityQueue[string]()
 	assert.Equal(0, q.Size())
 	sameHash := generator.String(20)
 	q.Push(NewMockHashPriority(2, sameHash))
@@ -43,7 +43,7 @@ func TestHashPriorityQueue_Size(t *testing.T) {
 
 func TestHashPriorityQueue_Peek(t *testing.T) {
 	assert := assert1.New(t)
-	q := NewHashPriorityQueue()
+	q := NewHashPriorityQueue[string]()
 	expected := NewMockHashPriority(3, generator.String(20))
 	q.Push(expected)
 	actual, ok := q.Peek()
@@ -90,7 +90,7 @@ func TestHashPriorityQueue(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			q := NewHashPriorityQueue()
+			q := NewHashPriorityQueue[string]()
 			for i := 0; i < len(tt.pinput); i++ {
 				q.Push(NewMockHashPriority(tt.pinput[i], tt.hinput[i]))
 			}

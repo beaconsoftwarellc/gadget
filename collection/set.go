@@ -5,7 +5,7 @@ import (
 )
 
 // Set data structure methods.
-type Set[T any] interface {
+type Set[T comparable] interface {
 	// Add the passed objects to the set
 	Add(objs ...T) Set[T]
 	// Remove the passed objects from the set
@@ -21,7 +21,7 @@ type Set[T any] interface {
 }
 
 // Union of sets a and b as a new set of the same type as a.
-func Union[T any](a, b Set[T]) Set[T] {
+func Union[T comparable](a, b Set[T]) Set[T] {
 	result := a.New()
 	result.Add(a.Elements()...)
 	result.Add(b.Elements()...)
@@ -29,12 +29,12 @@ func Union[T any](a, b Set[T]) Set[T] {
 }
 
 // Disjunction of sets a and b as a new set of the same type as a.
-func Disjunction[T any](a, b Set[T]) Set[T] {
+func Disjunction[T comparable](a, b Set[T]) Set[T] {
 	return Union(a, b).Remove(Intersection(a, b).Elements()...)
 }
 
 // Intersection of sets a and b as a new set of the same type as a.
-func Intersection[T any](a, b Set[T]) Set[T] {
+func Intersection[T comparable](a, b Set[T]) Set[T] {
 	result := a.New()
 	for _, e := range b.Elements() {
 		if a.Contains(e) {
@@ -49,15 +49,15 @@ func Intersection[T any](a, b Set[T]) Set[T] {
 	return result
 }
 
-type mapSet[T any] struct {
+type mapSet[T comparable] struct {
 	mutex sync.RWMutex
 	// empty interface with nil stored is smaller than bool
-	m map[interface{}]interface{}
+	m map[T]interface{}
 }
 
 // NewSet instance.
-func NewSet[T any](objs ...T) Set[T] {
-	ms := &mapSet[T]{m: make(map[interface{}]interface{}, len(objs))}
+func NewSet[T comparable](objs ...T) Set[T] {
+	ms := &mapSet[T]{m: make(map[T]interface{}, len(objs))}
 	return ms.Add(objs...)
 }
 
@@ -96,7 +96,7 @@ func (ms *mapSet[T]) Elements() []T {
 	i := 0
 	keys := make([]T, len(ms.m))
 	for k := range ms.m {
-		keys[i] = k.(T)
+		keys[i] = k
 		i++
 	}
 	return keys
