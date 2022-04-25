@@ -98,24 +98,32 @@ func TOTPCompare(key string, period time.Duration, adjust int, length int, chall
 
 // TOTPCompareWithVariance the expected TOTP calculation with the challenge in constant time. If variance is > 0
 // constant time execution is not guaranteed, allows for totp to fall with the variance range of steps + or -
-func TOTPCompareWithVariance(key string, period time.Duration, length int, variance uint, challenge string) (bool, error) {
+func TOTPCompareWithVariance(key string, period time.Duration, length int, variance uint, challenge string) (ok bool, err error) {
+	ok, _, err = TOTPCompareAndGetVariance(key, period, length, variance, challenge)
+	return
+}
+
+// TOTPCompareAndGetVariance the expected TOTP calculation with the challenge in constant time. If variance is > 0
+// constant time execution is not guaranteed, allows for totp to fall with the variance range of steps + or -, variance is returned
+func TOTPCompareAndGetVariance(key string, period time.Duration, length int, variance uint, challenge string) (bool, int, error) {
 	var eq bool
 	var err error
 	// do 0, +1 && -1, +2 && -2, etc.
 	for vary := 0; vary <= int(variance); vary++ {
 		eq, err = TOTPCompare(key, period, vary, length, challenge)
 		if nil != err || eq {
-			return eq, err
+			return eq, vary, err
 		}
 		if vary == 0 {
 			continue
 		}
 		eq, err = TOTPCompare(key, period, vary*-1, length, challenge)
 		if nil != err || eq {
-			return eq, err
+			return eq, -1 * vary, err
 		}
 	}
-	return false, nil
+
+	return false, 0, nil
 }
 
 // GenerateTOTPURI for use in a QR code for registration with an authenticator application

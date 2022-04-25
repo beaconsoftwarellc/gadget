@@ -3,9 +3,10 @@ package crypto
 import (
 	"crypto/sha1"
 	"encoding/base32"
-	assert1 "github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	assert1 "github.com/stretchr/testify/assert"
 )
 
 func TestDynamicTruncate(t *testing.T) {
@@ -197,6 +198,33 @@ func TestTOTPCompareWithVariance(t *testing.T) {
 	eq, err = TOTPCompareWithVariance(key, 30*time.Second, 6, 2, totp)
 	assert.NoError(err)
 	assert.True(eq)
+}
+
+func TestTOTPCompareAndGetVariance(t *testing.T) {
+	assert := assert1.New(t)
+	key, _ := NewOTPKey()
+	totp, _ := TOTP(key, 30*time.Second, 0, 6)
+	eq, vary, err := TOTPCompareAndGetVariance(key, 30*time.Second, 6, 0, totp)
+	assert.NoError(err)
+	assert.True(eq)
+	assert.Equal(vary, 0)
+
+	totp, _ = TOTP(key, 30*time.Second, 2, 6)
+	eq, vary, err = TOTPCompareAndGetVariance(key, 30*time.Second, 6, 1, totp)
+	assert.NoError(err)
+	assert.False(eq)
+	assert.Equal(vary, 0)
+
+	eq, vary, err = TOTPCompareAndGetVariance(key, 30*time.Second, 6, 2, totp)
+	assert.NoError(err)
+	assert.True(eq)
+	assert.Equal(vary, 2)
+
+	totp, _ = TOTP(key, 30*time.Second, -1, 6)
+	eq, vary, err = TOTPCompareAndGetVariance(key, 30*time.Second, 6, 2, totp)
+	assert.NoError(err)
+	assert.True(eq)
+	assert.Equal(vary, -1)
 }
 
 func TestGenerateTOTPURI(t *testing.T) {
