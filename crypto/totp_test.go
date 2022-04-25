@@ -200,28 +200,28 @@ func TestTOTPCompareWithVariance(t *testing.T) {
 	assert.True(eq)
 }
 
-func TestTOTPCompareAndGetVariance(t *testing.T) {
+func TestTOTPCompareAndGetDrift(t *testing.T) {
 	assert := assert1.New(t)
 	key, _ := NewOTPKey()
 	totp, _ := TOTP(key, 30*time.Second, 0, 6)
-	eq, vary, err := TOTPCompareAndGetVariance(key, 30*time.Second, 6, 0, totp)
+	eq, vary, err := TOTPCompareAndGetDrift(key, 30*time.Second, 6, 0, totp)
 	assert.NoError(err)
 	assert.True(eq)
 	assert.Equal(vary, 0)
 
 	totp, _ = TOTP(key, 30*time.Second, 2, 6)
-	eq, vary, err = TOTPCompareAndGetVariance(key, 30*time.Second, 6, 1, totp)
+	eq, vary, err = TOTPCompareAndGetDrift(key, 30*time.Second, 6, 1, totp)
 	assert.NoError(err)
 	assert.False(eq)
 	assert.Equal(vary, 0)
 
-	eq, vary, err = TOTPCompareAndGetVariance(key, 30*time.Second, 6, 2, totp)
+	eq, vary, err = TOTPCompareAndGetDrift(key, 30*time.Second, 6, 2, totp)
 	assert.NoError(err)
 	assert.True(eq)
 	assert.Equal(vary, 2)
 
 	totp, _ = TOTP(key, 30*time.Second, -1, 6)
-	eq, vary, err = TOTPCompareAndGetVariance(key, 30*time.Second, 6, 2, totp)
+	eq, vary, err = TOTPCompareAndGetDrift(key, 30*time.Second, 6, 2, totp)
 	assert.NoError(err)
 	assert.True(eq)
 	assert.Equal(vary, -1)

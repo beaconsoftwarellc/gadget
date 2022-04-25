@@ -99,13 +99,13 @@ func TOTPCompare(key string, period time.Duration, adjust int, length int, chall
 // TOTPCompareWithVariance the expected TOTP calculation with the challenge in constant time. If variance is > 0
 // constant time execution is not guaranteed, allows for totp to fall with the variance range of steps + or -
 func TOTPCompareWithVariance(key string, period time.Duration, length int, variance uint, challenge string) (ok bool, err error) {
-	ok, _, err = TOTPCompareAndGetVariance(key, period, length, variance, challenge)
+	ok, _, err = TOTPCompareAndGetDrift(key, period, length, variance, challenge)
 	return
 }
 
-// TOTPCompareAndGetVariance the expected TOTP calculation with the challenge in constant time. If variance is > 0
+// TOTPCompareAndGetDrift the expected TOTP calculation with the challenge in constant time. If variance is > 0
 // constant time execution is not guaranteed, allows for totp to fall with the variance range of steps + or -, variance is returned
-func TOTPCompareAndGetVariance(key string, period time.Duration, length int, variance uint, challenge string) (bool, int, error) {
+func TOTPCompareAndGetDrift(key string, period time.Duration, length int, variance uint, challenge string) (bool, int, error) {
 	var eq bool
 	var err error
 	// do 0, +1 && -1, +2 && -2, etc.
