@@ -15,7 +15,9 @@ import (
 	"time"
 
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
+	"github.com/beaconsoftwarellc/gadget/v2/intutil"
 	"github.com/skip2/go-qrcode"
+	"golang.org/x/exp/slices"
 )
 
 // NewOTPKey for use with HOTP or TOTP as a base32 encoded string
@@ -99,27 +101,42 @@ func TOTPCompare(key string, period time.Duration, adjust int, length int, chall
 // TOTPCompareWithVariance the expected TOTP calculation with the challenge in constant time. If variance is > 0
 // constant time execution is not guaranteed, allows for totp to fall with the variance range of steps + or -
 func TOTPCompareWithVariance(key string, period time.Duration, length int, variance uint, challenge string) (ok bool, err error) {
-	ok, _, err = TOTPCompareAndGetDrift(key, period, length, variance, challenge)
+	ok, _, err = TOTPCompareAndGetDrift(key, period, length, variance, challenge, 0)
 	return
 }
 
 // TOTPCompareAndGetDrift the expected TOTP calculation with the challenge in constant time. If variance is > 0
 // constant time execution is not guaranteed, allows for totp to fall with the variance range of steps + or -, variance is returned
-func TOTPCompareAndGetDrift(key string, period time.Duration, length int, variance uint, challenge string) (bool, int, error) {
+func TOTPCompareAndGetDrift(key string, period time.Duration, length int, variance uint, challenge string, drift int) (bool, int, error) {
 	var eq bool
 	var err error
-	// do 0, +1 && -1, +2 && -2, etc.
-	for vary := 0; vary <= int(variance); vary++ {
-		eq, err = TOTPCompare(key, period, vary, length, challenge)
+
+	// create initial vary
+	vary := make([]int, 0, int(variance)*2+1+drift)
+
+	for i := -int(variance); i <= int(variance); i++ {
+		vary = append(vary, i)
+	}
+
+	// add to vary if drift > 0
+	for i := drift; i > 0; i-- {
+		vary = append(vary, i+int(variance))
+	}
+
+	// add to vary if drift < 0
+	for i := drift; i < 0; i++ {
+		vary = append(vary, i-int(variance))
+	}
+
+	// sort vary to do 0, +1 && -1, +2 && -2, etc.
+	slices.SortFunc(vary, func(a, b int) bool {
+		return intutil.Abs(a) < intutil.Abs(b)
+	})
+
+	for _, v := range vary {
+		eq, err = TOTPCompare(key, period, v, length, challenge)
 		if nil != err || eq {
-			return eq, vary, err
-		}
-		if vary == 0 {
-			continue
-		}
-		eq, err = TOTPCompare(key, period, vary*-1, length, challenge)
-		if nil != err || eq {
-			return eq, -1 * vary, err
+			return eq, v, err
 		}
 	}
 
