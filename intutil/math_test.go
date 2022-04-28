@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	assert1 "github.com/stretchr/testify/assert"
+	"golang.org/x/exp/constraints"
 )
 
 func TestMin(t *testing.T) {
@@ -19,6 +20,22 @@ func TestMin(t *testing.T) {
 	}
 	for _, data := range testData {
 		assert.Equal(data.expected, Min(data.a, data.b))
+	}
+}
+
+func TestMinv(t *testing.T) {
+	assert := assert1.New(t)
+	var testData = []struct {
+		data     []int
+		expected int
+	}{
+		{[]int{}, 0},
+		{[]int{1, 2, 3, 4, 5}, 1},
+		{[]int{5, 4, 3, 2, 1}, 1},
+		{[]int{5, 5, 5, 5, 5}, 5},
+	}
+	for _, test := range testData {
+		assert.Equal(test.expected, Minv(test.data...))
 	}
 }
 
@@ -52,6 +69,62 @@ func TestMaxv(t *testing.T) {
 	for _, test := range testData {
 		assert.Equal(test.expected, Maxv(test.data...))
 	}
+}
+
+func TestAbs(t *testing.T) {
+	type testcase[T constraints.Signed] struct {
+		intput   T
+		expected T
+	}
+
+	var testData = struct {
+		inttype   []testcase[int]
+		int32type []testcase[int32]
+	}{
+		inttype: []testcase[int]{
+			{
+				intput:   5,
+				expected: 5,
+			},
+			{
+				intput:   0,
+				expected: 0,
+			},
+			{
+				intput:   -1,
+				expected: 1,
+			},
+		},
+		int32type: []testcase[int32]{
+			{
+				intput:   5,
+				expected: 5,
+			},
+			{
+				intput:   0,
+				expected: 0,
+			},
+			{
+				intput:   -1,
+				expected: 1,
+			},
+		},
+	}
+
+	t.Run("int", func(t *testing.T) {
+		assert := assert1.New(t)
+		for _, test := range testData.inttype {
+			assert.Equal(test.expected, Abs(test.intput))
+		}
+	})
+
+	t.Run("int32", func(t *testing.T) {
+		assert := assert1.New(t)
+		for _, test := range testData.int32type {
+			assert.Equal(test.expected, Abs(test.intput))
+		}
+	})
+
 }
 
 func TestDecrementor_Decrement_Resets(t *testing.T) {

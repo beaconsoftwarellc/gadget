@@ -111,29 +111,18 @@ func TOTPCompareAndGetDrift(key string, period time.Duration, length int, varian
 	var eq bool
 	var err error
 
-	// create initial vary
-	vary := make([]int, 0, int(variance)*2+1+drift)
-
-	for i := -int(variance); i <= int(variance); i++ {
-		vary = append(vary, i)
+	frames := make([]int, 2*variance+1)
+	i := drift - int(variance)
+	for j := 0; j < len(frames); j++ {
+		frames[j] = i
+		i++
 	}
 
-	// add to vary if drift > 0
-	for i := drift; i > 0; i-- {
-		vary = append(vary, i+int(variance))
-	}
-
-	// add to vary if drift < 0
-	for i := drift; i < 0; i++ {
-		vary = append(vary, i-int(variance))
-	}
-
-	// sort vary to do 0, +1 && -1, +2 && -2, etc.
-	slices.SortFunc(vary, func(a, b int) bool {
+	slices.SortFunc(frames, func(a, b int) bool {
 		return intutil.Abs(a) < intutil.Abs(b)
 	})
 
-	for _, v := range vary {
+	for _, v := range frames {
 		eq, err = TOTPCompare(key, period, v, length, challenge)
 		if nil != err || eq {
 			return eq, v, err
