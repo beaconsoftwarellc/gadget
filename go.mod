@@ -12,6 +12,7 @@ require (
 	github.com/mattes/migrate v3.0.1+incompatible
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	github.com/stretchr/testify v1.7.1
+	golang.org/x/exp v0.0.0-20220414153411-bcd21879b8fd
 	google.golang.org/grpc v1.45.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )

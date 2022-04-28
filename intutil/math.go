@@ -1,8 +1,9 @@
 package intutil
 
 import (
-	"math"
 	"sync/atomic"
+
+	"golang.org/x/exp/constraints"
 )
 
 // Constants
@@ -14,12 +15,16 @@ const (
 )
 
 // Abs value of an int
-func Abs(a int) int {
-	return int(math.Abs(float64(a)))
+func Abs[T constraints.Signed](a T) T {
+	if a < 0 {
+		return -a
+	}
+
+	return a
 }
 
 // Min returns the smaller of a or b
-func Min(a, b int) int {
+func Min[T constraints.Ordered](a, b T) T {
 	if a < b {
 		return a
 	}
@@ -27,19 +32,23 @@ func Min(a, b int) int {
 }
 
 // Minv returns the smallest int passed in the variadic argument.
-func Minv(ints ...int) int {
+func Minv[T constraints.Ordered](ints ...T) T {
+	var min T
 	if len(ints) == 0 {
-		return 0
+		return min
 	}
-	min := ints[0]
+
+	min = ints[0]
+
 	for _, i := range ints {
 		min = Min(min, i)
 	}
+
 	return min
 }
 
 // Max returns the larger of a or b
-func Max(a, b int) int {
+func Max[T constraints.Ordered](a, b T) T {
 	if a > b {
 		return a
 	}
@@ -47,15 +56,19 @@ func Max(a, b int) int {
 }
 
 // Maxv returns the largest int passed in the variadic argument.
-func Maxv(ints ...int) int {
+func Maxv[T constraints.Ordered](ints ...T) T {
+	var min T
 	if len(ints) == 0 {
-		return 0
+		return min
 	}
-	max := ints[0]
+
+	min = ints[0]
+
 	for _, i := range ints {
-		max = Max(max, i)
+		min = Max(min, i)
 	}
-	return max
+
+	return min
 }
 
 // Decrementor defines a class that allows multiple threads/processes to act upon to decrement a counter
