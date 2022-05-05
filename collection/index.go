@@ -6,12 +6,14 @@ type GetIndexedValue[T, Y comparable] func(obj T) []Y
 // Index for a field comparable field of type Y that is a member of objects of
 // type T
 type Index[T, Y comparable] interface {
-	// Add the passed comparable to the index
+	// Add the passed comparables to the index
 	Add(...T)
 	// Get indexed object by indexed value
 	Get(Y) []T
 	// Remove the passed comparable from the index
 	Remove(T)
+	// Len is the cardinality of the set of keys Y
+	Len() int
 }
 
 type index[T, Y comparable] struct {
@@ -20,11 +22,12 @@ type index[T, Y comparable] struct {
 }
 
 // NewIndex for the field of type Y that is a member of type T
-func NewIndex[T, Y comparable](getter GetIndexedValue[T, Y]) Index[T, Y] {
+func NewIndex[T, Y comparable](getter GetIndexedValue[T, Y], init ...T) Index[T, Y] {
 	idx := &index[T, Y]{
 		getter: getter,
 		index:  make(map[Y]Set[T]),
 	}
+	idx.Add(init...)
 	return idx
 }
 
@@ -56,8 +59,16 @@ func (idx *index[T, Y]) Add(objs ...T) {
 func (idx *index[T, Y]) Remove(obj T) {
 	for _, value := range idx.getter(obj) {
 		objs, ok := idx.index[value]
-		if ok {
-			objs.Remove(obj)
+		if !ok {
+			continue
+		}
+		objs.Remove(obj)
+		if objs.Size() == 0 {
+			delete(idx.index, value)
 		}
 	}
+}
+
+func (idx *index[T, Y]) Len() int {
+	return len(idx.index)
 }
