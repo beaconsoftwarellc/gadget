@@ -16,20 +16,20 @@ func GetF(t Testable) []int {
 	return []int{t.F}
 }
 
-func TestNewIndex(t *testing.T) {
+func TestNewPivot(t *testing.T) {
 	assert := assert1.New(t)
-	actual := NewIndex(GetF)
+	actual := NewPivot(GetF)
 	assert.NotNil(actual)
 	assert.Equal(0, actual.Len())
 
-	actual = NewIndex(GetF, Testable{F: 1})
+	actual = NewPivot(GetF, Testable{F: 1})
 	assert.NotNil(actual)
 	assert.Equal(1, actual.Len())
 }
 
-func TestIndex_Add(t *testing.T) {
+func TestPivot_Add(t *testing.T) {
 	assert := assert1.New(t)
-	actual := NewIndex(GetF)
+	actual := NewPivot(GetF)
 	expected := Testable{A: "0", F: generator.Int()}
 	expected1 := Testable{A: "1", F: generator.Int()}
 
@@ -45,9 +45,9 @@ func TestIndex_Add(t *testing.T) {
 	assert.ElementsMatch([]Testable{expected1}, actual.Get(expected1.F))
 }
 
-func TestIndex_Len(t *testing.T) {
+func TestPivot_Len(t *testing.T) {
 	assert := assert1.New(t)
-	actual := NewIndex(GetF)
+	actual := NewPivot(GetF)
 	assert.Equal(0, actual.Len())
 	testable := Testable{F: generator.Int()}
 	actual.Add(testable)
@@ -60,20 +60,20 @@ func TestIndex_Len(t *testing.T) {
 	assert.Equal(1, actual.Len())
 }
 
-func TestIndex_Get_Empty(t *testing.T) {
+func TestPivot_Get_Empty(t *testing.T) {
 	assert := assert1.New(t)
-	idx := NewIndex(GetF)
-	actual := idx.Get(generator.Int())
+	p := NewPivot(GetF)
+	actual := p.Get(generator.Int())
 	assert.Empty(actual)
-	idx.Add(Testable{F: generator.Int()})
-	idx.Add(Testable{F: generator.Int()})
-	actual = idx.Get(generator.Int())
+	p.Add(Testable{F: generator.Int()})
+	p.Add(Testable{F: generator.Int()})
+	actual = p.Get(generator.Int())
 	assert.Empty(actual)
 }
 
-func TestIndex_Remove(t *testing.T) {
+func TestPivot_Remove(t *testing.T) {
 	assert := assert1.New(t)
-	actual := NewIndex(GetF)
+	actual := NewPivot(GetF)
 	testable := Testable{A: "0", F: generator.Int()}
 	assert.NotPanics(func() { actual.Remove(testable) })
 
