@@ -1,6 +1,7 @@
 package database
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -11,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattes/migrate/database/mysql" // imported for side effect as driver for mysql
 	_ "github.com/mattes/migrate/source/file"    // imported for side effect as driver for migrate
@@ -157,7 +157,7 @@ func (bs *bootstrapper) WriteSQL(filename string, output []string) {
 }
 
 func (bs *bootstrapper) Insert(record Record) error {
-	if "" != record.PrimaryKey().Value() {
+	if record.PrimaryKey().Value() != "" {
 		err := bs.db.UpsertTx(record, bs.TX())
 		return err
 	}
@@ -172,7 +172,7 @@ func (bs *bootstrapper) toSQLString(val interface{}) string {
 		return strconv.FormatBool(v)
 	}
 	if v, ok := val.(map[string]interface{}); ok {
-		nullTime := &mysql.NullTime{}
+		nullTime := &sql.NullTime{}
 		nullTime.Scan(v["Time"])
 		if nullTime.Valid {
 			return fmt.Sprintf("'%s'", nullTime.Time.Format(mysqlTimestampFormat))

@@ -20,13 +20,13 @@ func generateSQLFiles(migrations map[string]string) (string, error) {
 	_, err := fileutil.EnsureDir(basepath, 0777)
 
 	if nil != err {
-		return "", fmt.Errorf("Unable to create directory %s\n%s", basepath, err)
+		return "", fmt.Errorf("unable to create directory %s\n%s", basepath, err)
 	}
 
 	for filename, data := range migrations {
 		f, err := os.Create(path.Join(basepath, filename))
 		if nil != err {
-			return "", fmt.Errorf("Unable to write %s to %s for database migrations\n%s", filename, basepath, err)
+			return "", fmt.Errorf("unable to write %s to %s for database migrations\n%s", filename, basepath, err)
 		}
 		defer f.Close()
 		f.WriteString(data)
@@ -51,7 +51,7 @@ func Migrate(migrations map[string]string, dbURL string) {
 	defer m.Close()
 
 	// Migrate all the way up ...
-	if err := m.Up(); err != nil && "no change" != err.Error() {
+	if err := m.Up(); err != nil && err.Error() != "no change" {
 		msg := fmt.Sprintf("Migration ERROR: %#v", err)
 		log.Fatalf(msg)
 		panic(msg)
