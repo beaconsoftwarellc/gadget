@@ -3,6 +3,7 @@ package database
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -10,6 +11,7 @@ import (
 	"github.com/beaconsoftwarellc/gadget/v2/database/qb"
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
 	"github.com/beaconsoftwarellc/gadget/v2/log"
+	"github.com/beaconsoftwarellc/gadget/v2/stringutil"
 )
 
 const (
@@ -177,7 +179,7 @@ const MaxLimit = 100
 
 // NewListOptions generates a ListOptions
 func NewListOptions(limit uint, offset uint) *ListOptions {
-	if 0 == limit {
+	if limit == 0 {
 		limit = 1
 	} else if limit > MaxLimit {
 		limit = MaxLimit
@@ -236,10 +238,23 @@ type Database struct {
 	Logger log.Logger
 }
 
+func obfuscateConnection(connection string) string {
+	obfuscateIndex := strings.LastIndex(connection, "@")
+	obfuscatedConnection := connection
+	if obfuscateIndex > 0 {
+		// no '@' means the credentials are not part of the connection and we do not
+		// need to obfuscate
+		obfuscatedConnection = stringutil.ObfuscateLeft(obfuscatedConnection,
+			obfuscateIndex, "*")
+	}
+	return obfuscatedConnection
+}
+
 // Initialize establishes the database connection
 func Initialize(config Config) *Database {
 	logger := log.New("Database", log.FunctionFromEnv())
-	log.Infof("initializing database connection: %s, %s", config.DatabaseDialect(), config.DatabaseConnection())
+	obfuscatedConnection := obfuscateConnection(config.DatabaseConnection())
+	log.Infof("initializing database connection: %s, %s", config.DatabaseDialect(), obfuscatedConnection)
 	var err errors.TracerError
 	var conn *sqlx.DB
 	for retries := 0; retries < config.NumberOfRetries(); retries++ {
@@ -253,7 +268,7 @@ func Initialize(config Config) *Database {
 	if nil != err {
 		panic(err)
 	}
-	log.Infof("database connection success: %s, %s", config.DatabaseDialect(), config.DatabaseConnection())
+	log.Infof("database connection success: %s, %s", config.DatabaseDialect(), obfuscatedConnection)
 	return &Database{DB: conn, Logger: logger}
 }
 

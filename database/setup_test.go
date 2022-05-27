@@ -7,8 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mattes/migrate"
-
 	"github.com/beaconsoftwarellc/gadget/v2/database/qb"
 	"github.com/beaconsoftwarellc/gadget/v2/environment"
 	"github.com/beaconsoftwarellc/gadget/v2/generator"
@@ -280,24 +278,6 @@ func initialize() string {
 func NewTestDuper() *TestDuper {
 	return &TestDuper{
 		intializer: initialize,
-	}
-}
-
-func rollback(migrations map[string]string, dbURL string) {
-	sqlFilesPath, _ := generateSQLFiles(migrations)
-	m, err := migrate.New(sqlFilesPath, dbURL)
-	if err != nil {
-		msg := fmt.Sprintf("couldn't load migration scripts from %s (%s)", sqlFilesPath, err)
-		log.Fatalf(msg)
-		panic(msg)
-	}
-	defer m.Close()
-
-	// Migrate all the way down ...
-	if err := m.Down(); err != nil {
-		msg := fmt.Sprintf("Rollback ERROR: %#v", err)
-		log.Fatalf(msg)
-		panic(msg)
 	}
 }
 

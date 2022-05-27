@@ -447,7 +447,6 @@ func TestTransaction(t *testing.T) {
 }
 
 type initDupe struct {
-	i    int
 	base string
 }
 
@@ -619,5 +618,38 @@ func TestSelect(t *testing.T) {
 	err = spec.DB.SelectTx(tx, &actual, query)
 	if assert.NoError(err) {
 		assert.Equal(2, len(actual))
+	}
+}
+
+func Test_obfuscateConnect(t *testing.T) {
+	tests := []struct {
+		name     string
+		arg      string
+		expected string
+	}{
+		{
+			name:     "empty",
+			arg:      "",
+			expected: "",
+		},
+		{
+			name:     "no credentials",
+			arg:      "foo.com",
+			expected: "foo.com",
+		},
+		{
+			name:     "credentials",
+			arg:      "user:password@foo.com",
+			expected: "*************@foo.com",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actual := obfuscateConnection(test.arg)
+			if actual != test.expected {
+				t.Errorf("obfuscateConnection(\"%s\") = \"%s\", expected \"%s\"",
+					test.arg, actual, test.expected)
+			}
+		})
 	}
 }
