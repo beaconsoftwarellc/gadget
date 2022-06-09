@@ -158,3 +158,67 @@ func TestDecrementor_Decrement(t *testing.T) {
 	<-ch
 	<-ch
 }
+
+func TestRange(t *testing.T) {
+	type testcase[T constraints.Signed] struct {
+		intput   T
+		expected T
+		min      T
+		max      T
+	}
+
+	var testData = struct {
+		inttype   []testcase[int]
+		int32type []testcase[int32]
+	}{
+		inttype: []testcase[int]{
+			{
+				intput:   5,
+				expected: 5,
+				min:      0,
+				max:      6,
+			},
+			{
+				intput:   0,
+				expected: 1,
+				min:      1,
+				max:      6,
+			},
+			{
+				intput:   -1,
+				expected: -10,
+				max:      -10,
+				min:      -100,
+			},
+		},
+		int32type: []testcase[int32]{
+			{
+				intput:   5,
+				expected: 5,
+				min:      0,
+				max:      6,
+			},
+			{
+				intput:   0,
+				expected: 1,
+				min:      1,
+				max:      6,
+			},
+		},
+	}
+
+	t.Run("int", func(t *testing.T) {
+		assert := assert1.New(t)
+		for _, test := range testData.inttype {
+			assert.Equal(test.expected, Range(test.intput, test.min, test.max))
+		}
+	})
+
+	t.Run("int32", func(t *testing.T) {
+		assert := assert1.New(t)
+		for _, test := range testData.int32type {
+			assert.Equal(test.expected, Range(test.intput, test.min, test.max))
+		}
+	})
+
+}
