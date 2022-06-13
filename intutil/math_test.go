@@ -73,7 +73,7 @@ func TestMaxv(t *testing.T) {
 
 func TestAbs(t *testing.T) {
 	type testcase[T constraints.Signed] struct {
-		intput   T
+		input    T
 		expected T
 	}
 
@@ -83,29 +83,29 @@ func TestAbs(t *testing.T) {
 	}{
 		inttype: []testcase[int]{
 			{
-				intput:   5,
+				input:    5,
 				expected: 5,
 			},
 			{
-				intput:   0,
+				input:    0,
 				expected: 0,
 			},
 			{
-				intput:   -1,
+				input:    -1,
 				expected: 1,
 			},
 		},
 		int32type: []testcase[int32]{
 			{
-				intput:   5,
+				input:    5,
 				expected: 5,
 			},
 			{
-				intput:   0,
+				input:    0,
 				expected: 0,
 			},
 			{
-				intput:   -1,
+				input:    -1,
 				expected: 1,
 			},
 		},
@@ -114,14 +114,14 @@ func TestAbs(t *testing.T) {
 	t.Run("int", func(t *testing.T) {
 		assert := assert1.New(t)
 		for _, test := range testData.inttype {
-			assert.Equal(test.expected, Abs(test.intput))
+			assert.Equal(test.expected, Abs(test.input))
 		}
 	})
 
 	t.Run("int32", func(t *testing.T) {
 		assert := assert1.New(t)
 		for _, test := range testData.int32type {
-			assert.Equal(test.expected, Abs(test.intput))
+			assert.Equal(test.expected, Abs(test.input))
 		}
 	})
 
@@ -161,7 +161,7 @@ func TestDecrementor_Decrement(t *testing.T) {
 
 func TestRange(t *testing.T) {
 	type testcase[T constraints.Signed] struct {
-		intput   T
+		input    T
 		expected T
 		min      T
 		max      T
@@ -173,19 +173,19 @@ func TestRange(t *testing.T) {
 	}{
 		inttype: []testcase[int]{
 			{
-				intput:   5,
+				input:    5,
 				expected: 5,
 				min:      0,
 				max:      6,
 			},
 			{
-				intput:   0,
+				input:    0,
 				expected: 1,
 				min:      1,
 				max:      6,
 			},
 			{
-				intput:   -1,
+				input:    -1,
 				expected: -10,
 				max:      -10,
 				min:      -100,
@@ -193,13 +193,13 @@ func TestRange(t *testing.T) {
 		},
 		int32type: []testcase[int32]{
 			{
-				intput:   5,
+				input:    5,
 				expected: 5,
 				min:      0,
 				max:      6,
 			},
 			{
-				intput:   0,
+				input:    0,
 				expected: 1,
 				min:      1,
 				max:      6,
@@ -210,14 +210,14 @@ func TestRange(t *testing.T) {
 	t.Run("int", func(t *testing.T) {
 		assert := assert1.New(t)
 		for _, test := range testData.inttype {
-			assert.Equal(test.expected, Range(test.intput, test.min, test.max))
+			assert.Equal(test.expected, Range(test.input, test.min, test.max))
 		}
 	})
 
 	t.Run("int32", func(t *testing.T) {
 		assert := assert1.New(t)
 		for _, test := range testData.int32type {
-			assert.Equal(test.expected, Range(test.intput, test.min, test.max))
+			assert.Equal(test.expected, Range(test.input, test.min, test.max))
 		}
 	})
 

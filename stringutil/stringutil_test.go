@@ -5,7 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	assert1 "github.com/stretchr/testify/assert"
 )
 
@@ -745,7 +744,7 @@ func TestObfuscateRightPercent(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expected, ObfuscateRightPercent(tc.input, tc.percent, tc.obfuscator))
+			assert1.Equal(t, tc.expected, ObfuscateRightPercent(tc.input, tc.percent, tc.obfuscator))
 		})
 	}
 }
@@ -804,7 +803,7 @@ func TestObfuscateLeftPercent(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expected, ObfuscateLeftPercent(tc.input, tc.percent, tc.obfuscator))
+			assert1.Equal(t, tc.expected, ObfuscateLeftPercent(tc.input, tc.percent, tc.obfuscator))
 		})
 	}
 }
