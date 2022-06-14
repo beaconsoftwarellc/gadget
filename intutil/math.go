@@ -98,3 +98,8 @@ func (decrementor *Decrementor) Decrement() int {
 func (decrementor *Decrementor) GetInitialMax() int {
 	return int(decrementor.initialMax)
 }
+
+// Clamp limits value to a given minimum and maximum
+func Clamp[T constraints.Ordered](value, min, max T) T {
+	return Min(Max(value, min), max)
+}

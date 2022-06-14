@@ -682,3 +682,128 @@ func TestObfuscateRight(t *testing.T) {
 		Expected: "this is ████████",
 	})
 }
+
+func TestObfuscateRightPercent(t *testing.T) {
+	tcs := []struct {
+		name       string
+		input      string
+		percent    int
+		expected   string
+		obfuscator string
+	}{
+		{
+			name:       "simple 90",
+			input:      "simple",
+			percent:    90,
+			expected:   "s*****",
+			obfuscator: "*",
+		},
+		{
+			name:       "simple 50",
+			input:      "simple",
+			percent:    50,
+			expected:   "sim***",
+			obfuscator: "*",
+		},
+		{
+			name:       "1 char 90",
+			input:      "s",
+			percent:    90,
+			expected:   "s",
+			obfuscator: "*",
+		},
+		{
+			name:       "9 chars 90",
+			input:      "123456789",
+			percent:    90,
+			expected:   "1********",
+			obfuscator: "*",
+		},
+		{
+			name:       "zero",
+			input:      "123456789",
+			percent:    0,
+			expected:   "123456789",
+			obfuscator: "*",
+		},
+		{
+			name:       "all",
+			input:      "123456789",
+			percent:    100,
+			expected:   "1********",
+			obfuscator: "*",
+		},
+		{
+			name:       "long",
+			input:      "12345678901234567890",
+			percent:    90,
+			expected:   "12------------------",
+			obfuscator: "-",
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			assert1.Equal(t, tc.expected, ObfuscateRightPercent(tc.input, tc.percent, tc.obfuscator))
+		})
+	}
+}
+
+func TestObfuscateLeftPercent(t *testing.T) {
+	tcs := []struct {
+		name       string
+		input      string
+		percent    int
+		expected   string
+		obfuscator string
+	}{
+		{
+			name:       "simple 90",
+			input:      "simple",
+			percent:    90,
+			expected:   "*****e",
+			obfuscator: "*",
+		},
+		{
+			name:       "1 char 90",
+			input:      "s",
+			percent:    90,
+			expected:   "s",
+			obfuscator: "*",
+		},
+		{
+			name:       "9 chars 90",
+			input:      "123456789",
+			percent:    90,
+			expected:   "********9",
+			obfuscator: "*",
+		},
+		{
+			name:       "zero",
+			input:      "123456789",
+			percent:    0,
+			expected:   "123456789",
+			obfuscator: "*",
+		},
+		{
+			name:       "all",
+			input:      "123456789",
+			percent:    100,
+			expected:   "********9",
+			obfuscator: "*",
+		},
+		{
+			name:       "long",
+			input:      "12345678901234567890",
+			percent:    90,
+			expected:   "------------------90",
+			obfuscator: "-",
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			assert1.Equal(t, tc.expected, ObfuscateLeftPercent(tc.input, tc.percent, tc.obfuscator))
+		})
+	}
+}
