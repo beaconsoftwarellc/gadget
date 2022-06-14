@@ -281,17 +281,17 @@ func ObfuscateRight(raw string, number int, obfuscator string) string {
 
 // ObfuscateRightPercent obfuscates percent of string, leaves at least 1 character
 func ObfuscateRightPercent(raw string, percent int, obfuscator string) string {
-
-	percent = intutil.Range(percent, 0, 100)
-
-	l := len(raw) - intutil.Max(1, len(raw)-len(raw)*percent/100)
-	return ObfuscateRight(raw, l, obfuscator)
+	return ObfuscatePercent(raw, percent, Right, obfuscator)
 }
 
 // ObfuscateLeftPercent obfuscates percent of string, leaves at least 1 character
 func ObfuscateLeftPercent(raw string, percent int, obfuscator string) string {
-	percent = intutil.Range(percent, 0, 100)
+	return ObfuscatePercent(raw, percent, Left, obfuscator)
+}
 
+// ObfuscatePercent obfuscates percent of string, leaves at least 1 character
+func ObfuscatePercent(raw string, percent int, direction Direction, obfuscator string) string {
+	percent = intutil.Clamp(percent, 0, 100)
 	l := len(raw) - intutil.Max(1, len(raw)-len(raw)*percent/100)
-	return ObfuscateLeft(raw, l, obfuscator)
+	return Obfuscate(raw, l, direction, obfuscator)
 }

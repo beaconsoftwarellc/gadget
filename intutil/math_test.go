@@ -210,14 +210,14 @@ func TestRange(t *testing.T) {
 	t.Run("int", func(t *testing.T) {
 		assert := assert1.New(t)
 		for _, test := range testData.inttype {
-			assert.Equal(test.expected, Range(test.input, test.min, test.max))
+			assert.Equal(test.expected, Clamp(test.input, test.min, test.max))
 		}
 	})
 
 	t.Run("int32", func(t *testing.T) {
 		assert := assert1.New(t)
 		for _, test := range testData.int32type {
-			assert.Equal(test.expected, Range(test.input, test.min, test.max))
+			assert.Equal(test.expected, Clamp(test.input, test.min, test.max))
 		}
 	})
 

@@ -99,9 +99,7 @@ func (decrementor *Decrementor) GetInitialMax() int {
 	return int(decrementor.initialMax)
 }
 
-// Range limits value to a given minimum and maximum
-func Range[T constraints.Ordered](value, min, max T) T {
-	value = Max(value, min)
-	value = Min(value, max)
-	return value
+// Clamp limits value to a given minimum and maximum
+func Clamp[T constraints.Ordered](value, min, max T) T {
+	return Min(Max(value, min), max)
 }
