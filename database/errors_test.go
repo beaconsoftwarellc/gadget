@@ -252,6 +252,12 @@ func TestDatabaseToApiError(t *testing.T) {
 			err:      &ConnectionError{},
 			expected: "rpc error: code = Internal desc = [GAD.DAT.262] internal system error encountered",
 		},
+		{
+			name:     "foregin key",
+			primary:  Action,
+			err:      &InvalidForeignKeyError{},
+			expected: "rpc error: code = InvalidArgument desc = [GAD.DAT.262] action foregin key violation:  ()",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -259,7 +265,7 @@ func TestDatabaseToApiError(t *testing.T) {
 			if stringutil.IsEmpty(tt.expected) {
 				assert.NoError(DatabaseToApiError(tt.primary, tt.err))
 			} else {
-				assert.EqualError(DatabaseToApiError(tt.primary, tt.err), tt.expected)
+				EqualLogError(assert, DatabaseToApiError(tt.primary, tt.err), tt.expected)
 			}
 		})
 	}

@@ -315,6 +315,9 @@ func DatabaseToApiError(primary qb.Table, dbError error) error {
 	case *UniqueConstraintError:
 		err = status.Error(codes.InvalidArgument, fmt.Sprintf("%s %s unique constraint violation: %s",
 			prefix, primary.GetName(), dbError))
+	case *InvalidForeignKeyError:
+		err = status.Error(codes.InvalidArgument, fmt.Sprintf("%s %s foregin key violation: %s",
+			prefix, primary.GetName(), dbError))
 	case *ValidationError:
 		err = status.Error(codes.InvalidArgument, fmt.Sprintf("%s operation on %s had a validation error: %s",
 			prefix, primary.GetName(), dbError))
