@@ -256,7 +256,7 @@ func TestDatabaseToApiError(t *testing.T) {
 			name:     "foregin key",
 			primary:  Action,
 			err:      &InvalidForeignKeyError{},
-			expected: "rpc error: code = InvalidArgument desc = [GAD.DAT.262] action foregin key violation:  ()",
+			expected: "rpc error: code = InvalidArgument desc = [GAD.DAT.262] action foreign key violation:  ()",
 		},
 	}
 	for _, tt := range tests {
