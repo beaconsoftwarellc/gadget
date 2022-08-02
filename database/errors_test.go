@@ -253,7 +253,7 @@ func TestDatabaseToApiError(t *testing.T) {
 			expected: "rpc error: code = Internal desc = [GAD.DAT.262] internal system error encountered",
 		},
 		{
-			name:     "foregin key",
+			name:     "foreign key",
 			primary:  Action,
 			err:      &InvalidForeignKeyError{},
 			expected: "rpc error: code = InvalidArgument desc = [GAD.DAT.262] action foreign key violation:  ()",
