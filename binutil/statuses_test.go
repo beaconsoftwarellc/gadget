@@ -25,6 +25,11 @@ func Test_GetDiscreteStatuses(t *testing.T) {
 
 	t.Run("int over max", func(t *testing.T) {
 		resp := GetDiscreteStatuses(111, 8)
-		assert.Equal(t, resp, []int{1, 2, 4, 8})
+		assert.Equal(t, resp, []int{1, 2, 4})
+	})
+
+	t.Run("large", func(t *testing.T) {
+		resp := GetDiscreteStatuses(127, 512)
+		assert.Equal(t, []int{1, 2, 4, 8, 16, 32, 64}, resp)
 	})
 }

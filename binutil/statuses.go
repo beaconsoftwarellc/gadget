@@ -11,7 +11,7 @@ func GetDiscreteStatuses[T constraints.Integer](s T, max T) []T {
 		i    T
 	)
 
-	for i = 1; i <= max; i = i << 1 {
+	for i = 1; i < max; i = i << 1 {
 		if i&s == i {
 			resp = append(resp, i)
 		}
