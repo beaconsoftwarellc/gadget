@@ -22,15 +22,6 @@ const (
 	Right
 )
 
-// AnonymizeRunes converts an array of runes to an array of anonymous interfaces
-func AnonymizeRunes(arr []rune) []interface{} {
-	ia := make([]interface{}, len(arr))
-	for i, s := range arr {
-		ia[i] = s
-	}
-	return ia
-}
-
 // Reverse returns its argument string reversed rune-wise left to right.
 func Reverse(s string) string {
 	r := []rune(s)
@@ -209,15 +200,6 @@ func GetSchemaName(obj proto.Message) (name string) {
 	// we want the actual type not '*type'.
 	name = ptrtype.Elem().String()
 	return
-}
-
-// Anonymize converts an array of strings to an array of anonymous interfaces
-func Anonymize(arr []string) []interface{} {
-	ia := make([]interface{}, len(arr))
-	for i, s := range arr {
-		ia[i] = s
-	}
-	return ia
 }
 
 // PSPrint pretty prints the passed map to string.
