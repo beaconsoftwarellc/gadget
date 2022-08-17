@@ -1,7 +1,6 @@
 package stringutil
 
 import (
-	"reflect"
 	"strings"
 	"testing"
 
@@ -321,39 +320,6 @@ func TestSafeSubstringIndexing(t *testing.T) {
 			if got := SafeSubstring(tt.args.s, tt.args.start, tt.args.end); got != tt.want {
 				t.Errorf("SafeSubstring(\"%s\", %d, %d) = \"%v\", want \"%v\"",
 					tt.args.s, tt.args.start, tt.args.end, got, tt.want)
-			}
-		})
-	}
-}
-
-func TestAnonymize(t *testing.T) {
-	type args struct {
-		arr []string
-	}
-	tests := []struct {
-		name string
-		args args
-		want []interface{}
-	}{
-		{
-			name: "empty array",
-			args: args{
-				arr: []string{},
-			},
-			want: make([]interface{}, 0),
-		},
-		{
-			name: "simple array",
-			args: args{
-				arr: []string{"foo", "bar🤡"},
-			},
-			want: []interface{}{"foo", "bar🤡"},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := Anonymize(tt.args.arr); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Anonymize() = %v, want %v", got, tt.want)
 			}
 		})
 	}

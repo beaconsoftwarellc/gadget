@@ -103,12 +103,3 @@ func (decrementor *Decrementor) GetInitialMax() int {
 func Clamp[T constraints.Ordered](value, min, max T) T {
 	return Min(Max(value, min), max)
 }
-
-// Anonymize converts an array of ints to an array of anonymous interfaces
-func Anonymize(arr []int) []interface{} {
-	ia := make([]interface{}, len(arr))
-	for i, s := range arr {
-		ia[i] = s
-	}
-	return ia
-}

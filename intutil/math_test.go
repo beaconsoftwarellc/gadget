@@ -1,7 +1,6 @@
 package intutil
 
 import (
-	"reflect"
 	"testing"
 
 	assert1 "github.com/stretchr/testify/assert"
@@ -221,37 +220,4 @@ func TestRange(t *testing.T) {
 			assert.Equal(test.expected, Clamp(test.input, test.min, test.max))
 		}
 	})
-}
-
-func TestAnonymize(t *testing.T) {
-	type args struct {
-		arr []int
-	}
-	tests := []struct {
-		name string
-		args args
-		want []interface{}
-	}{
-		{
-			name: "empty array",
-			args: args{
-				arr: []int{},
-			},
-			want: make([]interface{}, 0),
-		},
-		{
-			name: "simple array",
-			args: args{
-				arr: []int{-1, 0, 1},
-			},
-			want: []interface{}{-1, 0, 1},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := Anonymize(tt.args.arr); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Anonymize() = %v, want %v", got, tt.want)
-			}
-		})
-	}
 }
