@@ -17,7 +17,8 @@ type Database struct {
 func (db *Database) enforceLimits(options *ListOptions) *ListOptions {
 	if nil == options {
 		options = NewListOptions(db.Configuration.MaxQueryLimit(), 0)
-	} else if options.Limit > db.Configuration.MaxQueryLimit() {
+	} else if db.Configuration.MaxQueryLimit() != qb.NoLimit &&
+		options.Limit > db.Configuration.MaxQueryLimit() {
 		db.Logger.Warnf("limit %d exceeds max limit of %d", options.Limit,
 			db.Configuration.MaxQueryLimit())
 		options.Limit = db.Configuration.MaxQueryLimit()

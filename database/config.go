@@ -27,6 +27,7 @@ func Initialize(config Config) *Database {
 		panic(err)
 	}
 	log.Infof("database connection success: %s, %s", config.DatabaseDialect(), obfuscatedConnection)
+
 	return &Database{DB: conn, Logger: logger, Configuration: config}
 }
 

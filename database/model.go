@@ -1,7 +1,6 @@
 package database
 
 const (
-
 	// DefaultMaxTries documentation hur
 	DefaultMaxTries = 10
 	// DefaultMaxLimit for row counts on select queries
@@ -16,11 +15,6 @@ type ListOptions struct {
 
 // NewListOptions generates a ListOptions
 func NewListOptions(limit uint, offset uint) *ListOptions {
-	if limit == 0 {
-		limit = 1
-	} else if limit > DefaultMaxLimit {
-		limit = DefaultMaxLimit
-	}
 	return &ListOptions{
 		Limit:  limit,
 		Offset: offset,

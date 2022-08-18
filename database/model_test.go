@@ -33,8 +33,8 @@ func TestNewListOptions(t *testing.T) {
 		Limit    uint
 		Offset   uint
 	}{
-		{&ListOptions{Limit: 1, Offset: 0}, 0, 0},
-		{&ListOptions{Limit: DefaultMaxLimit, Offset: 10}, DefaultMaxLimit + 1, 10},
+		{&ListOptions{Limit: 0, Offset: 0}, 0, 0},
+		{&ListOptions{Limit: DefaultMaxLimit, Offset: 10}, DefaultMaxLimit, 10},
 		{&ListOptions{Limit: 5, Offset: 5}, 5, 5},
 	}
 	for _, test := range data {
@@ -130,6 +130,30 @@ func TestList(t *testing.T) {
 	options := NewListOptions(3, 0)
 	assert.NoError(spec.DB.List(&TestRecord{}, lookup, options))
 	assert.Equal(3, len(*lookup))
+}
+
+func TestList_QueryLimit(t *testing.T) {
+	assert := assert1.New(t)
+	spec := newSpecification()
+	conf := spec.DB.Configuration.(*specification)
+	conf.QueryLimit = 2
+
+	records := make([]TestRecord, 5)
+	for i := range records {
+		record := &TestRecord{Name: fmt.Sprintf("TestList_QueryLimit %s", strconv.Itoa(i))}
+		assert.NoError(spec.DB.Create(record))
+		records[i] = *record
+	}
+
+	lookup := &[]TestRecord{}
+	options := NewListOptions(conf.QueryLimit+5, 0)
+	assert.NoError(spec.DB.List(&TestRecord{}, lookup, options))
+	assert.Equal(int(conf.QueryLimit), len(*lookup))
+
+	lookup = &[]TestRecord{}
+	options = NewListOptions(conf.QueryLimit-1, 0)
+	assert.NoError(spec.DB.List(&TestRecord{}, lookup, options))
+	assert.Equal(int(conf.QueryLimit-1), len(*lookup))
 }
 
 func TestWhere(t *testing.T) {
@@ -618,6 +642,29 @@ func TestSelect(t *testing.T) {
 	err = spec.DB.SelectTx(tx, &actual, query)
 	if assert.NoError(err) {
 		assert.Equal(2, len(actual))
+	}
+}
+
+func TestSelect_LimitEnforced(t *testing.T) {
+	assert := assert1.New(t)
+	spec := newSpecification()
+	conf := spec.DB.Configuration.(*specification)
+	conf.QueryLimit = 3
+
+	records := make([]*TestRecord, 5)
+	for i := range records {
+		name := fmt.Sprintf("%d%s", i, generator.Name())
+		record := &TestRecord{Name: name}
+		assert.NoError(spec.DB.Create(record))
+		records[i] = record
+	}
+
+	query := qb.Select(TestMeta.AllColumns()).From(TestMeta).
+		OrderBy(TestMeta.Name, qb.Ascending)
+	var actual []*TestRecord
+	err := spec.DB.Select(&actual, query)
+	if assert.NoError(err) {
+		assert.Equal(int(conf.QueryLimit), len(actual))
 	}
 }
 
