@@ -34,7 +34,7 @@ func TestNewListOptions(t *testing.T) {
 		Offset   uint
 	}{
 		{&ListOptions{Limit: 1, Offset: 0}, 0, 0},
-		{&ListOptions{Limit: MaxLimit, Offset: 10}, MaxLimit + 1, 10},
+		{&ListOptions{Limit: DefaultMaxLimit, Offset: 10}, DefaultMaxLimit + 1, 10},
 		{&ListOptions{Limit: 5, Offset: 5}, 5, 5},
 	}
 	for _, test := range data {

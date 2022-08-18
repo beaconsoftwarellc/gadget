@@ -17,6 +17,7 @@ type specification struct {
 	DatabaseType string
 	DatabaseURL  string `env:"TST_DATABASE_URL"`
 	DB           *Database
+	QueryLimit   uint
 }
 
 func (spec specification) NumberOfRetries() int {
@@ -40,6 +41,10 @@ func (spec specification) DatabaseDialect() string {
 // DatabaseDialectURL returns the dialect (mysql, mongo, etc) for the connection
 func (spec specification) DatabaseDialectURL() string {
 	return fmt.Sprintf("%s://%s", spec.DatabaseType, spec.DatabaseURL)
+}
+
+func (spec specification) MaxQueryLimit() uint {
+	return spec.QueryLimit
 }
 
 func newSpecification() *specification {
