@@ -18,6 +18,35 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+const (
+	// Select indicates a SELECT statement triggered the error
+	Select SQLQueryType = "SELECT"
+	// Insert indicates an INSERT statement triggered the error
+	Insert = "INSERT"
+	// Delete indicates a DELETE statement triggered the error
+	Delete = "DELETE"
+	// Update indicates an UPDATE statement triggered the error
+	Update = "UPDATE"
+)
+
+const (
+	dbErrPrefix               = "dberr"
+	invalidForeignKeyMsg      = "invalid reference"
+	dataTooLongMsg            = "data too long"
+	duplicateRecordMsg        = "already exists"
+	mysqlDuplicateEntry       = 1062
+	mysqlDataTooLong          = 1406
+	mysqlInvalidForeignKey    = 1452
+	primaryKeyConstraintCheck = "for key 'PRIMARY'"
+)
+
+// IsNotFoundError returns a boolean indicating that the passed error (can be nil) is of
+// type *database.NotFoundError
+func IsNotFoundError(err error) bool {
+	var dst *NotFoundError
+	return errors.As(err, &dst)
+}
+
 // ConnectionError  is returned when unable to connect to database
 type ConnectionError struct {
 	err   error
@@ -40,32 +69,6 @@ func NewDatabaseConnectionError(err error) errors.TracerError {
 
 // SQLQueryType indicates the type of query being executed that caused and error
 type SQLQueryType string
-
-const (
-	// Select indicates a SELECT statement triggered the error
-	Select SQLQueryType = "SELECT"
-	// Insert indicates an INSERT statement triggered the error
-	Insert = "INSERT"
-	// Delete indicates a DELETE statement triggered the error
-	Delete = "DELETE"
-	// Update indicates an UPDATE statement triggered the error
-	Update = "UPDATE"
-)
-
-const (
-	dbErrPrefix          = "dberr"
-	invalidForeignKeyMsg = "invalid reference"
-	dataTooLongMsg       = "data too long"
-	duplicateRecordMsg   = "already exists"
-)
-
-const (
-	mysqlDuplicateEntry    = 1062
-	mysqlDataTooLong       = 1406
-	mysqlInvalidForeignKey = 1452
-)
-
-const primaryKeyConstraintCheck = "for key 'PRIMARY'"
 
 // TranslateError converts a mysql or other obtuse errors into discrete explicit errors
 func TranslateError(err error, action SQLQueryType, stmt string, logger log.Logger) errors.TracerError {
