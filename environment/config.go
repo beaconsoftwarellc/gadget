@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
 	"github.com/beaconsoftwarellc/gadget/v2/stringutil"
@@ -71,17 +72,23 @@ func ProcessMap(config interface{}, envVars map[string]string) error {
 			continue
 		}
 
-		switch t := typ.Type.Kind(); t {
-		case reflect.String:
+		switch valueField.Interface().(type) {
+		case string:
 			valueField.SetString(env)
-		case reflect.Int:
+		case int:
 			parsed, err := strconv.Atoi(env)
 			if err != nil {
 				return errors.New("%s while converting %s", err.Error(), envTag)
 			}
 			valueField.SetInt(int64(parsed))
+		case time.Duration:
+			parsed, err := time.ParseDuration(env)
+			if err != nil {
+				return errors.New("%s while converting %s", err.Error(), envTag)
+			}
+			valueField.SetInt(int64(parsed))
 		default:
-			return UnsupportedDataTypeError{Type: t, Field: typ.Name}
+			return UnsupportedDataTypeError{Type: typ.Type.Kind(), Field: typ.Name}
 		}
 	}
 	return nil
@@ -107,13 +114,16 @@ func Push(config interface{}) error {
 			continue
 		}
 		var value string
-		switch t := typ.Type.Kind(); t {
-		case reflect.String:
-			value = valueField.String()
-		case reflect.Int:
-			value = strconv.Itoa(int(valueField.Int()))
+
+		switch t := valueField.Interface().(type) {
+		case string:
+			value = t
+		case int:
+			value = strconv.Itoa(t)
+		case time.Duration:
+			value = t.String()
 		default:
-			return UnsupportedDataTypeError{Type: t, Field: typ.Name}
+			return UnsupportedDataTypeError{Type: typ.Type.Kind(), Field: typ.Name}
 		}
 		os.Setenv(envTag, value)
 	}
