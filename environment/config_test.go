@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strconv"
 	"testing"
+	"time"
 
 	assert1 "github.com/stretchr/testify/assert"
 
@@ -12,9 +13,10 @@ import (
 )
 
 type specification struct {
-	StringField         string `env:"STRING_FIELD" s3:"bar,foo"`
-	IntField            int    `env:"INT_FIELD,junk" s3:"foo,bar"`
-	OptionalField       string `env:"OPTIONAL_FIELD,optional,junk"`
+	StringField         string        `env:"STRING_FIELD" s3:"bar,foo"`
+	IntField            int           `env:"INT_FIELD,junk" s3:"foo,bar"`
+	OptionalField       string        `env:"OPTIONAL_FIELD,optional,junk"`
+	Interval            time.Duration `env:"INTERVAL,optional"`
 	NotEnvironmentField string
 }
 
@@ -30,12 +32,14 @@ func TestPush(t *testing.T) {
 		StringField:   generator.String(20),
 		IntField:      10,
 		OptionalField: generator.String(30),
+		Interval:      time.Duration(int64(generator.Int16())),
 	}
 
 	assert.NoError(Push(spec))
 	assert.Equal(os.Getenv("STRING_FIELD"), spec.StringField)
 	assert.Equal(os.Getenv("INT_FIELD"), "10")
 	assert.Equal(os.Getenv("OPTIONAL_FIELD"), spec.OptionalField)
+	assert.Equal(os.Getenv("INTERVAL"), spec.Interval.String())
 }
 
 func TestValidConfig(t *testing.T) {
@@ -48,6 +52,9 @@ func TestValidConfig(t *testing.T) {
 	expectedIntField := 42
 	os.Setenv("INT_FIELD", strconv.Itoa(expectedIntField))
 
+	interval := time.Duration(int64(generator.Int16()))
+	os.Setenv("INTERVAL", interval.String())
+
 	expectedNotEnvironmentField := "How many roads must a man walk down?"
 	config := &specification{NotEnvironmentField: expectedNotEnvironmentField}
 	err := Process(config)
@@ -57,6 +64,7 @@ func TestValidConfig(t *testing.T) {
 	assert.Equal(expectedIntField, config.IntField)
 	assert.Equal("", config.OptionalField)
 	assert.Equal(expectedNotEnvironmentField, config.NotEnvironmentField)
+	assert.Equal(interval, config.Interval)
 }
 
 func TestProcessNonPointerFails(t *testing.T) {
