@@ -69,7 +69,7 @@ func TestUpdateQueryOrderBy(t *testing.T) {
 		assert.Equal(expectedName, values[0])
 		assert.Equal(expectedAddressID, values[1])
 	}
-	assert.Equal("UPDATE `person` SET  `person`.`name` = ? WHERE `person`.`address_id` = ? ORDER BY `name` DESC", sql)
+	assert.Equal("UPDATE `person` SET  `person`.`name` = ? WHERE `person`.`address_id` = ? ORDER BY `person`.`name` DESC", sql)
 }
 
 func TestUpdateQueryWhereOrderByLimit(t *testing.T) {
@@ -85,5 +85,5 @@ func TestUpdateQueryWhereOrderByLimit(t *testing.T) {
 		assert.Equal(expectedName, values[0])
 		assert.Equal(expectedAddressID, values[1])
 	}
-	assert.Equal("UPDATE `person` SET  `person`.`name` = ? WHERE `person`.`address_id` = ? ORDER BY `name` DESC LIMIT 10", sql)
+	assert.Equal("UPDATE `person` SET  `person`.`name` = ? WHERE `person`.`address_id` = ? ORDER BY `person`.`name` DESC LIMIT 10", sql)
 }
