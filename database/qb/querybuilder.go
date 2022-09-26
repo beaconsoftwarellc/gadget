@@ -239,7 +239,7 @@ func (ob *orderBy) sql() (string, bool) {
 	}
 	orderByLines := []string{}
 	for _, orderBy := range ob.expressions {
-		orderByLines = append(orderByLines, fmt.Sprintf("`%s` %s", orderBy.field.Name, orderBy.direction))
+		orderByLines = append(orderByLines, fmt.Sprintf("`%s`.`%s` %s", orderBy.field.Table, orderBy.field.Name, orderBy.direction))
 	}
 	return "ORDER BY " + strings.Join(orderByLines, ", "), true
 }

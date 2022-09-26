@@ -311,7 +311,7 @@ func TestQueryBuilderOrderBy_SQL(t *testing.T) {
 	actual, values, err := Select(Person.ID, Person.Name).From(Person).OrderBy(Person.ID, Ascending).SQL(10, 10)
 	assert.NoError(err)
 	assert.Empty(values)
-	assert.Equal("SELECT `person`.`id`, `person`.`name` FROM `person` AS `person` ORDER BY `id` ASC LIMIT 10 OFFSET 10", actual)
+	assert.Equal("SELECT `person`.`id`, `person`.`name` FROM `person` AS `person` ORDER BY `person`.`id` ASC LIMIT 10 OFFSET 10", actual)
 }
 
 func TestQueryBuilderOrderByMulti_SQL(t *testing.T) {
@@ -321,7 +321,7 @@ func TestQueryBuilderOrderByMulti_SQL(t *testing.T) {
 	actual, values, err := query.SQL(10, 10)
 	assert.NoError(err)
 	assert.Empty(values)
-	assert.Equal("SELECT `person`.`id`, `person`.`name` FROM `person` AS `person` ORDER BY `id` ASC, `name` DESC LIMIT 10 OFFSET 10", actual)
+	assert.Equal("SELECT `person`.`id`, `person`.`name` FROM `person` AS `person` ORDER BY `person`.`id` ASC, `person`.`name` DESC LIMIT 10 OFFSET 10", actual)
 }
 
 func TestQueryBuilderFromNotSetError(t *testing.T) {
