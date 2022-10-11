@@ -309,3 +309,42 @@ func (db *Database) DeleteWhereTx(obj Record, tx *sqlx.Tx,
 	}
 	return nil
 }
+
+// UpdateWhere updates fields for the Record based on a supplied where clause
+func (db *Database) UpdateWhere(obj Record,
+	where *qb.ConditionExpression, fields ...qb.FieldValue) (int64, error) {
+	tx, err := db.Beginx()
+	if nil != err {
+		return 0, errors.Wrap(err)
+	}
+
+	rowsAffected, err := db.UpdateWhereTx(obj, tx, where, fields...)
+	return rowsAffected, CommitOrRollback(tx, err)
+}
+
+// UpdateWhereTx updates fields for the Record based on a supplied where clause in a transaction
+func (db *Database) UpdateWhereTx(obj Record, tx *sqlx.Tx,
+	where *qb.ConditionExpression, fields ...qb.FieldValue) (int64, error) {
+	query := qb.Update(obj.Meta())
+
+	for _, f := range fields {
+		query = query.Set(f.Field, f.Value)
+	}
+
+	stmt, values, err := query.Where(where).SQL(qb.NoLimit)
+	if nil != err {
+		return 0, errors.Wrap(err)
+	}
+
+	result, err := tx.Exec(stmt, values...)
+	if nil != err {
+		return 0, TranslateError(err, Update, stmt, db.Logger)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if nil != err {
+		return 0, errors.Wrap(err)
+	}
+
+	return rowsAffected, nil
+}
