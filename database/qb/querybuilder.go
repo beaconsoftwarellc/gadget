@@ -133,6 +133,12 @@ type TableField struct {
 	Table string
 }
 
+// FieldValue represents a single field value on a table.
+type FieldValue struct {
+	Field TableField
+	Value interface{}
+}
+
 // GetName that can be used to reference this expression
 func (tf TableField) GetName() string {
 	return tf.Name

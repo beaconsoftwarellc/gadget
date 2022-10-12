@@ -1,6 +1,7 @@
 package database
 
 import (
+	"database/sql"
 	"fmt"
 	"strconv"
 	"testing"
@@ -447,6 +448,63 @@ func TestUpsertTx(t *testing.T) {
 	assert.NoError(tx.Rollback())
 }
 
+func TestUpdateWhere(t *testing.T) {
+	assert := assert1.New(t)
+	spec := newSpecification()
+
+	expected := &TestRecord{Name: "TestUpdateWhere"}
+	assert.NoError(spec.DB.Create(expected))
+
+	actual := &TestRecord{}
+	assert.NoError(spec.DB.Read(actual, expected.PrimaryKey()))
+	assert.Equal(expected, actual)
+
+	affected, err := spec.DB.UpdateWhere(expected, TestMeta.ID.Equal(expected.ID),
+		qb.FieldValue{Field: TestMeta.Name, Value: "TestUpdateWhere updated"},
+		qb.FieldValue{Field: TestMeta.Place, Value: "Place"})
+	assert.NoError(err)
+	assert.Equal(int64(1), affected)
+
+	assert.NoError(spec.DB.Read(actual, expected.PrimaryKey()))
+	expected.Name = "TestUpdateWhere updated"
+	expected.Place = sql.NullString{
+		String: "Place",
+		Valid:  true,
+	}
+
+	assert.Equal(expected, actual)
+}
+
+func TestUpdateWhereTx(t *testing.T) {
+	assert := assert1.New(t)
+	spec := newSpecification()
+	tx := spec.DB.MustBegin()
+	t.Cleanup(func() {
+		_ = tx.Rollback()
+	})
+
+	expected := &TestRecord{Name: "TestUpdateWhereTx"}
+	assert.NoError(spec.DB.CreateTx(expected, tx))
+
+	actual := &TestRecord{}
+	assert.NoError(spec.DB.ReadTx(actual, expected.PrimaryKey(), tx))
+	assert.Equal(expected, actual)
+
+	affected, err := spec.DB.UpdateWhereTx(expected, tx, TestMeta.ID.Equal(expected.ID),
+		qb.FieldValue{Field: TestMeta.Name, Value: "TestUpdateWhereTx updated"},
+		qb.FieldValue{Field: TestMeta.Place, Value: "Place"})
+	assert.NoError(err)
+	assert.Equal(int64(1), affected)
+
+	assert.NoError(spec.DB.ReadTx(actual, expected.PrimaryKey(), tx))
+	expected.Name = "TestUpdateWhereTx updated"
+	expected.Place = sql.NullString{
+		String: "Place",
+		Valid:  true,
+	}
+
+	assert.Equal(expected, actual)
+}
 func TestTransaction(t *testing.T) {
 	assert := assert1.New(t)
 	spec := newSpecification()
