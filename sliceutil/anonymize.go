@@ -9,3 +9,13 @@ func Anonymize[T any](src []T) []interface{} {
 
 	return dst
 }
+
+func String[T ~string](src []T) []string {
+	dst := make([]string, len(src))
+
+	for i, s := range src {
+		dst[i] = string(s)
+	}
+
+	return dst
+}

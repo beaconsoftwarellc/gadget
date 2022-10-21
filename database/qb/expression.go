@@ -3,6 +3,8 @@ package qb
 import (
 	"fmt"
 	"strings"
+
+	"github.com/beaconsoftwarellc/gadget/v2/sliceutil"
 )
 
 const (
@@ -17,6 +19,7 @@ type expressionUnion struct {
 	value interface{}
 	field *TableField
 	multi []expressionUnion
+	cond  *ConditionExpression
 }
 
 func newUnion(values ...interface{}) expressionUnion {
@@ -24,6 +27,9 @@ func newUnion(values ...interface{}) expressionUnion {
 		tf, ok := values[0].(TableField)
 		if ok {
 			return expressionUnion{field: &tf}
+		}
+		if cond, ok := values[0].(*ConditionExpression); ok {
+			return expressionUnion{cond: cond}
 		}
 		return expressionUnion{value: values[0]}
 	}
@@ -45,6 +51,10 @@ func (union expressionUnion) isField() bool {
 
 func (union expressionUnion) isMulti() bool {
 	return nil != union.multi
+}
+
+func (union expressionUnion) isCondition() bool {
+	return nil != union.cond
 }
 
 func (union expressionUnion) getTables() []string {
@@ -78,6 +88,10 @@ func (union expressionUnion) sql() (string, []interface{}) {
 		sql = fmt.Sprintf("%s", union.value)
 	} else if union.isString() && strings.HasPrefix(union.value.(string), ":") {
 		sql = fmt.Sprintf("%s", union.value)
+	} else if union.isCondition() {
+		subsql, subvalues := union.cond.SQL()
+		values = append(values, subvalues...)
+		sql = subsql
 	} else {
 		sql = "?"
 		values = append(values, union.value)
@@ -155,6 +169,16 @@ func FieldIn(left TableField, in ...interface{}) *ConditionExpression {
 		comparison = Equal
 	}
 	return &ConditionExpression{binary: &binaryExpression{left: left, comparison: comparison, right: newUnion(rightValues...)}}
+}
+
+func Bitwise(left TableField, value interface{}, operators ...BitwiseOperator) *ConditionExpression {
+	return &ConditionExpression{
+		binary: &binaryExpression{
+			left:       left,
+			comparison: Comparison(strings.Join(sliceutil.String(operators), "")),
+			right:      newUnion(value),
+		},
+	}
 }
 
 // And creates an expression with this and the passed expression with an AND conjunction.

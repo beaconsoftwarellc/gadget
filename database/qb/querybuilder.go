@@ -107,6 +107,19 @@ const (
 	NoLimit = 0
 )
 
+type BitwiseOperator string
+
+const (
+	// Binary and expression conjunction
+	BitwiseAnd BitwiseOperator = "&"
+	// Bitwise or expression conjunction
+	BitwiseOr BitwiseOperator = "|"
+	// Bitwise xor expression conjunction
+	BitwiseXor BitwiseOperator = "^"
+	// Bitwise negation expression conjunction
+	BitwiseNegation BitwiseOperator = "~"
+)
+
 // Table represents a db table
 type Table interface {
 	// GetName returns the name of the database table
