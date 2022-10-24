@@ -374,7 +374,7 @@ func TestSelectBitwise(t *testing.T) {
 	assert := assert1.New(t)
 	query := Select(Person.Name)
 	query.From(Person)
-	query.Where(Person.ID.NotEqual(Bitwise(Person.ID, "5", BitwiseAnd)))
+	query.Where(Person.ID.NotEqual(Bitwise(Person.ID, BitwiseAnd, "5")))
 	actual, values, err := query.SQL(0, 10)
 	assert.NoError(err)
 	assert.Equal(values, []interface{}{"5"})
@@ -403,7 +403,7 @@ func TestUpdateBitwise(t *testing.T) {
 	assert := assert1.New(t)
 
 	actual, values, err := Update(Person).Set(Person.AddressID,
-		Bitwise(Person.AddressID, "5", BitwiseAnd, BitwiseNegation)).SQL(0)
+		Bitwise(Person.AddressID, BitwiseAndNegation, "5")).SQL(0)
 	assert.NoError(err)
 	assert.Equal(values, []interface{}{"5"})
 	assert.Equal("UPDATE `person` SET  `person`.`address_id` = `person`.`address_id` &~ ?", actual)

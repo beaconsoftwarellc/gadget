@@ -3,8 +3,6 @@ package qb
 import (
 	"fmt"
 	"strings"
-
-	"github.com/beaconsoftwarellc/gadget/v2/sliceutil"
 )
 
 const (
@@ -24,13 +22,14 @@ type expressionUnion struct {
 
 func newUnion(values ...interface{}) expressionUnion {
 	if len(values) == 1 {
-		tf, ok := values[0].(TableField)
-		if ok {
-			return expressionUnion{field: &tf}
+
+		switch v := values[0].(type) {
+		case TableField:
+			return expressionUnion{field: &v}
+		case *ConditionExpression:
+			return expressionUnion{cond: v}
 		}
-		if cond, ok := values[0].(*ConditionExpression); ok {
-			return expressionUnion{cond: cond}
-		}
+
 		return expressionUnion{value: values[0]}
 	}
 	multi := make([]expressionUnion, len(values))
@@ -53,7 +52,7 @@ func (union expressionUnion) isMulti() bool {
 	return nil != union.multi
 }
 
-func (union expressionUnion) isCondition() bool {
+func (union expressionUnion) isConditionExpression() bool {
 	return nil != union.cond
 }
 
@@ -74,7 +73,9 @@ func (union expressionUnion) getTables() []string {
 func (union expressionUnion) sql() (string, []interface{}) {
 	var sql string
 	values := []interface{}{}
-	if union.isMulti() {
+
+	switch {
+	case union.isMulti():
 		sa := make([]string, len(union.multi))
 		var subvalues []interface{}
 		for i, exp := range union.multi {
@@ -82,17 +83,17 @@ func (union expressionUnion) sql() (string, []interface{}) {
 			values = append(values, subvalues...)
 		}
 		sql = "(" + strings.Join(sa, ", ") + ")"
-	} else if union.isField() {
+	case union.isField():
 		sql = union.field.SQL()
-	} else if SQLNow == union.value || SQLNull == union.value {
+	case SQLNow == union.value || SQLNull == union.value:
 		sql = fmt.Sprintf("%s", union.value)
-	} else if union.isString() && strings.HasPrefix(union.value.(string), ":") {
+	case union.isString() && strings.HasPrefix(union.value.(string), ":"):
 		sql = fmt.Sprintf("%s", union.value)
-	} else if union.isCondition() {
+	case union.isConditionExpression():
 		subsql, subvalues := union.cond.SQL()
 		values = append(values, subvalues...)
 		sql = subsql
-	} else {
+	default:
 		sql = "?"
 		values = append(values, union.value)
 	}
@@ -171,12 +172,12 @@ func FieldIn(left TableField, in ...interface{}) *ConditionExpression {
 	return &ConditionExpression{binary: &binaryExpression{left: left, comparison: comparison, right: newUnion(rightValues...)}}
 }
 
-func Bitwise(left TableField, value interface{}, operators ...BitwiseOperator) *ConditionExpression {
+func Bitwise(left TableField, operator BitwiseOperator, right interface{}) *ConditionExpression {
 	return &ConditionExpression{
 		binary: &binaryExpression{
 			left:       left,
-			comparison: Comparison(strings.Join(sliceutil.String(operators), "")),
-			right:      newUnion(value),
+			comparison: Comparison(operator),
+			right:      newUnion(right),
 		},
 	}
 }

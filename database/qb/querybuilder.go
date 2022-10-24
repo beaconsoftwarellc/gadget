@@ -118,6 +118,12 @@ const (
 	BitwiseXor BitwiseOperator = "^"
 	// Bitwise negation expression conjunction
 	BitwiseNegation BitwiseOperator = "~"
+	// Bitwise and negation expression conjunction
+	BitwiseAndNegation BitwiseOperator = "&~"
+	// Bitwise or negation expression conjunction
+	BitwiseOrNegation BitwiseOperator = "|~"
+	// Bitwise xor negation expression conjunction
+	BitwiseXorNegation BitwiseOperator = "^~"
 )
 
 // Table represents a db table
@@ -164,7 +170,7 @@ func (tf TableField) GetTables() []string {
 
 // SQL that represents this table field
 func (tf TableField) SQL() string {
-	if "*" == tf.Name {
+	if tf.Name == "*" {
 		return fmt.Sprintf("`%s`.%s", tf.Table, tf.Name)
 	}
 	return fmt.Sprintf("`%s`.`%s`", tf.Table, tf.Name)
