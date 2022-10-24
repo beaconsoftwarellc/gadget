@@ -14,10 +14,10 @@ const (
 )
 
 type expressionUnion struct {
-	value interface{}
-	field *TableField
-	multi []expressionUnion
-	cond  *ConditionExpression
+	value  interface{}
+	field  *TableField
+	multi  []expressionUnion
+	binary *binaryExpression
 }
 
 func newUnion(values ...interface{}) expressionUnion {
@@ -26,8 +26,8 @@ func newUnion(values ...interface{}) expressionUnion {
 		switch v := values[0].(type) {
 		case TableField:
 			return expressionUnion{field: &v}
-		case *ConditionExpression:
-			return expressionUnion{cond: v}
+		case *binaryExpression:
+			return expressionUnion{binary: v}
 		}
 
 		return expressionUnion{value: values[0]}
@@ -52,8 +52,8 @@ func (union expressionUnion) isMulti() bool {
 	return nil != union.multi
 }
 
-func (union expressionUnion) isConditionExpression() bool {
-	return nil != union.cond
+func (union expressionUnion) isBinary() bool {
+	return nil != union.binary
 }
 
 func (union expressionUnion) getTables() []string {
@@ -89,8 +89,8 @@ func (union expressionUnion) sql() (string, []interface{}) {
 		sql = fmt.Sprintf("%s", union.value)
 	case union.isString() && strings.HasPrefix(union.value.(string), ":"):
 		sql = fmt.Sprintf("%s", union.value)
-	case union.isConditionExpression():
-		subsql, subvalues := union.cond.SQL()
+	case union.isBinary():
+		subsql, subvalues := union.binary.SQL()
 		values = append(values, subvalues...)
 		sql = subsql
 	default:
@@ -172,13 +172,11 @@ func FieldIn(left TableField, in ...interface{}) *ConditionExpression {
 	return &ConditionExpression{binary: &binaryExpression{left: left, comparison: comparison, right: newUnion(rightValues...)}}
 }
 
-func Bitwise(left TableField, operator BitwiseOperator, right interface{}) *ConditionExpression {
-	return &ConditionExpression{
-		binary: &binaryExpression{
-			left:       left,
-			comparison: Comparison(operator),
-			right:      newUnion(right),
-		},
+func Bitwise(left TableField, operator BitwiseOperator, right interface{}) *binaryExpression {
+	return &binaryExpression{
+		left:       left,
+		comparison: Comparison(operator),
+		right:      newUnion(right),
 	}
 }
 
