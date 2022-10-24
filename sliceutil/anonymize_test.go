@@ -79,7 +79,7 @@ func Test_String(t *testing.T) {
 
 	type foo string
 
-	t.Run("ints", func(t *testing.T) {
+	t.Run("type alias", func(t *testing.T) {
 		tcs := []testCase[foo]{
 			{
 				name:   "base",
