@@ -1,5 +1,6 @@
 package sliceutil
 
+// Anonymize casts slice to slice of interfaces
 func Anonymize[T any](src []T) []interface{} {
 	dst := make([]interface{}, len(src))
 
@@ -10,7 +11,8 @@ func Anonymize[T any](src []T) []interface{} {
 	return dst
 }
 
-func String[T ~string](src []T) []string {
+// ToStringSlice casts slice of string type aliases to slice of string type
+func ToStringSlice[T ~string](src []T) []string {
 	dst := make([]string, len(src))
 
 	for i, s := range src {

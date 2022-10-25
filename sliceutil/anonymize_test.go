@@ -7,7 +7,6 @@ import (
 )
 
 func Test_Anonymize(t *testing.T) {
-
 	type testCase[T any] struct {
 		name   string
 		input  []T
@@ -69,8 +68,7 @@ func Test_Anonymize(t *testing.T) {
 	})
 }
 
-func Test_String(t *testing.T) {
-
+func Test_ToStringSlice(t *testing.T) {
 	type testCase[T any] struct {
 		name   string
 		input  []T
@@ -100,7 +98,7 @@ func Test_String(t *testing.T) {
 
 		for _, tc := range tcs {
 			t.Run(tc.name, func(t *testing.T) {
-				actual := String(tc.input)
+				actual := ToStringSlice(tc.input)
 				assert.Equal(t, tc.expect, actual)
 			})
 		}
@@ -127,7 +125,7 @@ func Test_String(t *testing.T) {
 
 		for _, tc := range tcs {
 			t.Run(tc.name, func(t *testing.T) {
-				actual := String(tc.input)
+				actual := ToStringSlice(tc.input)
 				assert.Equal(t, tc.expect, actual)
 			})
 		}
