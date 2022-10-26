@@ -370,6 +370,17 @@ func TestSelectNotNull(t *testing.T) {
 	assert.Equal("SELECT (`person`.`id` IS NOT NULL) AS `person_id_not_null`, `person`.`name` FROM `person` AS `person`", actual)
 }
 
+func TestSelectBitwise(t *testing.T) {
+	assert := assert1.New(t)
+	query := Select(Person.Name)
+	query.From(Person)
+	query.Where(Person.ID.NotEqual(Bitwise(Person.ID, BitwiseAnd, "5")))
+	actual, values, err := query.SQL(0, 10)
+	assert.NoError(err)
+	assert.Equal(values, []interface{}{"5"})
+	assert.Equal("SELECT `person`.`name` FROM `person` AS `person` WHERE `person`.`id` != `person`.`id` & ?", actual)
+}
+
 func TestSelectFrom(t *testing.T) {
 	assert := assert1.New(t)
 	query := Select(Person.ID, Person.Name, Person.AddressID).From(Person).GroupBy(Person.Name, Person.AddressID)
@@ -386,4 +397,14 @@ func TestSelectFrom(t *testing.T) {
 	assert.Empty(values)
 	assert.Equal("SELECT `person`.`id` FROM `person` AS `person`"+
 		" GROUP BY `person`.`name`, `person`.`address_id`", actual)
+}
+
+func TestUpdateBitwise(t *testing.T) {
+	assert := assert1.New(t)
+
+	actual, values, err := Update(Person).Set(Person.AddressID,
+		Bitwise(Person.AddressID, BitwiseAndNegation, "5")).SQL(0)
+	assert.NoError(err)
+	assert.Equal(values, []interface{}{"5"})
+	assert.Equal("UPDATE `person` SET  `person`.`address_id` = `person`.`address_id` &~ ?", actual)
 }
