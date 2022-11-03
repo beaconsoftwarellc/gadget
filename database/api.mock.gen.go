@@ -62,6 +62,20 @@ func (mr *MockAPIMockRecorder) Commit() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Commit", reflect.TypeOf((*MockAPI)(nil).Commit))
 }
 
+// CommitOrRollback mocks base method.
+func (m *MockAPI) CommitOrRollback(err error) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CommitOrRollback", err)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CommitOrRollback indicates an expected call of CommitOrRollback.
+func (mr *MockAPIMockRecorder) CommitOrRollback(err interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommitOrRollback", reflect.TypeOf((*MockAPI)(nil).CommitOrRollback), err)
+}
+
 // Create mocks base method.
 func (m *MockAPI) Create(obj Record) error {
 	m.ctrl.T.Helper()

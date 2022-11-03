@@ -3,6 +3,7 @@ package database
 
 import (
 	"github.com/beaconsoftwarellc/gadget/v2/database/qb"
+	"github.com/beaconsoftwarellc/gadget/v2/errors"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -14,6 +15,8 @@ type API interface {
 	Commit() error
 	// Rollback aborts the transaction
 	Rollback() error
+	// CommitOrRollback will rollback on an errors.TracerError otherwise commit
+	CommitOrRollback(err error) error
 
 	// Create initializes a Record and inserts it into the Database
 	Create(obj Record) error
@@ -37,138 +40,139 @@ type API interface {
 	DeleteWhere(obj Record, condition *qb.ConditionExpression) error
 }
 
-// NewAPI returns API interface implementation
+// NewAPI using the passed database and transaction. Transaction may be null
 func NewAPI(db *Database, tx *sqlx.Tx) API {
-	return &dbapi{Tx: tx, Database: db}
+	return &dbapi{tx: tx, db: db}
 }
 
 var _ API = &dbapi{}
 
+var ErrMissingTransaction = errors.New("missing transaction")
+
 type dbapi struct {
-	*sqlx.Tx
-	*Database
+	tx *sqlx.Tx
+	db *Database
 }
 
-// Begin starts a transaction
 func (d *dbapi) Begin() error {
 	var err error
 
-	if d.Tx == nil {
-		d.Tx, err = d.Beginx()
+	if d.tx == nil {
+		d.tx, err = d.db.Beginx()
 	}
 
 	return err
 }
 
-// Rollback aborts the transaction
 func (d *dbapi) Rollback() error {
-	if d.Tx != nil {
-		defer d.cleanTx()
-		return d.Tx.Rollback()
+	if d.tx != nil {
+		err := d.tx.Rollback()
+		d.tx = nil
+		return err
 	}
 
-	return nil
+	return ErrMissingTransaction
 }
 
-// Commit commits the transaction
 func (d *dbapi) Commit() error {
-	if d.Tx != nil {
-		defer d.cleanTx()
-		return d.Tx.Commit()
+	if d.tx != nil {
+		err := d.tx.Commit()
+		d.tx = nil
+		return err
 	}
 
-	return nil
+	return ErrMissingTransaction
 }
 
-// Create initializes a Record and inserts it into the Database
+func (d *dbapi) CommitOrRollback(err error) error {
+	if d.tx != nil {
+		err = CommitOrRollback(d.tx, err)
+		d.tx = nil
+		return err
+	}
+
+	return ErrMissingTransaction
+}
+
 func (d *dbapi) Create(obj Record) error {
-	if d.Tx != nil {
-		return d.Database.CreateTx(obj, d.Tx)
-	}
-
-	return d.Database.Create(obj)
+	return d.runInTransaction(func(tx *sqlx.Tx) error {
+		return d.db.CreateTx(obj, d.tx)
+	})
 }
 
-// Read populates a Record from the database
 func (d *dbapi) Read(obj Record, pk PrimaryKeyValue) error {
-	if d.Tx != nil {
-		return d.Database.ReadTx(obj, pk, d.Tx)
-	}
-
-	return d.Database.Read(obj, pk)
+	return d.runInTransaction(func(tx *sqlx.Tx) error {
+		return d.db.ReadTx(obj, pk, d.tx)
+	})
 }
 
-// ReadOneWhere populates a Record from a custom where clause
 func (d *dbapi) ReadOneWhere(obj Record, condition *qb.ConditionExpression) error {
-	if d.Tx != nil {
-		return d.Database.ReadOneWhereTx(obj, d.Tx, condition)
-	}
-
-	return d.Database.ReadOneWhere(obj, condition)
+	return d.runInTransaction(func(tx *sqlx.Tx) error {
+		return d.db.ReadOneWhereTx(obj, d.tx, condition)
+	})
 }
 
 func (d *dbapi) Select(target interface{}, query *qb.SelectQuery) error {
-	if d.Tx != nil {
-		return d.Database.SelectTx(d.Tx, target, query)
-	}
-
-	return d.Database.Select(target, query)
+	return d.runInTransaction(func(tx *sqlx.Tx) error {
+		return d.db.SelectTx(d.tx, target, query)
+	})
 }
 
-// SelectList of Records into target based upon the passed query
 func (d *dbapi) SelectList(target interface{}, query *qb.SelectQuery, options *ListOptions) error {
-	if d.Tx != nil {
-		return d.Database.SelectListTx(d.Tx, target, query, options)
-	}
-
-	return d.Database.SelectList(target, query, options)
+	return d.runInTransaction(func(tx *sqlx.Tx) error {
+		return d.db.SelectListTx(d.tx, target, query, options)
+	})
 }
 
-// ListWhere populates target with a list of records from the database
 func (d *dbapi) ListWhere(meta Record, target interface{},
 	condition *qb.ConditionExpression, options *ListOptions) error {
-	if d.Tx != nil {
-		return d.Database.ListWhereTx(d.Tx, meta, target, condition, options)
-	}
-
-	return d.Database.ListWhere(meta, target, condition, options)
+	return d.runInTransaction(func(tx *sqlx.Tx) error {
+		return d.db.ListWhereTx(d.tx, meta, target, condition, options)
+	})
 }
 
 func (d *dbapi) Update(obj Record) error {
-	if d.Tx != nil {
-		return d.Database.UpdateTx(obj, d.Tx)
-	}
-
-	return d.Database.Update(obj)
+	return d.runInTransaction(func(tx *sqlx.Tx) error {
+		return d.db.UpdateTx(obj, d.tx)
+	})
 }
 
-// UpdateWhere updates fields for the Record based on a supplied where clause
 func (d *dbapi) UpdateWhere(obj Record, where *qb.ConditionExpression, fields ...qb.FieldValue) (int64, error) {
-	if d.Tx != nil {
-		return d.Database.UpdateWhereTx(obj, d.Tx, where, fields...)
-	}
+	var (
+		total int64
+		err   error
+	)
+	err = d.runInTransaction(func(tx *sqlx.Tx) error {
+		total, err = d.db.UpdateWhereTx(obj, d.tx, where, fields...)
+		return err
+	})
 
-	return d.Database.UpdateWhere(obj, where, fields...)
+	return total, err
 }
 
-// Delete removes a row from the database
 func (d *dbapi) Delete(obj Record) error {
-	if d.Tx != nil {
-		return d.Database.DeleteTx(obj, d.Tx)
-	}
-
-	return d.Database.Delete(obj)
+	return d.runInTransaction(func(tx *sqlx.Tx) error {
+		return d.db.DeleteTx(obj, d.tx)
+	})
 }
 
-// DeleteWhereTx removes row(s) from the database based on a supplied where clause in a transaction
 func (d *dbapi) DeleteWhere(obj Record, condition *qb.ConditionExpression) error {
-	if d.Tx != nil {
-		return d.Database.DeleteWhereTx(obj, d.Tx, condition)
-	}
-
-	return d.Database.DeleteWhere(obj, condition)
+	return d.runInTransaction(func(tx *sqlx.Tx) error {
+		return d.db.DeleteWhereTx(obj, d.tx, condition)
+	})
 }
 
-func (d *dbapi) cleanTx() {
-	d.Tx = nil
+func (d *dbapi) runInTransaction(fn func(*sqlx.Tx) error) error {
+	// if the transaction exists, execute a function in tx context
+	if d.tx != nil {
+		return fn(d.tx)
+	}
+
+	// otherwise create a temporary transaction and commit or rollback after execution
+	err := d.Begin()
+	if err != nil {
+		return err
+	}
+
+	return d.CommitOrRollback(fn(d.tx))
 }
