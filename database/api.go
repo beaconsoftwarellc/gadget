@@ -6,7 +6,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-// Database is a reduced database interface which only exposes the transaction and select functions
+// API is a database interface
 type API interface {
 	// Begin starts a transaction
 	Begin() error
@@ -37,10 +37,12 @@ type API interface {
 	DeleteWhere(obj Record, condition *qb.ConditionExpression) error
 }
 
-// New
+// NewAPI returns API interface implementation
 func NewAPI(db *Database, tx *sqlx.Tx) API {
 	return &dbapi{Tx: tx, Database: db}
 }
+
+var _ API = &dbapi{}
 
 type dbapi struct {
 	*sqlx.Tx
