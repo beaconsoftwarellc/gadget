@@ -146,6 +146,8 @@ type action struct {
 	alias      string
 	ID         qb.TableField
 	Name       qb.TableField
+	Created    qb.TableField
+	Modified   qb.TableField
 	allColumns qb.TableField
 }
 
@@ -173,6 +175,8 @@ func (a *action) ReadColumns() []qb.TableField {
 	return []qb.TableField{
 		a.ID,
 		a.Name,
+		a.Created,
+		a.Modified,
 	}
 }
 
@@ -182,9 +186,12 @@ func (a *action) WriteColumns() []qb.TableField {
 
 func (a *action) Alias(alias string) *action {
 	return &action{
-		alias:      alias,
-		ID:         qb.TableField{Name: "id", Table: alias},
-		Name:       qb.TableField{Name: "name", Table: alias},
+		alias:    alias,
+		ID:       qb.TableField{Name: "id", Table: alias},
+		Name:     qb.TableField{Name: "name", Table: alias},
+		Created:  qb.TableField{Name: "created", Table: alias},
+		Modified: qb.TableField{Name: "modified", Table: alias},
+
 		allColumns: qb.TableField{Name: "*", Table: alias},
 	}
 }
