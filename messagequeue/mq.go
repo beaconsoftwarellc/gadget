@@ -1,8 +1,18 @@
 package messagequeue
 
-import "time"
+import (
+	"context"
+	"time"
+)
 
 type MessageQueue interface {
+	// Enqueue the passed messages in the message queue
+	Enqueue(messages ...*Message) error
+	// Poll for messages processing them using the passed ProcessMessage with
+	// the passed number of workers
+	Poll(processMessage ProcessMessage, workers int) error
+	// Stop polling for messages
+	Stop()
 }
 
 // Message that can be enqueued in a MessageQueue
@@ -24,10 +34,11 @@ type Message struct {
 	Body string
 }
 
-type messagequeue struct {
-}
+// ProcessMessage returning a boolean indicating if the message was successfully
+// processed.
+type ProcessMessage func(context.Context, *Message) (bool, error)
 
 // New message queue for asynchronous processing
 func New() (MessageQueue, error) {
-	return &messagequeue{}, nil
+	return nil, nil
 }
