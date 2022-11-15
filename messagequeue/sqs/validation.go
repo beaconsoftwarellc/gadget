@@ -7,6 +7,16 @@ import (
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
 )
 
+const (
+	minNameCharacters = 1
+	maxNameCharacters = 256
+	minBodyCharacters = 1
+	maxBodyKilobytes  = 255
+	prohibitedAWS     = "aws"
+	prohibitedAmazon  = "amazon"
+	period            = "."
+)
+
 // NameIsValid for use as an attribute or system attribute name
 func NameIsValid(s string) error {
 	/*

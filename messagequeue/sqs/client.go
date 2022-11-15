@@ -2,19 +2,21 @@ package sqs
 
 import (
 	"net/url"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/beaconsoftwarellc/gadget/v2/errors"
+	"github.com/beaconsoftwarellc/gadget/v2/log"
 	"github.com/beaconsoftwarellc/gadget/v2/messagequeue"
 )
 
 const (
-	serviceAttributeName          = "service"
-	methodAttributeName           = "method"
-	awsTraceHeaderName            = "AWSTraceHeader"
-	all                    string = ".*"
-	maxWaitTimeSeconds            = 20
-	maxMessageDequeueCount        = 10
+	serviceAttributeName   = "service"
+	methodAttributeName    = "method"
+	awsTraceHeaderName     = "AWSTraceHeader"
+	maxWaitTime            = 20 * time.Second
+	maxMessageDequeueCount = 10
 )
 
 // VisibilityTimeout should be used to timeout the context for messages
@@ -28,8 +30,15 @@ const (
 // instance.
 type SQS interface {
 	// Enqueue the passed message
-	Enqueue(m *messagequeue.Message) (*messagequeue.Message, error)
-	Dequeue(count, waitSeconds int64) ([]*messagequeue.Message, error)
+	Enqueue(m *messagequeue.Message) error
+	// Enqueue all the passed messages as a batch
+	EnqueueBatch(messages []*messagequeue.Message) error
+	// Dequeue up to the passed count of messages waiting up to the passed
+	// duration
+	Dequeue(count int, wait time.Duration) ([]*messagequeue.Message, error)
+	// Delete the passed message from the queue so that it is not processed by
+	// other workers
+	Delete(*messagequeue.Message) error
 }
 
 // New SQS instance located at the passed URL
@@ -87,42 +96,112 @@ func (mq *sdk) Enqueue(msg *messagequeue.Message) error {
 	return err
 }
 
-func (mq *sdk) Dequeue(count, waitTimeSeconds int64) ([]*messagequeue.Message, error) {
+func (mq *sdk) EnqueueBatch(messages []*messagequeue.Message) error {
+	if len(messages) == 0 {
+		return nil
+	}
+	if len(messages) == 1 {
+		return mq.Enqueue(messages[0])
+	}
 	var (
-		client        *sqs.SQS
-		err           error
-		rmi           = &sqs.ReceiveMessageInput{}
-		allAttributes = all
-		rmo           *sqs.ReceiveMessageOutput
-		messages      []*messagequeue.Message
+		client *sqs.SQS
+		err    error
+		smbi   *sqs.SendMessageBatchInput
+		smbo   *sqs.SendMessageBatchOutput
+	)
+	client, err = mq.client()
+	if nil != err {
+		return err
+	}
+	smbi = &sqs.SendMessageBatchInput{
+		Entries: make([]*sqs.SendMessageBatchRequestEntry, 0, len(messages)),
+	}
+	var smbre *sqs.SendMessageBatchRequestEntry
+	for _, msg := range messages {
+		smbre, err = sendMessageBatchRequestEntryFromMessage(msg)
+		if nil != log.Error(err) {
+			continue
+		}
+		if err = smbre.Validate(); nil != log.Error(err) {
+			continue
+		}
+		smbi.Entries = append(smbi.Entries, smbre)
+	}
+	if len(smbi.Entries) == 0 {
+		return errors.New("all messages were invalid")
+	}
+	smbi.SetQueueUrl(mq.queueUrl.String())
+	if smbo, err = client.SendMessageBatch(smbi); nil != err {
+		return err
+	}
+	// we can iterate through response.Success and response.Failed and handle
+	// the specific cases if we need to later. For now just log the failures
+	log.Infof("succeeded enqueueing %d of %d messages", len(smbo.Successful),
+		len(messages))
+	for _, failure := range smbo.Failed {
+		log.Warnf("message %s failed (SenderFault: %v) with code %s: %s ",
+			*failure.Id, failure.SenderFault, failure.Code, *failure.Message)
+	}
+	return nil
+}
+
+func (mq *sdk) Dequeue(count int, wait time.Duration) ([]*messagequeue.Message, error) {
+	var (
+		client   *sqs.SQS
+		err      error
+		rmi      = &sqs.ReceiveMessageInput{}
+		rmo      *sqs.ReceiveMessageOutput
+		messages []*messagequeue.Message
 	)
 	client, err = mq.client()
 	if nil != err {
 		return nil, err
 	}
-	if waitTimeSeconds < 0 {
-		waitTimeSeconds = 0
+	if wait < 0 {
+		wait = 0
 	}
-	if waitTimeSeconds > maxWaitTimeSeconds {
-		waitTimeSeconds = maxWaitTimeSeconds
+	if wait > maxWaitTime {
+		wait = maxWaitTime
 	}
-	if count < 0 {
+	if count < 1 {
 		count = 1
 	}
 	if count > maxMessageDequeueCount {
 		count = maxMessageDequeueCount
 	}
+	// We should set this here and include the timeout as a deadline on the
+	// message, we can expose 'ExtendVisibilityTimeout' methods so that it
+	// can be extended (up to 12 hours from receipt) as the message is processed.
+	// You can provide the VisibilityTimeout parameter in your request.
+	// The parameter is applied to the messages that Amazon SQS returns in the
+	// response. If you don't include the parameter, the overall visibility
+	// timeout for the queue is used for the returned messages.
+	// rmi.SetVisibilityTimeout()
 	rmi.SetQueueUrl(mq.queueUrl.String())
-	rmi.SetMaxNumberOfMessages(count)
-	rmi.SetMessageAttributeNames([]*string{&allAttributes})
-	rmi.SetWaitTimeSeconds(waitTimeSeconds)
+	rmi.SetMaxNumberOfMessages(int64(count))
+	rmi.SetWaitTimeSeconds(int64(wait.Seconds()))
 	rmo, err = client.ReceiveMessage(rmi)
 	if nil != err {
 		return nil, err
 	}
 	for _, m := range rmo.Messages {
-		&message{SendMessageInput: m}
-		messages = append(m, messages)
+		messages = append(messages, convert(m))
 	}
 	return messages, nil
+}
+
+func (mq *sdk) Delete(msg *messagequeue.Message) error {
+	var (
+		client *sqs.SQS
+		err    error
+		dmi    = &sqs.DeleteMessageInput{}
+	)
+	client, err = mq.client()
+	if nil != err {
+		return err
+	}
+	dmi.SetQueueUrl(mq.queueUrl.String())
+	dmi.SetReceiptHandle(msg.External)
+	_, err = client.DeleteMessage(dmi)
+	return err
 }
