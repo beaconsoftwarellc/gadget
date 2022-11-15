@@ -10,23 +10,33 @@ type smiWrapper struct {
 }
 
 func (smi *smiWrapper) SetQueueUrl(value string) {
-	smi.SendMessageInput.SetQueueUrl(value)
+	if nil != smi && nil != smi.SendMessageInput {
+		smi.SendMessageInput.SetQueueUrl(value)
+	}
 }
 
 func (smi *smiWrapper) SetMessageBody(value string) {
-	smi.SendMessageInput.SetMessageBody(value)
+	if nil != smi && nil != smi.SendMessageInput {
+		smi.SendMessageInput.SetMessageBody(value)
+	}
 }
 
 func (smi *smiWrapper) SetDelaySeconds(value int64) {
-	smi.SendMessageInput.SetDelaySeconds(value)
+	if nil != smi && nil != smi.SendMessageInput {
+		smi.SendMessageInput.SetDelaySeconds(value)
+	}
 }
 
 func (smi *smiWrapper) SetMessageAttributes(value map[string]*sqs.MessageAttributeValue) {
-	smi.SendMessageInput.SetMessageAttributes(value)
+	if nil != smi && nil != smi.SendMessageInput {
+		smi.SendMessageInput.SetMessageAttributes(value)
+	}
 }
 
 func (smi *smiWrapper) SetMessageSystemAttributes(value map[string]*sqs.MessageSystemAttributeValue) {
-	smi.SendMessageInput.SetMessageSystemAttributes(value)
+	if nil != smi && nil != smi.SendMessageInput {
+		smi.SendMessageInput.SetMessageSystemAttributes(value)
+	}
 }
 
 func sendMessageInputFromMessage(message *messagequeue.Message) (*sqs.SendMessageInput, error) {
@@ -38,5 +48,5 @@ func sendMessageInputFromMessage(message *messagequeue.Message) (*sqs.SendMessag
 		// See: https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/using-messagegroupid-property.html
 		MessageGroupId: nil,
 	}}
-	return wrapper.SendMessageInput, updateRequestFromMessage(wrapper, message)
+	return wrapper.SendMessageInput, updateEnqueueFromMessage(wrapper, message)
 }

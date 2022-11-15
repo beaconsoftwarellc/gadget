@@ -17,21 +17,29 @@ func (smbi *smbreWrapper) SetQueueUrl(value string) {
 }
 
 func (smbi *smbreWrapper) SetMessageBody(value string) {
-	smbi.SendMessageBatchRequestEntry.SetMessageBody(value)
+	if nil != smbi && nil != smbi.SendMessageBatchRequestEntry {
+		smbi.SendMessageBatchRequestEntry.SetMessageBody(value)
+	}
 }
 
 func (smbi *smbreWrapper) SetDelaySeconds(value int64) {
-	smbi.SendMessageBatchRequestEntry.SetDelaySeconds(value)
+	if nil != smbi && nil != smbi.SendMessageBatchRequestEntry {
+		smbi.SendMessageBatchRequestEntry.SetDelaySeconds(value)
+	}
 }
 
 func (smbi *smbreWrapper) SetMessageAttributes(
 	value map[string]*sqs.MessageAttributeValue) {
-	smbi.SendMessageBatchRequestEntry.SetMessageAttributes(value)
+	if nil != smbi && nil != smbi.SendMessageBatchRequestEntry {
+		smbi.SendMessageBatchRequestEntry.SetMessageAttributes(value)
+	}
 }
 
 func (smbi *smbreWrapper) SetMessageSystemAttributes(
 	value map[string]*sqs.MessageSystemAttributeValue) {
-	smbi.SendMessageBatchRequestEntry.SetMessageSystemAttributes(value)
+	if nil != smbi && nil != smbi.SendMessageBatchRequestEntry {
+		smbi.SendMessageBatchRequestEntry.SetMessageSystemAttributes(value)
+	}
 }
 
 func sendMessageBatchRequestEntryFromMessage(message *messagequeue.Message) (
@@ -43,5 +51,5 @@ func sendMessageBatchRequestEntryFromMessage(message *messagequeue.Message) (
 	// within the batch. We can just use generator.
 	wrapper.SendMessageBatchRequestEntry.SetId(generator.String(32))
 	return wrapper.SendMessageBatchRequestEntry,
-		updateRequestFromMessage(wrapper, message)
+		updateEnqueueFromMessage(wrapper, message)
 }

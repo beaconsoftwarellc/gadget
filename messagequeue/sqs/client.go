@@ -4,6 +4,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
@@ -28,7 +29,7 @@ const (
 
 // SQS interface for sending and receiving messages from a simple queueing service
 // instance.
-type SQS interface {
+type Client interface {
 	// Enqueue the passed message
 	Enqueue(m *messagequeue.Message) error
 	// Enqueue all the passed messages as a batch
@@ -42,7 +43,7 @@ type SQS interface {
 }
 
 // New SQS instance located at the passed URL
-func New(queueLocator *url.URL) SQS {
+func New(queueLocator *url.URL) Client {
 	return &sdk{
 		queueUrl: queueLocator,
 	}
@@ -50,12 +51,12 @@ func New(queueLocator *url.URL) SQS {
 
 type sdk struct {
 	queueUrl *url.URL
-	service  *sqs.SQS
+	api      API
 }
 
-func (mq *sdk) client() (*sqs.SQS, error) {
-	if nil != mq.service {
-		return mq.service, nil
+func (mq *sdk) API() (API, error) {
+	if nil != mq.api {
+		return mq.api, nil
 	}
 	var (
 		err  error
@@ -65,19 +66,19 @@ func (mq *sdk) client() (*sqs.SQS, error) {
 		SharedConfigState: session.SharedConfigEnable,
 	})
 	if nil == err {
-		mq.service = sqs.New(sess)
+		mq.api = sqs.New(sess)
 	}
-	return mq.service, err
+	return mq.api, err
 }
 
 func (mq *sdk) Enqueue(msg *messagequeue.Message) error {
 	var (
-		client *sqs.SQS
-		err    error
-		smin   *sqs.SendMessageInput
-		smout  *sqs.SendMessageOutput
+		api   API
+		err   error
+		smin  *sqs.SendMessageInput
+		smout *sqs.SendMessageOutput
 	)
-	client, err = mq.client()
+	api, err = mq.API()
 	if nil != err {
 		return err
 	}
@@ -89,7 +90,7 @@ func (mq *sdk) Enqueue(msg *messagequeue.Message) error {
 	if err = smin.Validate(); nil != err {
 		return err
 	}
-	smout, err = client.SendMessage(smin)
+	smout, err = api.SendMessage(smin)
 	if nil == err {
 		msg.ID = *smout.MessageId
 	}
@@ -104,12 +105,12 @@ func (mq *sdk) EnqueueBatch(messages []*messagequeue.Message) error {
 		return mq.Enqueue(messages[0])
 	}
 	var (
-		client *sqs.SQS
-		err    error
-		smbi   *sqs.SendMessageBatchInput
-		smbo   *sqs.SendMessageBatchOutput
+		api  API
+		err  error
+		smbi *sqs.SendMessageBatchInput
+		smbo *sqs.SendMessageBatchOutput
 	)
-	client, err = mq.client()
+	api, err = mq.API()
 	if nil != err {
 		return err
 	}
@@ -131,7 +132,7 @@ func (mq *sdk) EnqueueBatch(messages []*messagequeue.Message) error {
 		return errors.New("all messages were invalid")
 	}
 	smbi.SetQueueUrl(mq.queueUrl.String())
-	if smbo, err = client.SendMessageBatch(smbi); nil != err {
+	if smbo, err = api.SendMessageBatch(smbi); nil != err {
 		return err
 	}
 	// we can iterate through response.Success and response.Failed and handle
@@ -140,20 +141,21 @@ func (mq *sdk) EnqueueBatch(messages []*messagequeue.Message) error {
 		len(messages))
 	for _, failure := range smbo.Failed {
 		log.Warnf("message %s failed (SenderFault: %v) with code %s: %s ",
-			*failure.Id, failure.SenderFault, failure.Code, *failure.Message)
+			aws.StringValue(failure.Id), aws.BoolValue(failure.SenderFault),
+			aws.StringValue(failure.Code), aws.StringValue(failure.Message))
 	}
 	return nil
 }
 
 func (mq *sdk) Dequeue(count int, wait time.Duration) ([]*messagequeue.Message, error) {
 	var (
-		client   *sqs.SQS
+		api      API
 		err      error
 		rmi      = &sqs.ReceiveMessageInput{}
 		rmo      *sqs.ReceiveMessageOutput
 		messages []*messagequeue.Message
 	)
-	client, err = mq.client()
+	api, err = mq.API()
 	if nil != err {
 		return nil, err
 	}
@@ -180,7 +182,7 @@ func (mq *sdk) Dequeue(count int, wait time.Duration) ([]*messagequeue.Message, 
 	rmi.SetQueueUrl(mq.queueUrl.String())
 	rmi.SetMaxNumberOfMessages(int64(count))
 	rmi.SetWaitTimeSeconds(int64(wait.Seconds()))
-	rmo, err = client.ReceiveMessage(rmi)
+	rmo, err = api.ReceiveMessage(rmi)
 	if nil != err {
 		return nil, err
 	}
@@ -192,16 +194,16 @@ func (mq *sdk) Dequeue(count int, wait time.Duration) ([]*messagequeue.Message, 
 
 func (mq *sdk) Delete(msg *messagequeue.Message) error {
 	var (
-		client *sqs.SQS
-		err    error
-		dmi    = &sqs.DeleteMessageInput{}
+		api API
+		err error
+		dmi = &sqs.DeleteMessageInput{}
 	)
-	client, err = mq.client()
+	api, err = mq.API()
 	if nil != err {
 		return err
 	}
 	dmi.SetQueueUrl(mq.queueUrl.String())
 	dmi.SetReceiptHandle(msg.External)
-	_, err = client.DeleteMessage(dmi)
+	_, err = api.DeleteMessage(dmi)
 	return err
 }
