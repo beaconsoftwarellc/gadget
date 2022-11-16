@@ -86,6 +86,7 @@ func (mq *sdk) Enqueue(msg *messagequeue.Message) error {
 	if nil != err {
 		return err
 	}
+	smin.SetQueueUrl(mq.queueUrl.String())
 
 	if err = smin.Validate(); nil != err {
 		return err
@@ -100,9 +101,6 @@ func (mq *sdk) Enqueue(msg *messagequeue.Message) error {
 func (mq *sdk) EnqueueBatch(messages []*messagequeue.Message) error {
 	if len(messages) == 0 {
 		return nil
-	}
-	if len(messages) == 1 {
-		return mq.Enqueue(messages[0])
 	}
 	var (
 		api  API
@@ -137,6 +135,8 @@ func (mq *sdk) EnqueueBatch(messages []*messagequeue.Message) error {
 	}
 	// we can iterate through response.Success and response.Failed and handle
 	// the specific cases if we need to later. For now just log the failures
+	// Maybe return an array of errors that correspond to the messages. If the
+	// error is marked "!SendFault" we should retry presumably.
 	log.Infof("succeeded enqueueing %d of %d messages", len(smbo.Successful),
 		len(messages))
 	for _, failure := range smbo.Failed {
