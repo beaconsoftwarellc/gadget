@@ -1,7 +1,9 @@
 package sqs
 
 import (
-	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
 	"github.com/beaconsoftwarellc/gadget/v2/messagequeue"
 )
 
@@ -11,31 +13,31 @@ type smiWrapper struct {
 
 func (smi *smiWrapper) SetQueueUrl(value string) {
 	if nil != smi && nil != smi.SendMessageInput {
-		smi.SendMessageInput.SetQueueUrl(value)
+		smi.SendMessageInput.QueueUrl = aws.String(value)
 	}
 }
 
 func (smi *smiWrapper) SetMessageBody(value string) {
 	if nil != smi && nil != smi.SendMessageInput {
-		smi.SendMessageInput.SetMessageBody(value)
+		smi.SendMessageInput.MessageBody = aws.String(value)
 	}
 }
 
-func (smi *smiWrapper) SetDelaySeconds(value int64) {
+func (smi *smiWrapper) SetDelaySeconds(value int32) {
 	if nil != smi && nil != smi.SendMessageInput {
-		smi.SendMessageInput.SetDelaySeconds(value)
+		smi.SendMessageInput.DelaySeconds = value
 	}
 }
 
-func (smi *smiWrapper) SetMessageAttributes(value map[string]*sqs.MessageAttributeValue) {
+func (smi *smiWrapper) SetMessageAttributes(value map[string]types.MessageAttributeValue) {
 	if nil != smi && nil != smi.SendMessageInput {
-		smi.SendMessageInput.SetMessageAttributes(value)
+		smi.SendMessageInput.MessageAttributes = value
 	}
 }
 
-func (smi *smiWrapper) SetMessageSystemAttributes(value map[string]*sqs.MessageSystemAttributeValue) {
+func (smi *smiWrapper) SetMessageSystemAttributes(value map[string]types.MessageSystemAttributeValue) {
 	if nil != smi && nil != smi.SendMessageInput {
-		smi.SendMessageInput.SetMessageSystemAttributes(value)
+		smi.SendMessageInput.MessageSystemAttributes = value
 	}
 }
 

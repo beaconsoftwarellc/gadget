@@ -3,8 +3,9 @@ package sqs
 import (
 	"testing"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
 	"github.com/beaconsoftwarellc/gadget/v2/generator"
 	"github.com/beaconsoftwarellc/gadget/v2/messagequeue"
 	assert1 "github.com/stretchr/testify/assert"
@@ -37,9 +38,8 @@ func Test_updateEnqueueFromMessage(t *testing.T) {
 	actual = updateEnqueueFromMessage(enqueue, message)
 	assert.NoError(actual)
 
-	assert.Equal(message.Body, aws.StringValue(enqueue.MessageBody))
-	assert.Equal(int64(message.Delay.Seconds()),
-		aws.Int64Value(enqueue.DelaySeconds))
+	assert.Equal(message.Body, aws.ToString(enqueue.MessageBody))
+	assert.Equal(int32(message.Delay.Seconds()), enqueue.DelaySeconds)
 	assert.Equal(message.Service,
 		*enqueue.MessageAttributes[serviceAttributeName].StringValue)
 	assert.Equal(message.Method,
@@ -50,7 +50,7 @@ func Test_updateEnqueueFromMessage(t *testing.T) {
 func Test_setAttribute(t *testing.T) {
 	var (
 		assert   = assert1.New(t)
-		mapping  map[string]*sqs.MessageAttributeValue
+		mapping  map[string]types.MessageAttributeValue
 		name     string
 		value    string
 		expected string
@@ -60,7 +60,7 @@ func Test_setAttribute(t *testing.T) {
 	actual = setAttribute(mapping, name, value)
 	assert.EqualError(actual, expected)
 
-	mapping = make(map[string]*sqs.MessageAttributeValue)
+	mapping = make(map[string]types.MessageAttributeValue)
 	expected = "name character count out of bounds [1, 256] (0)"
 	actual = setAttribute(mapping, name, value)
 	assert.EqualError(actual, expected)
@@ -79,7 +79,7 @@ func Test_setAttribute(t *testing.T) {
 func Test_setXRayTrace(t *testing.T) {
 	var (
 		assert   = assert1.New(t)
-		mapping  map[string]*sqs.MessageSystemAttributeValue
+		mapping  map[string]types.MessageSystemAttributeValue
 		value    string
 		expected string
 		actual   error
@@ -88,7 +88,7 @@ func Test_setXRayTrace(t *testing.T) {
 	actual = setXRayTrace(mapping, value)
 	assert.EqualError(actual, expected)
 
-	mapping = make(map[string]*sqs.MessageSystemAttributeValue)
+	mapping = make(map[string]types.MessageSystemAttributeValue)
 	expected = bodyMinimumError
 	actual = setXRayTrace(mapping, value)
 	assert.EqualError(actual, expected)

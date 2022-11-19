@@ -1,6 +1,10 @@
 package sqs
 
-import "github.com/aws/aws-sdk-go/service/sqs"
+import (
+	"context"
+
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
+)
 
 //go:generate mockgen -package sqs -destination api_mock_test.gen.go . API
 
@@ -34,7 +38,8 @@ type API interface {
 	//   Error code 400. Unsupported operation.
 	//
 	// See also, https://docs.aws.amazon.com/goto/WebAPI/sqs-2012-11-05/SendMessage
-	SendMessage(*sqs.SendMessageInput) (*sqs.SendMessageOutput, error)
+	SendMessage(context.Context, *sqs.SendMessageInput, ...func(*sqs.Options)) (
+		*sqs.SendMessageOutput, error)
 	// SendMessageBatch API operation for Amazon Simple Queue Service.
 	//
 	// Delivers up to ten messages to the specified queue. This is a batch version
@@ -96,7 +101,8 @@ type API interface {
 	//   Error code 400. Unsupported operation.
 	//
 	// See also, https://docs.aws.amazon.com/goto/WebAPI/sqs-2012-11-05/SendMessageBatch
-	SendMessageBatch(*sqs.SendMessageBatchInput) (*sqs.SendMessageBatchOutput, error)
+	SendMessageBatch(context.Context, *sqs.SendMessageBatchInput,
+		...func(*sqs.Options)) (*sqs.SendMessageBatchOutput, error)
 	// ReceiveMessage API operation for Amazon Simple Queue Service.
 	//
 	// Retrieves one or more messages (up to 10), from the specified queue. Using
@@ -162,7 +168,8 @@ type API interface {
 	//   reached.
 	//
 	// See also, https://docs.aws.amazon.com/goto/WebAPI/sqs-2012-11-05/ReceiveMessage
-	ReceiveMessage(*sqs.ReceiveMessageInput) (*sqs.ReceiveMessageOutput, error)
+	ReceiveMessage(context.Context, *sqs.ReceiveMessageInput, ...func(*sqs.Options)) (
+		*sqs.ReceiveMessageOutput, error)
 	// DeleteMessage API operation for Amazon Simple Queue Service.
 	//
 	// Deletes the specified message from the specified queue. To select the message
@@ -201,5 +208,6 @@ type API interface {
 	//   The specified receipt handle isn't valid.
 	//
 	// See also, https://docs.aws.amazon.com/goto/WebAPI/sqs-2012-11-05/DeleteMessage
-	DeleteMessage(*sqs.DeleteMessageInput) (*sqs.DeleteMessageOutput, error)
+	DeleteMessage(ctx context.Context, params *sqs.DeleteMessageInput,
+		optFns ...func(*sqs.Options)) (*sqs.DeleteMessageOutput, error)
 }

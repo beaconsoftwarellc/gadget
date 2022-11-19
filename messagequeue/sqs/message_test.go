@@ -3,7 +3,7 @@ package sqs
 import (
 	"testing"
 
-	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
 	"github.com/beaconsoftwarellc/gadget/v2/generator"
 	"github.com/beaconsoftwarellc/gadget/v2/messagequeue"
 	assert1 "github.com/stretchr/testify/assert"
@@ -18,8 +18,8 @@ func Test_convert(t *testing.T) {
 		service  string = missing
 		method   string = missing
 	)
-	message := &sqs.Message{
-		MessageAttributes: make(map[string]*sqs.MessageAttributeValue),
+	message := &types.Message{
+		MessageAttributes: make(map[string]types.MessageAttributeValue),
 	}
 	assertAll := func(actual *messagequeue.Message) {
 		assert.Equal(id, actual.ID)
@@ -39,10 +39,10 @@ func Test_convert(t *testing.T) {
 	message.MessageId = &id
 	message.ReceiptHandle = &external
 	message.Body = &body
-	message.MessageAttributes[serviceAttributeName] = &sqs.MessageAttributeValue{
+	message.MessageAttributes[serviceAttributeName] = types.MessageAttributeValue{
 		StringValue: &service,
 	}
-	message.MessageAttributes[methodAttributeName] = &sqs.MessageAttributeValue{
+	message.MessageAttributes[methodAttributeName] = types.MessageAttributeValue{
 		StringValue: &method,
 	}
 	actual = convert(message)

@@ -5,9 +5,10 @@
 package sqs
 
 import (
+	context "context"
 	reflect "reflect"
 
-	sqs "github.com/aws/aws-sdk-go/service/sqs"
+	sqs "github.com/aws/aws-sdk-go-v2/service/sqs"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -35,61 +36,81 @@ func (m *MockAPI) EXPECT() *MockAPIMockRecorder {
 }
 
 // DeleteMessage mocks base method.
-func (m *MockAPI) DeleteMessage(arg0 *sqs.DeleteMessageInput) (*sqs.DeleteMessageOutput, error) {
+func (m *MockAPI) DeleteMessage(arg0 context.Context, arg1 *sqs.DeleteMessageInput, arg2 ...func(*sqs.Options)) (*sqs.DeleteMessageOutput, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteMessage", arg0)
+	varargs := []interface{}{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeleteMessage", varargs...)
 	ret0, _ := ret[0].(*sqs.DeleteMessageOutput)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // DeleteMessage indicates an expected call of DeleteMessage.
-func (mr *MockAPIMockRecorder) DeleteMessage(arg0 interface{}) *gomock.Call {
+func (mr *MockAPIMockRecorder) DeleteMessage(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteMessage", reflect.TypeOf((*MockAPI)(nil).DeleteMessage), arg0)
+	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteMessage", reflect.TypeOf((*MockAPI)(nil).DeleteMessage), varargs...)
 }
 
 // ReceiveMessage mocks base method.
-func (m *MockAPI) ReceiveMessage(arg0 *sqs.ReceiveMessageInput) (*sqs.ReceiveMessageOutput, error) {
+func (m *MockAPI) ReceiveMessage(arg0 context.Context, arg1 *sqs.ReceiveMessageInput, arg2 ...func(*sqs.Options)) (*sqs.ReceiveMessageOutput, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReceiveMessage", arg0)
+	varargs := []interface{}{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ReceiveMessage", varargs...)
 	ret0, _ := ret[0].(*sqs.ReceiveMessageOutput)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ReceiveMessage indicates an expected call of ReceiveMessage.
-func (mr *MockAPIMockRecorder) ReceiveMessage(arg0 interface{}) *gomock.Call {
+func (mr *MockAPIMockRecorder) ReceiveMessage(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReceiveMessage", reflect.TypeOf((*MockAPI)(nil).ReceiveMessage), arg0)
+	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReceiveMessage", reflect.TypeOf((*MockAPI)(nil).ReceiveMessage), varargs...)
 }
 
 // SendMessage mocks base method.
-func (m *MockAPI) SendMessage(arg0 *sqs.SendMessageInput) (*sqs.SendMessageOutput, error) {
+func (m *MockAPI) SendMessage(arg0 context.Context, arg1 *sqs.SendMessageInput, arg2 ...func(*sqs.Options)) (*sqs.SendMessageOutput, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SendMessage", arg0)
+	varargs := []interface{}{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "SendMessage", varargs...)
 	ret0, _ := ret[0].(*sqs.SendMessageOutput)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // SendMessage indicates an expected call of SendMessage.
-func (mr *MockAPIMockRecorder) SendMessage(arg0 interface{}) *gomock.Call {
+func (mr *MockAPIMockRecorder) SendMessage(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendMessage", reflect.TypeOf((*MockAPI)(nil).SendMessage), arg0)
+	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendMessage", reflect.TypeOf((*MockAPI)(nil).SendMessage), varargs...)
 }
 
 // SendMessageBatch mocks base method.
-func (m *MockAPI) SendMessageBatch(arg0 *sqs.SendMessageBatchInput) (*sqs.SendMessageBatchOutput, error) {
+func (m *MockAPI) SendMessageBatch(arg0 context.Context, arg1 *sqs.SendMessageBatchInput, arg2 ...func(*sqs.Options)) (*sqs.SendMessageBatchOutput, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SendMessageBatch", arg0)
+	varargs := []interface{}{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "SendMessageBatch", varargs...)
 	ret0, _ := ret[0].(*sqs.SendMessageBatchOutput)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // SendMessageBatch indicates an expected call of SendMessageBatch.
-func (mr *MockAPIMockRecorder) SendMessageBatch(arg0 interface{}) *gomock.Call {
+func (mr *MockAPIMockRecorder) SendMessageBatch(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendMessageBatch", reflect.TypeOf((*MockAPI)(nil).SendMessageBatch), arg0)
+	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendMessageBatch", reflect.TypeOf((*MockAPI)(nil).SendMessageBatch), varargs...)
 }

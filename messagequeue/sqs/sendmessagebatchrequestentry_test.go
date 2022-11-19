@@ -29,5 +29,5 @@ func Test_sendMessageBatchRequestEntryFromMessage(t *testing.T) {
 		*actual.MessageAttributes[methodAttributeName].StringValue)
 	assert.Equal(message.Trace,
 		*actual.MessageSystemAttributes[awsTraceHeaderName].StringValue)
-	assert.Equal(int64(message.Delay.Seconds()), *actual.DelaySeconds)
+	assert.Equal(int32(message.Delay.Seconds()), actual.DelaySeconds)
 }

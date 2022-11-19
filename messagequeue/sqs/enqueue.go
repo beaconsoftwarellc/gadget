@@ -3,7 +3,8 @@ package sqs
 import (
 	"time"
 
-	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
 	"github.com/beaconsoftwarellc/gadget/v2/messagequeue"
 	"github.com/beaconsoftwarellc/gadget/v2/stringutil"
@@ -26,9 +27,9 @@ type enqueue interface {
 	//
 	// When you set FifoQueue, you can't set DelaySeconds per message. You can set
 	// this parameter only on a queue level.
-	SetDelaySeconds(int64)
-	SetMessageAttributes(map[string]*sqs.MessageAttributeValue)
-	SetMessageSystemAttributes(map[string]*sqs.MessageSystemAttributeValue)
+	SetDelaySeconds(int32)
+	SetMessageAttributes(map[string]types.MessageAttributeValue)
+	SetMessageSystemAttributes(map[string]types.MessageSystemAttributeValue)
 }
 
 func updateEnqueueFromMessage(request enqueue, message *messagequeue.Message) error {
@@ -37,13 +38,13 @@ func updateEnqueueFromMessage(request enqueue, message *messagequeue.Message) er
 	}
 	var (
 		err  error
-		mma  = map[string]*sqs.MessageAttributeValue{}
-		mmsa = map[string]*sqs.MessageSystemAttributeValue{}
+		mma  = map[string]types.MessageAttributeValue{}
+		mmsa = map[string]types.MessageSystemAttributeValue{}
 	)
 	if message.Delay > maxDelay {
 		message.Delay = maxDelay
 	}
-	request.SetDelaySeconds(int64(message.Delay.Seconds()))
+	request.SetDelaySeconds(int32(message.Delay.Seconds()))
 
 	if err = setAttribute(mma, serviceAttributeName, message.Service); err != nil {
 		return err
@@ -67,7 +68,7 @@ func updateEnqueueFromMessage(request enqueue, message *messagequeue.Message) er
 	return err
 }
 
-func setAttribute(mapping map[string]*sqs.MessageAttributeValue, name, value string) error {
+func setAttribute(mapping map[string]types.MessageAttributeValue, name, value string) error {
 	if nil == mapping {
 		return errors.New(mappingErrorMessage)
 	}
@@ -78,14 +79,14 @@ func setAttribute(mapping map[string]*sqs.MessageAttributeValue, name, value str
 	if err = BodyIsValid(value); nil != err {
 		return errors.New("invalid attribute value: %s", err.Error())
 	}
-	mav := &sqs.MessageAttributeValue{}
-	mav.SetDataType(stringDataType)
-	mav.SetStringValue(value)
+	mav := types.MessageAttributeValue{}
+	mav.DataType = aws.String(stringDataType)
+	mav.StringValue = aws.String(value)
 	mapping[name] = mav
 	return nil
 }
 
-func setXRayTrace(mapping map[string]*sqs.MessageSystemAttributeValue,
+func setXRayTrace(mapping map[string]types.MessageSystemAttributeValue,
 	value string) error {
 	if nil == mapping {
 		return errors.New(mappingErrorMessage)
@@ -97,9 +98,9 @@ func setXRayTrace(mapping map[string]*sqs.MessageSystemAttributeValue,
 	if err = BodyIsValid(value); nil != err {
 		return err
 	}
-	msav := &sqs.MessageSystemAttributeValue{}
-	msav.SetDataType(stringDataType)
-	msav.SetStringValue(value)
+	msav := types.MessageSystemAttributeValue{}
+	msav.DataType = aws.String(stringDataType)
+	msav.StringValue = aws.String(value)
 	mapping[awsTraceHeaderName] = msav
 	return nil
 }
