@@ -119,6 +119,9 @@ func (mq *sdk) enqueueBatch(ctx context.Context,
 		if ok {
 			r.ID = aws.ToString(message.MessageId)
 			r.Success = true
+		} else {
+			log.Warnf("message ID '%s' returned from SQS is unknown",
+				aws.ToString(message.Id))
 		}
 	}
 	for _, failed := range smbo.Failed {
