@@ -74,6 +74,7 @@ type dispatcher struct {
 	consecutiveScaleDownMisses int
 	etMux                      sync.Mutex
 	executingTasks             map[string]*internalTask
+	log                        log.Logger
 }
 
 // NewDispatcher to handle asynchronous processing of Tasks with the specified maximum number of workers.
@@ -81,23 +82,23 @@ type dispatcher struct {
 // Execution for the dispatcher is asynchronous but `Dispatcher.Run` must be called for any tasks to be worked.
 // Example Usage:
 //
-//      type MyTask struct {}
+//	     type MyTask struct {}
 //
-//      func (task *MyTask) Execute() error {
-//          // do work here
-//          return nil
-//      }
-//      func main() {
-//             maxBufferedMessages := 10
-//			   minWorkers := 1
-//			   maxWorkers := 10
-//             myDispatcher := dispatcher.NewDispatcher(maxBufferedMessages, minWorkers, maxWorkers)
-//             myDispatcher.Run()
-//             myTask := &MyTask{}
-//             myDispatcher.Dispatch(myTask)
-//             myDispatcher.Quit()
-//      }
-func NewDispatcher(maxBufferedMessage int, minWorkers int, maxWorkers int) Dispatcher {
+//	     func (task *MyTask) Execute() error {
+//	         // do work here
+//	         return nil
+//	     }
+//	     func main() {
+//	            maxBufferedMessages := 10
+//				   minWorkers := 1
+//				   maxWorkers := 10
+//	            myDispatcher := dispatcher.NewDispatcher(maxBufferedMessages, minWorkers, maxWorkers)
+//	            myDispatcher.Run()
+//	            myTask := &MyTask{}
+//	            myDispatcher.Dispatch(myTask)
+//	            myDispatcher.Quit()
+//	     }
+func NewDispatcher(maxBufferedMessage int, minWorkers int, maxWorkers int, logger log.Logger) Dispatcher {
 	d := &dispatcher{
 		bufferSize: maxBufferedMessage,
 		queue:      make(chan *internalTask, maxBufferedMessage),
@@ -108,6 +109,7 @@ func NewDispatcher(maxBufferedMessage int, minWorkers int, maxWorkers int) Dispa
 		waitBetweenScaleDowns:      DefaultWaitBetweenScaleDowns,
 		consecutiveScaleDownMisses: DefaultDispatchMissesBeforeDraining,
 		executingTasks:             make(map[string]*internalTask),
+		log:                        logger,
 	}
 	// don't set max below min
 	d.maxWorkers = intutil.Maxv(d.minWorkers, maxWorkers)
@@ -124,7 +126,7 @@ func (d *dispatcher) overflowPush(t *internalTask) {
 			ets[i] = fmt.Sprintf("%#v", task)
 			i++
 		}
-		log.Errorf("Overflow activity at threshold, current tasks:\n%s", strings.Join(ets, "\n"))
+		d.log.Errorf("Overflow activity at threshold, current tasks:\n%s", strings.Join(ets, "\n"))
 		d.etMux.Unlock()
 	}
 }
@@ -145,14 +147,14 @@ func (d *dispatcher) Resize(size int, start bool) {
 			size = d.minWorkers
 		}
 		if size == len(d.workers) {
-			log.Warnf("cannot resize pool to it's current size %d", len(d.workers))
+			d.log.Warnf("cannot resize pool to it's current size %d", len(d.workers))
 			return
 		}
 		if size < 0 {
-			log.Warnf("pool size cannot be less than zero")
+			d.log.Warnf("pool size cannot be less than zero")
 			return
 		}
-		log.Debugf("scaling worker pool %d -> %d", len(d.workers), size)
+		d.log.Debugf("scaling worker pool %d -> %d", len(d.workers), size)
 
 		// kill all the existing workers
 		for _, w := range d.workers {
@@ -162,7 +164,7 @@ func (d *dispatcher) Resize(size int, start bool) {
 		d.workers = make([]Worker, size)
 		// add in the new workers
 		for i := 0; i < len(d.workers); i++ {
-			d.workers[i] = NewWorker(newPool, d.complete)
+			d.workers[i] = NewWorker(newPool, d.complete, d.log)
 		}
 		// no one is using the old pool anymore so close it
 		if nil != d.pool {
@@ -174,7 +176,7 @@ func (d *dispatcher) Resize(size int, start bool) {
 				<-w.Run()
 			}
 		}
-		log.Debugf("scaling complete")
+		d.log.Debugf("scaling complete")
 		atomic.StoreInt32(&d.scaling, 0)
 	}
 }
@@ -190,7 +192,7 @@ func (d *dispatcher) Resize(size int, start bool) {
 // prevent the Quit function from exiting.
 func (d *dispatcher) Dispatch(task Task) bool {
 	if d.Status() == Draining {
-		log.Error(fmt.Errorf("task added to dispatcher while draining: %+v", task))
+		d.log.Error(fmt.Errorf("task added to dispatcher while draining: %+v", task))
 	}
 	return d.enqueue(newInternalTask(task), false)
 }
@@ -202,7 +204,7 @@ func (d *dispatcher) enqueue(task *internalTask, suppressWarning bool) bool {
 	default:
 		d.overflowPush(task)
 		if !suppressWarning {
-			log.Warnf("task added to dispatcher with a full queue, overflow is at %d ", d.overflow.Size())
+			d.log.Warnf("task added to dispatcher with a full queue, overflow is at %d ", d.overflow.Size())
 		}
 		return false
 	}
@@ -259,7 +261,7 @@ func (d *dispatcher) run() {
 			consecutiveMisses++
 			// try to load the overflow
 			if d.overflow.Size() == 0 && consecutiveMisses > d.consecutiveScaleDownMisses {
-				log.Infof("exiting as there are no more tasks")
+				d.log.Infof("exiting as there are no more tasks")
 				d.exited <- true
 				return
 			}
@@ -271,7 +273,7 @@ func (d *dispatcher) run() {
 			d.etMux.Unlock()
 			consecutiveMisses = 0
 			if d.overflow.Size() > 0 && !d.loadOverflow() {
-				log.Infof("dispatcher overflow queue at %d messages after load", d.overflow.Size())
+				d.log.Infof("dispatcher overflow queue at %d messages after load", d.overflow.Size())
 			}
 		case task := <-d.queue:
 			lastDispatch = time.Now()
@@ -281,7 +283,7 @@ func (d *dispatcher) run() {
 			// scale down if we have no overflow queue, we are not at our minimum number of workers
 			// and it has been over a second since the last time we dispatched a message
 			if d.overflow.Size() == 0 && len(d.workers) != d.minWorkers && time.Since(lastDispatch) > d.waitBetweenScaleDowns {
-				log.Infof("dispatcher status: %d workers %d overflow", len(d.workers), d.overflow.Size())
+				d.log.Infof("dispatcher status: %d workers %d overflow", len(d.workers), d.overflow.Size())
 				d.Resize(len(d.workers)/2, true)
 			}
 		}
@@ -300,7 +302,7 @@ func (d *dispatcher) dispatch(t *internalTask) {
 		d.etMux.Unlock()
 		if !w.Exec(t) {
 			// put it in overflow for now
-			log.Warnf("worker exec failed, pushing task to overflow (%d tasks)", d.overflow.Size())
+			d.log.Warnf("worker exec failed, pushing task to overflow (%d tasks)", d.overflow.Size())
 			d.overflowPush(t)
 		}
 	case <-d.exit:
@@ -311,7 +313,7 @@ func (d *dispatcher) dispatch(t *internalTask) {
 	default:
 		// no workers, try scaling up if we are not already at capacity
 		if len(d.workers) != d.maxWorkers {
-			log.Infof("No workers available scaling pool")
+			d.log.Infof("No workers available scaling pool")
 			d.Resize(2*len(d.workers), true)
 		}
 		// but either way push to overflow and try later

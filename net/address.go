@@ -3,12 +3,14 @@ package net
 import (
 	"encoding/json"
 	"fmt"
+
 	"math"
 	"net"
 	"strconv"
 	"strings"
 
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
+	"github.com/beaconsoftwarellc/gadget/v2/log"
 	"github.com/beaconsoftwarellc/gadget/v2/stringutil"
 )
 
@@ -33,15 +35,15 @@ func (addr *Address) String() string {
 }
 
 // NewAddressFromConnection if the RemoteAddr is set to a valid address.
-func NewAddressFromConnection(conn net.Conn) (*Address, error) {
-	return ParseAddress(conn.RemoteAddr().String())
+func NewAddressFromConnection(conn net.Conn, logger log.Logger) (*Address, error) {
+	return ParseAddress(conn.RemoteAddr().String(), logger)
 }
 
 // ParseAddress from the passed string and return it.
-func ParseAddress(address string) (*Address, errors.TracerError) {
+func ParseAddress(address string, logger log.Logger) (*Address, errors.TracerError) {
 	addr := &Address{}
-	if ValidateIPv6Address(address) {
-		clean, testPort := cleanIPv6(address)
+	if ValidateIPv6Address(address, logger) {
+		clean, testPort := cleanIPv6(address, logger)
 		hasPort := false
 		port := 0
 		if testPort > 0 {

@@ -191,9 +191,9 @@ func ConstantTimeComparison(expected, actual string) bool {
 }
 
 // GetSchemaName from an object for use in the schema field on a routed message payload.
-func GetSchemaName(obj proto.Message) (name string) {
+func GetSchemaName(obj proto.Message, logger log.Logger) (name string) {
 	if nil == obj {
-		log.Infof("GetSchemaName called with nil")
+		logger.Infof("GetSchemaName called with nil")
 		return "<nil>"
 	}
 	ptrtype := reflect.TypeOf(obj)

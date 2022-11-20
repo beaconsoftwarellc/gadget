@@ -66,11 +66,11 @@ type bootstrapper struct {
 }
 
 // NewBootstrapper returns the primary implementation of the Bootstrapper interface
-func NewBootstrapper(db *Database) Bootstrapper {
+func NewBootstrapper(db *Database, logger log.Logger) Bootstrapper {
 	return &bootstrapper{
 		db:  db,
 		tx:  db.MustBegin(),
-		log: log.New("bootstrap", log.FunctionFromEnv()),
+		log: logger,
 	}
 }
 

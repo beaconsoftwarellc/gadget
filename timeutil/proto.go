@@ -11,7 +11,7 @@ import (
 )
 
 // TimeToTimestamp returns a protobuf Timestamp from a Time object
-func TimeToTimestamp(t time.Time) *timestamp.Timestamp {
+func TimeToTimestamp(t time.Time, logger log.Logger) *timestamp.Timestamp {
 
 	if t.IsZero() {
 		return &timestamp.Timestamp{}
@@ -19,31 +19,31 @@ func TimeToTimestamp(t time.Time) *timestamp.Timestamp {
 
 	ts, err := ptypes.TimestampProto(t)
 	if nil != err {
-		log.Errorf("Time to Timestamp error: %s", err.Error())
+		logger.Errorf("Time to Timestamp error: %s", err.Error())
 	}
 	return ts
 }
 
 // TimestampToTime returns a Time object from a protobuf Timestamp
-func TimestampToTime(ts *timestamp.Timestamp) time.Time {
+func TimestampToTime(ts *timestamp.Timestamp, logger log.Logger) time.Time {
 	if nil == ts {
 		return time.Time{}
 	}
 	t, err := ptypes.Timestamp(ts)
 	if nil != err {
-		log.Errorf("Timestamp to Times error: %s", err.Error())
+		logger.Errorf("Timestamp to Times error: %s", err.Error())
 	}
 	return t
 }
 
 // TimestampToNullTime returns a mysql.NullTime from a protobuf Timestamp
-func TimestampToNullTime(ts *timestamp.Timestamp) mysql.NullTime {
-	return TimeToNullTime(TimestampToTime(ts))
+func TimestampToNullTime(ts *timestamp.Timestamp, logger log.Logger) mysql.NullTime {
+	return TimeToNullTime(TimestampToTime(ts, logger))
 }
 
 // TimestampToNilOrTime returns a time.Time or nil (for JSON) from a protobuf Timestamp
-func TimestampToNilOrTime(ts *timestamp.Timestamp) *time.Time {
-	nt := TimestampToNullTime(ts)
+func TimestampToNilOrTime(ts *timestamp.Timestamp, logger log.Logger) *time.Time {
+	nt := TimestampToNullTime(ts, logger)
 	if nt.Valid {
 		return &nt.Time
 	}
@@ -51,7 +51,7 @@ func TimestampToNilOrTime(ts *timestamp.Timestamp) *time.Time {
 }
 
 // NullTimeToTimestamp returns a protobuf Timestamp from a mysql.NullTime
-func NullTimeToTimestamp(nt mysql.NullTime) *timestamp.Timestamp {
+func NullTimeToTimestamp(nt mysql.NullTime, logger log.Logger) *timestamp.Timestamp {
 	var ts *timestamp.Timestamp
 	var err error
 
@@ -61,7 +61,7 @@ func NullTimeToTimestamp(nt mysql.NullTime) *timestamp.Timestamp {
 		ts, err = ptypes.TimestampProto(time.Time{})
 	}
 	if nil != err {
-		log.Error(err)
+		logger.Error(err)
 	}
 	return ts
 }

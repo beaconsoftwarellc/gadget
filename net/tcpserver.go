@@ -29,20 +29,23 @@ type TCPServer struct {
 	idleTicker           timeutil.Ticker
 	idleMutex            sync.RWMutex
 	onIdle               func()
+	log                  log.Logger
 }
 
 // NewTCPServer that will exit listen on the number of MaxConsecutiveErrors specified and use the number of
 // workers specified to asynchronously process incoming connections.
-func NewTCPServer(maxConsecutiveErrors, maxWorkers int, getListenerGetTask GetListenerGetTask) *TCPServer {
+func NewTCPServer(maxConsecutiveErrors, maxWorkers int,
+	getListenerGetTask GetListenerGetTask, logger log.Logger) *TCPServer {
 	return &TCPServer{
 		MaxConsecutiveErrors: maxConsecutiveErrors,
 		MaxWorkers:           maxWorkers,
 		implementation:       getListenerGetTask,
 		Dispatcher: dispatcher.NewDispatcher(DefaultBufferedTasks,
-			DefaultMinWorkers, maxWorkers),
+			DefaultMinWorkers, maxWorkers, logger),
 		idleUpdate:  make(chan time.Duration, 5),
 		idleTimeout: DefaultIdleTimeout,
 		idleTicker:  timeutil.NewTicker(DefaultIdleTimeout),
+		log:         logger,
 	}
 }
 
@@ -115,7 +118,7 @@ func (server *TCPServer) Listen() (chan bool, error) {
 				server.idleTimeout = timeout
 				server.idleTicker.SetPeriod(server.idleTimeout)
 			case <-server.idleTicker.Channel():
-				log.Infof("tcp server was idle for %s", server.idleTimeout)
+				server.log.Infof("tcp server was idle for %s", server.idleTimeout)
 				server.callOnIdle()
 				server.idleTicker.Stop()
 			case <-done:
@@ -131,10 +134,10 @@ func (server *TCPServer) Listen() (chan bool, error) {
 					server.Dispatch(task)
 				}
 			case err := <-errors:
-				log.Errorf("error encountered listening %s %#v", err, err)
+				server.log.Errorf("error encountered listening %s %#v", err, err)
 				consecutiveFailures++
 				if consecutiveFailures > server.MaxConsecutiveErrors {
-					log.Infof("Maximum consecutive errors threshold exceeded.")
+					server.log.Infof("Maximum consecutive errors threshold exceeded.")
 					done <- true
 				}
 			}

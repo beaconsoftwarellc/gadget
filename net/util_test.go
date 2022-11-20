@@ -8,6 +8,7 @@ import (
 	assert1 "github.com/stretchr/testify/assert"
 
 	"github.com/beaconsoftwarellc/gadget/v2/generator"
+	"github.com/beaconsoftwarellc/gadget/v2/log"
 )
 
 func TestValidateIPv4Address(t *testing.T) {
@@ -128,7 +129,7 @@ func TestValidateIPv6Address(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := ValidateIPv6Address(tt.arg); got != tt.want {
+			if got := ValidateIPv6Address(tt.arg, log.NewStackLogger()); got != tt.want {
 				t.Errorf("ValidateIPv6Address() = %v, want %v", got, tt.want)
 			}
 		})

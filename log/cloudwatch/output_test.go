@@ -86,7 +86,7 @@ func Test_Skip(t *testing.T) {
 	// into cloudwatch.
 	t.SkipNow()
 	assert := assert1.New(t)
-	admin, err := GetAdministration()
+	admin, err := GetAdministration(log.NewStackLogger())
 	if !assert.NoError(err) {
 		return
 	}

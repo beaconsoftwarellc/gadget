@@ -11,6 +11,7 @@ import (
 	"github.com/beaconsoftwarellc/gadget/v2/dispatcher"
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
 	"github.com/beaconsoftwarellc/gadget/v2/generator"
+	"github.com/beaconsoftwarellc/gadget/v2/log"
 )
 
 type MockGetListenerGetTask struct {
@@ -41,7 +42,7 @@ func (mt *MockTask) Execute() error {
 func TestNewTCPServer(t *testing.T) {
 	assert := assert1.New(t)
 	mglgt := &MockGetListenerGetTask{}
-	server := NewTCPServer(2, 10, mglgt)
+	server := NewTCPServer(2, 10, mglgt, log.NewStackLogger())
 	assert.NotNil(server)
 }
 
@@ -57,7 +58,7 @@ func TestListen(t *testing.T) {
 			return connection
 		},
 	}
-	server := NewTCPServer(2, 10, mglgt)
+	server := NewTCPServer(2, 10, mglgt, log.NewStackLogger())
 	done, err := server.Listen()
 	if assert.NoError(err) {
 		time.Sleep(10 * time.Millisecond)
@@ -76,7 +77,7 @@ func TestListenFailsAfterMaxErrors(t *testing.T) {
 		},
 		AcceptError: errors.New(generator.String(20)),
 	}
-	server := NewTCPServer(2, 10, mglgt)
+	server := NewTCPServer(2, 10, mglgt, log.NewStackLogger())
 	done, err := server.Listen()
 	if assert.NoError(err) {
 		<-done
@@ -93,7 +94,7 @@ func TestListenFailsAfterMaxErrorsCreateTask(t *testing.T) {
 		},
 	}
 	mglgt.getTaskError = errors.New(generator.String(20))
-	server := NewTCPServer(2, 10, mglgt)
+	server := NewTCPServer(2, 10, mglgt, log.NewStackLogger())
 	done, err := server.Listen()
 	if assert.NoError(err) {
 		<-done
@@ -110,7 +111,7 @@ func Test_server_OnIdle(t *testing.T) {
 			return &MockConn{}
 		},
 	}
-	server := NewTCPServer(2, 10, mglgt)
+	server := NewTCPServer(2, 10, mglgt, log.NewStackLogger())
 	done, err := server.Listen()
 	assert.NoError(err)
 	idleCalled := int32(0)

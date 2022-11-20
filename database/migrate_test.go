@@ -10,6 +10,7 @@ import (
 	assert1 "github.com/stretchr/testify/assert"
 
 	"github.com/beaconsoftwarellc/gadget/v2/environment"
+	"github.com/beaconsoftwarellc/gadget/v2/log"
 )
 
 func TestGenerateSqlFiles(t *testing.T) {
@@ -26,8 +27,8 @@ func TestGenerateSqlFiles(t *testing.T) {
 	assert.Equal("", actual)
 	assert.Error(err)
 	// Triggers first panic since it cannot create the migration files
-	assert.Panics(func() { Migrate(migrations, "") })
-	assert.Panics(func() { Reset(migrations, "") })
+	assert.Panics(func() { Migrate(migrations, "", log.NewStackLogger()) })
+	assert.Panics(func() { Reset(migrations, "", log.NewStackLogger()) })
 	os.RemoveAll(basedir)
 
 	// Assert that a directory was created even if migrations is empty
@@ -57,15 +58,15 @@ func TestMigrateAndResetErrors(t *testing.T) {
 `
 
 	// Triggers second panic since it cannot connect to the database
-	assert.Panics(func() { Migrate(migrations, "") })
-	assert.Panics(func() { Reset(migrations, "") })
+	assert.Panics(func() { Migrate(migrations, "", log.NewStackLogger()) })
+	assert.Panics(func() { Reset(migrations, "", log.NewStackLogger()) })
 
 	config := &specification{
 		DatabaseType: "mysql",
 	}
-	environment.Process(config)
+	environment.Process(config, log.NewStackLogger())
 
 	// Triggers second panic since it cannot find any files due to the name not conforming to 00_stuff.up.sql
-	assert.Panics(func() { Migrate(migrations, config.DatabaseDialectURL()) })
-	assert.Panics(func() { Reset(migrations, config.DatabaseDialectURL()) })
+	assert.Panics(func() { Migrate(migrations, config.DatabaseDialectURL(), log.NewStackLogger()) })
+	assert.Panics(func() { Reset(migrations, config.DatabaseDialectURL(), log.NewStackLogger()) })
 }

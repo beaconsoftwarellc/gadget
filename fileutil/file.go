@@ -99,14 +99,14 @@ func DownloadToMemory(url string) ([]byte, error) {
 }
 
 // RemoveFileMatches for the given filepath pattern.
-func RemoveFileMatches(pattern string) error {
+func RemoveFileMatches(pattern string, logger log.Logger) error {
 	files, err := filepath.Glob(pattern)
 	if err != nil {
 		return err
 	}
 	for _, f := range files {
 		if err := os.Remove(f); err != nil {
-			log.Warnf("File removal failed for %s: %s", f, err)
+			logger.Warnf("File removal failed for %s: %s", f, err)
 		}
 	}
 	return nil

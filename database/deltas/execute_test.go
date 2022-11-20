@@ -9,6 +9,7 @@ import (
 	"github.com/beaconsoftwarellc/gadget/v2/database/qb"
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
 	"github.com/beaconsoftwarellc/gadget/v2/generator"
+	"github.com/beaconsoftwarellc/gadget/v2/log"
 	assert1 "github.com/stretchr/testify/assert"
 )
 
@@ -88,7 +89,7 @@ func TestExecute(t *testing.T) {
 		},
 	}
 
-	err := execute(database.InstanceConfig{}, "", deltas, mld)
+	err := execute(database.InstanceConfig{}, "", deltas, mld, log.NewStackLogger())
 	assert.NoError(err)
 }
 
@@ -100,7 +101,7 @@ func TestExecute_BeginxError(t *testing.T) {
 		BeginxErr:              expected,
 	}
 
-	err := execute(database.InstanceConfig{}, "", nil, mld)
+	err := execute(database.InstanceConfig{}, "", nil, mld, log.NewStackLogger())
 	assert.EqualError(err, expected.Error())
 }
 
@@ -113,7 +114,7 @@ func TestExecute_TableExistsError(t *testing.T) {
 		TableExistsErr:         expected,
 	}
 
-	err := execute(database.InstanceConfig{}, "", nil, mld)
+	err := execute(database.InstanceConfig{}, "", nil, mld, log.NewStackLogger())
 	assert.EqualError(err, expected.Error())
 }
 
@@ -125,7 +126,7 @@ func TestExecute_ExecError(t *testing.T) {
 		BeginxReturn:           &MockTransaction{ExecErr: expected},
 	}
 
-	err := execute(database.InstanceConfig{}, "", nil, mld)
+	err := execute(database.InstanceConfig{}, "", nil, mld, log.NewStackLogger())
 	assert.EqualError(err, expected.Error())
 }
 
@@ -145,7 +146,7 @@ func TestExecute_ExecuteDeltaError(t *testing.T) {
 		},
 	}
 
-	err := execute(database.InstanceConfig{}, "", deltas, mld)
+	err := execute(database.InstanceConfig{}, "", deltas, mld, log.NewStackLogger())
 	assert.EqualError(err, expected.Error())
 }
 
@@ -162,7 +163,7 @@ func TestExecuteDelta(t *testing.T) {
 		Name: "test",
 	}
 
-	err := ExecuteDelta(mt, mld, delta)
+	err := ExecuteDelta(mt, mld, delta, log.NewStackLogger())
 	assert.NoError(err)
 }
 
@@ -176,7 +177,7 @@ func TestExecuteDelta_AlreadyExecuted(t *testing.T) {
 		Name: "test",
 	}
 
-	err := ExecuteDelta(mt, mld, delta)
+	err := ExecuteDelta(mt, mld, delta, log.NewStackLogger())
 	assert.NoError(err)
 }
 
@@ -194,7 +195,7 @@ func TestExecuteDelta_ReadError(t *testing.T) {
 		Name: "test",
 	}
 
-	err := ExecuteDelta(mt, mld, delta)
+	err := ExecuteDelta(mt, mld, delta, log.NewStackLogger())
 	assert.EqualError(err, expected.Error())
 }
 
@@ -214,7 +215,7 @@ func TestExecuteDelta_ExecError(t *testing.T) {
 		Name: "test",
 	}
 
-	err := ExecuteDelta(mt, mld, delta)
+	err := ExecuteDelta(mt, mld, delta, log.NewStackLogger())
 	assert.EqualError(err, expected.Error())
 }
 
@@ -233,6 +234,6 @@ func TestExecuteDelta_CreateTxError(t *testing.T) {
 		Name: "test",
 	}
 
-	err := ExecuteDelta(mt, mld, delta)
+	err := ExecuteDelta(mt, mld, delta, log.NewStackLogger())
 	assert.EqualError(err, expected.Error())
 }

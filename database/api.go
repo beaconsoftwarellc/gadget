@@ -4,6 +4,7 @@ package database
 import (
 	"github.com/beaconsoftwarellc/gadget/v2/database/qb"
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
+	"github.com/beaconsoftwarellc/gadget/v2/log"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -41,8 +42,8 @@ type API interface {
 }
 
 // NewAPI using the passed database and transaction. Transaction may be null
-func NewAPI(db *Database, tx *sqlx.Tx) API {
-	return &dbapi{tx: tx, db: db}
+func NewAPI(db *Database, tx *sqlx.Tx, log log.Logger) API {
+	return &dbapi{tx: tx, db: db, log: log}
 }
 
 var _ API = &dbapi{}
@@ -50,8 +51,9 @@ var _ API = &dbapi{}
 var ErrMissingTransaction = errors.New("missing transaction")
 
 type dbapi struct {
-	tx *sqlx.Tx
-	db *Database
+	tx  *sqlx.Tx
+	db  *Database
+	log log.Logger
 }
 
 func (d *dbapi) Begin() error {
@@ -86,7 +88,7 @@ func (d *dbapi) Commit() error {
 
 func (d *dbapi) CommitOrRollback(err error) error {
 	if d.tx != nil {
-		err = CommitOrRollback(d.tx, err)
+		err = CommitOrRollback(d.tx, err, d.log)
 		d.tx = nil
 		return err
 	}
