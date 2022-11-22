@@ -137,6 +137,16 @@ func TestQueryBuilderTableAlias(t *testing.T) {
 	assert.Equal(expected, actual)
 }
 
+func TestQueryBuilderTableCount(t *testing.T) {
+	assert := assert1.New(t)
+	query := Select(Person.ID, Count(Person.Name, "person_name")).From(Person)
+	actual, values, err := query.SQL(0, 0)
+	assert.NoError(err)
+	assert.Empty(values)
+	expected := "SELECT `person`.`id`, COUNT(`person`.`name`) AS `person_name` FROM `person` AS `person`"
+	assert.Equal(expected, actual)
+}
+
 func TestQueryBuilderDistinct(t *testing.T) {
 	assert := assert1.New(t)
 	query := SelectDistinct(Person.ID, Person.Name).From(Person)
