@@ -53,7 +53,7 @@ func newSpecification() *specification {
 		DatabaseURL:  "test:test@/test_db?parseTime=true",
 	}
 	environment.Process(config, log.NewStackLogger())
-	config.DB = Initialize(config, log.NewStackLogger())
+	config.DB = Initialize(config)
 	return config
 }
 
@@ -303,10 +303,10 @@ func TestMain(m *testing.M) {
 	migrations["0001_foo.down.sql"] = `DROP TABLE IF EXISTS test_record;
 	DROP TABLE IF EXISTS test_duper;
 `
-	Migrate(migrations, config.DatabaseDialectURL(), log.NewStackLogger())
+	Migrate(migrations, config.DatabaseDialectURL())
 
 	res := m.Run()
-	Reset(migrations, config.DatabaseDialectURL(), log.NewStackLogger())
+	Reset(migrations, config.DatabaseDialectURL())
 
 	os.Exit(res)
 }

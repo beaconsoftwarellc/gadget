@@ -93,7 +93,7 @@ func TestTranslateError(t *testing.T) {
 func Test_getLogPrefix(t *testing.T) {
 	assert := assert1.New(t)
 	expected := "[GAD.DAT.96]"
-	actual := getLogPrefix(1, log.NewStackLogger())
+	actual := getLogPrefix(1)
 	assert.Equal(expected, actual)
 }
 
@@ -270,9 +270,9 @@ func TestDatabaseToApiError(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			assert := assert1.New(t)
 			if stringutil.IsEmpty(tt.expected) {
-				assert.NoError(DatabaseToApiError(tt.primary, tt.err, log.NewStackLogger()))
+				assert.NoError(DatabaseToApiError(tt.primary, tt.err))
 			} else {
-				EqualLogError(assert, DatabaseToApiError(tt.primary, tt.err, log.NewStackLogger()), tt.expected)
+				EqualLogError(assert, DatabaseToApiError(tt.primary, tt.err), tt.expected)
 			}
 		})
 	}

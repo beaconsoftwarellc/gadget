@@ -300,12 +300,12 @@ func NewInvalidForeignKeyError(action SQLQueryType, stmt string, err error, logg
 
 // DatabaseToApiError handles conversion from a database error to a GRPC friendly
 // error with code.
-func DatabaseToApiError(primary qb.Table, dbError error, logger log.Logger) error {
+func DatabaseToApiError(primary qb.Table, dbError error) error {
 	if nil == dbError {
 		return nil
 	}
 	var err error
-	prefix := getLogPrefix(2, logger)
+	prefix := getLogPrefix(2)
 	switch dbError.(type) {
 	case *NotFoundError:
 		err = status.Error(codes.NotFound, fmt.Sprintf("%s %s not found", prefix, primary.GetName()))
@@ -325,20 +325,20 @@ func DatabaseToApiError(primary qb.Table, dbError error, logger log.Logger) erro
 		err = status.Error(codes.InvalidArgument, fmt.Sprintf("%s operation on %s had a validation error: %s",
 			prefix, primary.GetName(), dbError))
 	case *ConnectionError, *NotAPointerError:
-		_ = logger.Errorf("[GAD.DAT.321] unexpected run time database error: %s", dbError)
+		_ = log.Errorf("[GAD.DAT.321] unexpected run time database error: %s", dbError)
 		err = status.Error(codes.Internal, fmt.Sprintf("%s internal system error encountered", prefix))
 	default:
-		_ = logger.Errorf("[GAD.DAT.324] unhandled error type %T: %s", dbError, dbError.Error())
+		_ = log.Errorf("[GAD.DAT.324] unhandled error type %T: %s", dbError, dbError.Error())
 		err = status.Error(codes.Aborted, fmt.Sprintf("%s (%s) database error encountered: %s",
 			prefix, primary.GetName(), dbError))
 	}
 	return err
 }
 
-func getLogPrefix(frameSkip int, logger log.Logger) string {
+func getLogPrefix(frameSkip int) string {
 	_, filePath, lineNumber, ok := runtime.Caller(frameSkip)
 	if !ok {
-		_ = logger.Warnf("failed to lookup runtime.Caller(%d) lookup failed", frameSkip)
+		_ = log.Warnf("failed to lookup runtime.Caller(%d) lookup failed", frameSkip)
 		return "[UNK]"
 	}
 	pathSplit := strings.Split(filePath, string(os.PathSeparator))

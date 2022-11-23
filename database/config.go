@@ -9,9 +9,10 @@ import (
 )
 
 // Initialize establishes the database connection
-func Initialize(config Config, logger log.Logger) *Database {
+func Initialize(config Config) *Database {
+	logger := log.New("Database", log.FunctionFromEnv())
 	obfuscatedConnection := obfuscateConnection(config.DatabaseConnection())
-	logger.Infof("initializing database connection: %s, %s", config.DatabaseDialect(), obfuscatedConnection)
+	log.Infof("initializing database connection: %s, %s", config.DatabaseDialect(), obfuscatedConnection)
 	var err errors.TracerError
 	var conn *sqlx.DB
 	for retries := 0; retries < config.NumberOfRetries(); retries++ {
@@ -19,13 +20,13 @@ func Initialize(config Config, logger log.Logger) *Database {
 		if nil == err {
 			break
 		}
-		logger.Warnf("database connection failed retrying in %s: %s", config.WaitBetweenRetries(), err)
+		log.Warnf("database connection failed retrying in %s: %s", config.WaitBetweenRetries(), err)
 		time.Sleep(config.WaitBetweenRetries())
 	}
 	if nil != err {
 		panic(err)
 	}
-	logger.Infof("database connection success: %s, %s", config.DatabaseDialect(), obfuscatedConnection)
+	log.Infof("database connection success: %s, %s", config.DatabaseDialect(), obfuscatedConnection)
 
 	return &Database{DB: conn, Logger: logger, Configuration: config}
 }

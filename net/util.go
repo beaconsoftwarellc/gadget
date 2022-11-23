@@ -22,7 +22,7 @@ func ValidateIPv4Address(s string) bool {
 	return ipv4AddressRegEx.MatchString(s)
 }
 
-func cleanIPv6(s string, logger log.Logger) (string, int) {
+func cleanIPv6(s string) (string, int) {
 	index := strings.Index(s, "]:")
 	port := 0
 	var err error
@@ -31,11 +31,11 @@ func cleanIPv6(s string, logger log.Logger) (string, int) {
 		portString := stringutil.SafeSubstring(s, index+2, 0)
 		port, err = strconv.Atoi(portString)
 		if nil != err {
-			logger.Warn(err)
+			log.Warn(err)
 			return "", -1
 		}
 		if port <= 0 || port > math.MaxUint16 {
-			logger.Warnf("port '%d' is not a valid port number, must be uint16", port)
+			log.Warnf("port '%d' is not a valid port number, must be uint16", port)
 			return "", -1
 		}
 		s = stringutil.SafeSubstring(s, 1, index)
@@ -47,11 +47,11 @@ func cleanIPv6(s string, logger log.Logger) (string, int) {
 }
 
 // ValidateIPv6Address with or without a port and return a boolean indicating success.
-func ValidateIPv6Address(s string, logger log.Logger) bool {
+func ValidateIPv6Address(s string) bool {
 	if ValidateIPv4Address(s) {
 		return false
 	}
-	s, _ = cleanIPv6(s, logger)
+	s, _ = cleanIPv6(s)
 	return nil != nnet.ParseIP(s)
 }
 

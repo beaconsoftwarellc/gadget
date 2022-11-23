@@ -3,8 +3,6 @@ package net
 import (
 	"reflect"
 	"testing"
-
-	"github.com/beaconsoftwarellc/gadget/v2/log"
 )
 
 func TestParseAddress(t *testing.T) {
@@ -57,7 +55,7 @@ func TestParseAddress(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := ParseAddress(tt.address, log.NewStackLogger())
+			got, err := ParseAddress(tt.address)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ParseAddress('%s') error = %v, wantErr %v", tt.address, err, tt.wantErr)
 				return

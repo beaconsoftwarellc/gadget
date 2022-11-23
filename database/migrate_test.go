@@ -27,8 +27,8 @@ func TestGenerateSqlFiles(t *testing.T) {
 	assert.Equal("", actual)
 	assert.Error(err)
 	// Triggers first panic since it cannot create the migration files
-	assert.Panics(func() { Migrate(migrations, "", log.NewStackLogger()) })
-	assert.Panics(func() { Reset(migrations, "", log.NewStackLogger()) })
+	assert.Panics(func() { Migrate(migrations, "") })
+	assert.Panics(func() { Reset(migrations, "") })
 	os.RemoveAll(basedir)
 
 	// Assert that a directory was created even if migrations is empty
@@ -58,15 +58,15 @@ func TestMigrateAndResetErrors(t *testing.T) {
 `
 
 	// Triggers second panic since it cannot connect to the database
-	assert.Panics(func() { Migrate(migrations, "", log.NewStackLogger()) })
-	assert.Panics(func() { Reset(migrations, "", log.NewStackLogger()) })
+	assert.Panics(func() { Migrate(migrations, "") })
+	assert.Panics(func() { Reset(migrations, "") })
 
 	config := &specification{
 		DatabaseType: "mysql",
 	}
-	environment.Process(config, log.NewStackLogger())
+	environment.Process(config, log.Global())
 
 	// Triggers second panic since it cannot find any files due to the name not conforming to 00_stuff.up.sql
-	assert.Panics(func() { Migrate(migrations, config.DatabaseDialectURL(), log.NewStackLogger()) })
-	assert.Panics(func() { Reset(migrations, config.DatabaseDialectURL(), log.NewStackLogger()) })
+	assert.Panics(func() { Migrate(migrations, config.DatabaseDialectURL()) })
+	assert.Panics(func() { Reset(migrations, config.DatabaseDialectURL()) })
 }

@@ -37,15 +37,15 @@ func generateSQLFiles(migrations map[string]string) (string, error) {
 
 // Migrate ensures that the database is up to date
 // Panics on error since this is an unrecoverable, fatal issue
-func Migrate(migrations map[string]string, dbURL string, logger log.Logger) {
+func Migrate(migrations map[string]string, dbURL string) {
 	sqlFilesPath, err := generateSQLFiles(migrations)
 	if err != nil {
-		panic(logger.Fatal(err))
+		panic(log.Fatal(err))
 	}
 	m, err := migrate.New(sqlFilesPath, dbURL)
 	if err != nil {
 		msg := fmt.Sprintf("couldn't load migration scripts from %s, %s (%s)", sqlFilesPath, dbURL, err)
-		logger.Fatalf(msg)
+		log.Fatalf(msg)
 		panic(msg)
 	}
 	defer m.Close()
@@ -53,7 +53,7 @@ func Migrate(migrations map[string]string, dbURL string, logger log.Logger) {
 	// Migrate all the way up ...
 	if err := m.Up(); err != nil && err.Error() != "no change" {
 		msg := fmt.Sprintf("Migration ERROR: %#v", err)
-		logger.Fatalf(msg)
+		log.Fatalf(msg)
 		panic(msg)
 	}
 }
@@ -61,15 +61,15 @@ func Migrate(migrations map[string]string, dbURL string, logger log.Logger) {
 // Reset runs all rollback migrations for the database
 // Panics on error since this is an unrecoverable, fatal issue
 // This will essentially nuke your database.  Only really useful for test scenario cleanup.
-func Reset(migrations map[string]string, dbURL string, logger log.Logger) {
+func Reset(migrations map[string]string, dbURL string) {
 	sqlFilesPath, err := generateSQLFiles(migrations)
 	if err != nil {
-		panic(logger.Error(err))
+		panic(log.Error(err))
 	}
 	m, err := migrate.New(sqlFilesPath, dbURL)
 	if err != nil {
 		msg := fmt.Sprintf("couldn't load migration scripts from %s (%s)", sqlFilesPath, err)
-		logger.Fatalf(msg)
+		log.Fatalf(msg)
 		panic(msg)
 	}
 	defer m.Close()
@@ -77,7 +77,7 @@ func Reset(migrations map[string]string, dbURL string, logger log.Logger) {
 	// Migrate all the way down ...
 	if err := m.Down(); err != nil {
 		msg := fmt.Sprintf("Rollback ERROR: %#v", err)
-		logger.Fatalf(msg)
+		log.Fatalf(msg)
 		panic(msg)
 	}
 }
