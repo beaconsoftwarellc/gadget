@@ -18,7 +18,7 @@ const (
 	period            = "."
 )
 
-var allowedCharacters = regexp.MustCompile(`^[a-zA-Z0-9_\-\.]+$`)
+var nameAllowedCharacters = regexp.MustCompile(`^[a-zA-Z0-9_\-\.]+$`)
 
 // NameIsValid for use as an attribute or system attribute name
 func NameIsValid(s string) error {
@@ -45,7 +45,7 @@ func NameIsValid(s string) error {
 			minNameCharacters, maxNameCharacters, runeCount)
 	}
 
-	if !allowedCharacters.MatchString(s) {
+	if !nameAllowedCharacters.MatchString(s) {
 		return errors.New("name has invalid characters")
 	}
 
