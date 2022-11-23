@@ -140,7 +140,7 @@ func (mq *sdk) EnqueueBatch(messages []*messagequeue.Message) error {
 		len(messages))
 	for _, failure := range smbo.Failed {
 		log.Warnf("message %s failed (SenderFault: %v) with code %s: %s ",
-			*failure.Id, failure.SenderFault, failure.Code, *failure.Message)
+			*failure.Id, failure.SenderFault, *failure.Code, *failure.Message)
 	}
 	return nil
 }

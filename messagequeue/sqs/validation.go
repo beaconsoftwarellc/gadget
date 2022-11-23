@@ -1,6 +1,7 @@
 package sqs
 
 import (
+	"regexp"
 	"strings"
 	"unicode/utf8"
 
@@ -16,6 +17,8 @@ const (
 	prohibitedAmazon  = "amazon"
 	period            = "."
 )
+
+var allowedCharacters = regexp.MustCompile(`^[a-zA-Z0-9_\-\.]+$`)
 
 // NameIsValid for use as an attribute or system attribute name
 func NameIsValid(s string) error {
@@ -35,17 +38,23 @@ func NameIsValid(s string) error {
 			- Must not start or end with a period
 			- Must not have periods in a sequence
 	*/
+
 	runeCount := utf8.RuneCountInString(s)
-	if runeCount < minBodyCharacters || runeCount > maxBodyKilobytes {
+	if runeCount < minNameCharacters || runeCount > maxNameCharacters {
 		return errors.New("name character count out of bounds [%d, %d] (%d)",
 			minNameCharacters, maxNameCharacters, runeCount)
 	}
+
+	if !allowedCharacters.MatchString(s) {
+		return errors.New("name has invalid characters")
+	}
+
 	if strings.HasPrefix(s, period) || strings.HasSuffix(s, period) ||
 		strings.Contains(s, period+period) {
 		return errors.New("name cannot begin, end, or contain sequences of '%s'", period)
 	}
 	low := strings.ToLower(s)
-	if strings.HasPrefix(prohibitedAmazon, low) || strings.HasPrefix(prohibitedAWS, low) {
+	if strings.HasPrefix(low, prohibitedAmazon) || strings.HasPrefix(low, prohibitedAWS) {
 		return errors.New("name has invalid prefix (%s|%s)", prohibitedAmazon, prohibitedAWS)
 	}
 	return nil
@@ -68,7 +77,7 @@ func BodyIsValid(s string) error {
 		return errors.New("body minimum character count is 1")
 	}
 	if len(s) > maxBodyKilobytes {
-		return errors.New("body cannot exceed %d kilobytes (was %d)")
+		return errors.New("body cannot exceed %d kilobytes (was %d)", maxBodyKilobytes, len(s))
 	}
 	return nil
 }
