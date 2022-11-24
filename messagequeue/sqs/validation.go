@@ -3,6 +3,7 @@ package sqs
 import (
 	"regexp"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
@@ -12,13 +13,26 @@ const (
 	minNameCharacters = 1
 	maxNameCharacters = 256
 	minBodyCharacters = 1
-	maxBodyKilobytes  = 255
+	maxBodyKilobytes  = 256
 	prohibitedAWS     = "aws"
 	prohibitedAmazon  = "amazon"
 	period            = "."
 )
 
 var nameAllowedCharacters = regexp.MustCompile(`^[a-zA-Z0-9_\-\.]+$`)
+
+var allowedRanges = &unicode.RangeTable{
+	R16: []unicode.Range16{
+		{0x9, 0x9, 1},
+		{0xA, 0xA, 1},
+		{0xD, 0xD, 1},
+		{0x20, 0xD7FF, 1},
+		{0xE000, 0xFFFD, 1},
+	},
+	R32: []unicode.Range32{
+		{0x10000, 0x10FFFF, 1},
+	},
+}
 
 // NameIsValid for use as an attribute or system attribute name
 func NameIsValid(s string) error {
@@ -76,8 +90,15 @@ func BodyIsValid(s string) error {
 	if utf8.RuneCountInString(s) == 0 {
 		return errors.New("body minimum character count is 1")
 	}
-	if len(s) > maxBodyKilobytes {
-		return errors.New("body cannot exceed %d kilobytes (was %d)", maxBodyKilobytes, len(s))
+
+	if len(s) > maxBodyKilobytes*1000 {
+		return errors.New("body cannot exceed %d kilobytes (was %d bytes)", maxBodyKilobytes, len(s))
+	}
+
+	for _, r := range s {
+		if !unicode.In(r, allowedRanges) {
+			return errors.New("char 0x%x is not allowed unicode character", r)
+		}
 	}
 	return nil
 }

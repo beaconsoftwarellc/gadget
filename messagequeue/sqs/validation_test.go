@@ -98,3 +98,59 @@ func Test_NameIsValid(t *testing.T) {
 		})
 	}
 }
+
+func Test_BodyIsValid(t *testing.T) {
+
+	tcs := []struct {
+		name  string
+		input string
+		err   error
+	}{
+		{
+			name:  "empty",
+			input: "",
+			err:   errors.New("body minimum character count is 1"),
+		},
+		{
+			name:  "too long",
+			input: generator.String(256*1000 + 1),
+			err:   errors.New("body cannot exceed 256 kilobytes (was 256001 bytes)"),
+		},
+		{
+			name:  "null char",
+			input: "foo\x00",
+			err:   errors.New("char 0x0 is not allowed unicode character"),
+		},
+		{
+			name:  "forbidden utf char",
+			input: "foo\x0f",
+			err:   errors.New("char 0xf is not allowed unicode character"),
+		},
+		{
+			name:  "ok",
+			input: "foo 😁",
+			err:   nil,
+		},
+		{
+			name:  "single allowed chars",
+			input: "\x09\x0A\x0D",
+			err:   nil,
+		},
+		{
+			name:  "allowed ranges",
+			input: "\x20 \ud7fe \ud7ff \ue000 \ue001 \ufffd \u10000 \U00010000 \U00010001 \U0010ffff",
+			err:   nil,
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			err := BodyIsValid(tc.input)
+			if tc.err != nil {
+				assert.EqualError(t, err, tc.err.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
