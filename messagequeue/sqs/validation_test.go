@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_Validation(t *testing.T) {
+func Test_NameIsValid(t *testing.T) {
 
 	tcs := []struct {
 		name  string
