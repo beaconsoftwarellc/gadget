@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	defaultChunkSize   uint32        = 10
+	defaultChunkSize   uint          = 10
 	stateStopped                     = 0
 	stateRunning                     = 1
 	defaultEntryExpiry time.Duration = 10 * time.Second
@@ -31,7 +31,7 @@ type Chunker[T any] interface {
 type ChunkerOptions struct {
 	// Size determines the desired chunk size for entries to be returned
 	// from the buffer.
-	Size uint32
+	Size uint
 	// ElementExpiry determines the maximum time an entry will wait to be chunked
 	// smaller durations may result in chunks that are less than the desired size.
 	ElementExpiry time.Duration
@@ -40,7 +40,7 @@ type ChunkerOptions struct {
 // Valid returns an error is a options value is out of bounds.
 func (o *ChunkerOptions) Valid() error {
 	if o.Size == 0 {
-		return errors.New("ChunkSize must be greater thank 0")
+		return errors.New("ChunkSize must be greater than 0")
 	}
 	if o.ElementExpiry < minimumExpiry {
 		return errors.New("ChunkElementExpiry must be greater than %s",
