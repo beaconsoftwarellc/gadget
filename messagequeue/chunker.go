@@ -40,10 +40,10 @@ type ChunkerOptions struct {
 // Valid returns an error is a options value is out of bounds.
 func (o *ChunkerOptions) Valid() error {
 	if o.Size == 0 {
-		return errors.New("ChunkSize must be greater than 0")
+		return errors.New("Size must be greater than 0")
 	}
 	if o.ElementExpiry < minimumExpiry {
-		return errors.New("ChunkElementExpiry must be greater than %s",
+		return errors.New("ElementExpiry must be greater than %s",
 			minimumExpiry.String())
 	}
 	return nil
