@@ -1,6 +1,8 @@
 package sqs
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
@@ -24,16 +26,6 @@ func Test_NameIsValid(t *testing.T) {
 			name:  "invalid utf-8 character",
 			input: "fóó",
 			err:   errors.New("name has invalid characters"),
-		},
-		{
-			name:  "too short",
-			input: "",
-			err:   errors.New("name character count out of bounds [1, 256] (0)"),
-		},
-		{
-			name:  "too long",
-			input: generator.String(300),
-			err:   errors.New("name character count out of bounds [1, 256] (300)"),
 		},
 		{
 			name:  "start with period",
@@ -85,6 +77,68 @@ func Test_NameIsValid(t *testing.T) {
 			input: "foo.bar--baz_v_9.11",
 			err:   nil,
 		},
+		{
+			name:  "too short",
+			input: "",
+			err:   errors.New("name character count out of bounds [1, 256] (0)"),
+		},
+		{
+			name:  "too long",
+			input: generator.String(257),
+			err:   errors.New("name character count out of bounds [1, 256] (257)"),
+		},
+		{
+			name:  "bad prefix 1",
+			input: fmt.Sprintf(".%s", generator.String(20)),
+			err:   dotError,
+		},
+		{
+			name:  "bad prefix 2",
+			input: fmt.Sprintf("%s%s", prohibitedAWS, generator.String(20)),
+			err:   prohibitedPrefixError,
+		},
+		{
+			name: "bad prefix 3",
+			input: fmt.Sprintf("%s%s", strings.ToUpper(prohibitedAWS),
+				generator.String(20)),
+			err: prohibitedPrefixError,
+		},
+		{
+			name: "bad prefix 4",
+			input: fmt.Sprintf("%s%s", strings.ToUpper(prohibitedAmazon),
+				generator.String(20)),
+			err: prohibitedPrefixError,
+		},
+		{
+			name:  "bad prefix 5",
+			input: fmt.Sprintf("%s%s", prohibitedAmazon, generator.String(20)),
+			err:   prohibitedPrefixError,
+		},
+		{
+			name:  "bad suffix",
+			input: fmt.Sprintf("%s%s", generator.String(20), "."),
+			err:   dotError,
+		},
+		{
+			name:  "bad sequence",
+			input: fmt.Sprintf("%s..%s", generator.String(20), generator.String(20)),
+			err:   dotError,
+		},
+		{
+			name:  "min",
+			input: generator.String(1),
+			err:   nil,
+		},
+		{
+			name:  "max",
+			input: generator.String(256),
+			err:   nil,
+		},
+		{
+			name:  "typical",
+			input: generator.String(32),
+			err:   nil,
+		},
 	}
 
 	for _, tc := range tcs {
@@ -94,6 +148,41 @@ func Test_NameIsValid(t *testing.T) {
 				assert.EqualError(t, err, tc.err.Error())
 			} else {
 				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestBodyIsValid(t *testing.T) {
+	var tests = []struct {
+		name  string
+		input string
+		err   error
+	}{
+		{
+			name:  "below minimum char count",
+			input: "",
+			err:   bodyMinimumError,
+		},
+		{
+			name:  "above maximum byte count",
+			input: generator.String((maxBodyKilobytes+1)*1024 + 1),
+			err:   errors.New("body cannot exceed 255 kilobytes (was 256 kb)"),
+		},
+		{
+			name:  "typical",
+			input: generator.String(32),
+			err:   nil,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert := assert.New(t)
+			err := BodyIsValid(test.input)
+			if test.err != nil {
+				assert.EqualError(err, test.err.Error())
+			} else {
+				assert.NoError(err)
 			}
 		})
 	}
