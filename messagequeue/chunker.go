@@ -11,11 +11,14 @@ import (
 )
 
 const (
-	defaultChunkSize   uint          = 10
 	stateStopped                     = 0
 	stateRunning                     = 1
+	defaultChunkSize                 = 10
 	defaultEntryExpiry time.Duration = 10 * time.Second
 	minimumExpiry                    = time.Millisecond
+	maximumExpiry                    = 24 * time.Hour
+	minimumChunkSize                 = 1
+	maximumChunkSize                 = 1024
 )
 
 // Chunker interface for 'chunking' entries on a buffer into slices of a desired
@@ -37,14 +40,16 @@ type ChunkerOptions struct {
 	ElementExpiry time.Duration
 }
 
-// Valid returns an error is a options value is out of bounds.
+// Valid returns an error if an options value is out of bounds.
 func (o *ChunkerOptions) Valid() error {
-	if o.Size == 0 {
-		return errors.New("Size must be greater than 0")
+	if o.Size < minimumChunkSize || o.Size > maximumChunkSize {
+		return errors.New("ChunkerOptions.Size(%d) was out of bounds [%d, %d]",
+			o.Size, minimumChunkSize, maximumChunkSize,
+		)
 	}
-	if o.ElementExpiry < minimumExpiry {
-		return errors.New("ElementExpiry must be greater than %s",
-			minimumExpiry.String())
+	if o.ElementExpiry < minimumExpiry || o.ElementExpiry > maximumExpiry {
+		return errors.New("ChunkerOptions.ElementExpiry(%s) was out of bounds [%s,%s]",
+			minimumExpiry.String(), minimumExpiry, maximumExpiry)
 	}
 	return nil
 }

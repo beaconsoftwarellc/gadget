@@ -19,7 +19,7 @@ func Test_NewChunker(t *testing.T) {
 	handler := func(chunk []*Entry) {}
 	obj := NewChunker(buffer, handler, nil)
 	c := obj.(*chunker[*Entry])
-	assert.Equal(defaultChunkSize, c.options.Size)
+	assert.Equal(uint(defaultChunkSize), c.options.Size)
 	assert.Equal(defaultEntryExpiry, c.options.ElementExpiry)
 	close(buffer)
 }
