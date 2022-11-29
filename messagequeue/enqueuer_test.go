@@ -28,7 +28,7 @@ func TestEnqueuerStart(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	messageQueue := NewMockMessageQueue(ctrl)
 
-	options := &EnqueuerOptions{}
+	options := &EnqueuerOptions{ChunkerOptions: &ChunkerOptions{}}
 	eq := New(options)
 
 	// fails on nil queue
@@ -40,8 +40,8 @@ func TestEnqueuerStart(t *testing.T) {
 	// fails on bad state
 	options.Logger = log.Global()
 	options.BufferSize = 2
-	options.BatchSize = 1
-	options.MaxMessageWait = 1 * time.Millisecond
+	options.ChunkSize = 1
+	options.MaxElementWait = 1 * time.Millisecond
 	options.FailedBufferSize = defaultFailedBufferSize
 	assert.NoError(eq.Start(messageQueue))
 	assert.EqualError(eq.Start(messageQueue),
@@ -74,7 +74,7 @@ func TestEnqueuerEnqueue_Validation(t *testing.T) {
 	messageQueue := NewMockMessageQueue(ctrl)
 	options := NewEnqueuerOptions()
 	options.BufferSize = 2
-	options.BatchSize = 1
+	options.ChunkSize = 1
 
 	eq := New(options)
 	// enqueue into stopped fails
@@ -111,7 +111,7 @@ func TestEnqueue_BatchError(t *testing.T) {
 	messageQueue := NewMockMessageQueue(ctrl)
 	options := NewEnqueuerOptions()
 	options.BufferSize = 2
-	options.BatchSize = 1
+	options.ChunkSize = 1
 
 	eq := New(options)
 
@@ -145,7 +145,7 @@ func TestEnqueue(t *testing.T) {
 	messageQueue := NewMockMessageQueue(ctrl)
 	options := NewEnqueuerOptions()
 	options.BufferSize = 3
-	options.BatchSize = 2
+	options.ChunkSize = 2
 	eq := New(options)
 
 	expected := []*Message{

@@ -15,12 +15,12 @@ type Entry struct {
 
 func Test_NewChunker(t *testing.T) {
 	assert := assert.New(t)
-	buffer := make(chan *Entry, 5)
+	actual := NewChunker[*Entry](nil)
+	assert.NotNil(actual)
 	handler := func(chunk []*Entry) {}
-	obj := NewChunker(buffer, handler, nil)
-	c := obj.(*chunker[*Entry])
-	assert.Equal(uint(defaultChunkSize), c.options.Size)
-	assert.Equal(defaultEntryExpiry, c.options.ElementExpiry)
+	buffer := make(chan *Entry, 2)
+	assert.NoError(actual.Start(buffer, handler))
+	assert.NoError(actual.Stop())
 	close(buffer)
 }
 
@@ -34,17 +34,17 @@ func Test_Chunker_StartStop(t *testing.T) {
 		resultChannel <- chunk
 	}
 	options := NewChunkerOptions()
-	options.Size = uint(batchSize)
-	options.ElementExpiry = expiry
-	c := NewChunker(buffer, handler, options)
+	options.ChunkSize = uint(batchSize)
+	options.MaxElementWait = expiry
+	c := NewChunker[*Entry](options)
 	// stop on not started should error
 	assert.EqualError(c.Stop(), "Chunker.Run called while not in state 'Running'")
 
 	// start the chunker
-	assert.NoError(c.Start())
+	assert.NoError(c.Start(buffer, handler))
 
 	// start on a started chunker should error
-	assert.EqualError(c.Start(), "Chunker.Run called while not in state 'Stopped'")
+	assert.EqualError(c.Start(buffer, handler), "Chunker.Run called while not in state 'Stopped'")
 
 	// add batch + 1
 	for i := 0; i < batchSize+1; i++ {
@@ -77,10 +77,10 @@ func Test_Chunker_Expiry(t *testing.T) {
 		resultChannel <- chunk
 	}
 	options := NewChunkerOptions()
-	options.Size = uint(batchSize)
-	options.ElementExpiry = expiry
-	c := NewChunker(buffer, handler, options)
-	assert.NoError(c.Start())
+	options.ChunkSize = uint(batchSize)
+	options.MaxElementWait = expiry
+	c := NewChunker[*Entry](options)
+	assert.NoError(c.Start(buffer, handler))
 
 	// add a entry we want to expire
 	expected := generator.String(20)
@@ -98,8 +98,8 @@ func Test_Chunker_BufferCloseDoesNotPanic(t *testing.T) {
 	buffer := make(chan *Entry, 2)
 
 	handler := func(chunk []*Entry) {}
-	c := NewChunker(buffer, handler, nil)
-	assert.NoError(c.Start())
+	c := NewChunker[*Entry](nil)
+	assert.NoError(c.Start(buffer, handler))
 
 	close(buffer)
 

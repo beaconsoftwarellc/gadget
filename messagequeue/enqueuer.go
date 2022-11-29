@@ -36,6 +36,7 @@ func New(options *EnqueuerOptions) Enqueuer {
 	}
 	return &enqueuer{
 		options: options,
+		chunker: NewChunker[*Message](options.ChunkerOptions),
 	}
 }
 
@@ -70,11 +71,8 @@ func (qr *enqueuer) Start(messageQueue MessageQueue) error {
 	}
 	qr.messageQueue = messageQueue
 	qr.buffer = make(chan *Message)
-	options := NewChunkerOptions()
-	options.ElementExpiry = qr.options.MaxMessageWait
-	options.Size = qr.options.BatchSize
-	qr.chunker = NewChunker(qr.buffer, qr.sendBatch, options)
-	err = qr.chunker.Start()
+	err = qr.chunker.Start(qr.buffer, qr.sendBatch)
+
 	qr.failed = make(chan *EnqueueMessageResult, int(qr.options.FailedBufferSize))
 	go qr.handleFailed()
 	qr.mux.Unlock()

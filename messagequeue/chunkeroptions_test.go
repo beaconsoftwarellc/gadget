@@ -23,25 +23,25 @@ func TestChunkerOptions_Valid(t *testing.T) {
 	assert.NoError(options.Validate())
 
 	// size is validated
-	options.Size = minimumChunkSize - 1
-	expected := fmt.Sprintf("ChunkerOptions.Size(%d) was out of bounds [%d, %d]",
-		options.Size, minimumChunkSize, maximumChunkSize)
+	options.ChunkSize = minimumChunkSize - 1
+	expected := fmt.Sprintf("ChunkerOptions.ChunkSize(%d) was out of bounds [%d, %d]",
+		options.ChunkSize, minimumChunkSize, maximumChunkSize)
 	assert.EqualError(options.Validate(), expected)
 
-	options.Size = maximumChunkSize + 1
-	expected = fmt.Sprintf("ChunkerOptions.Size(%d) was out of bounds [%d, %d]",
-		options.Size, minimumChunkSize, maximumChunkSize)
+	options.ChunkSize = maximumChunkSize + 1
+	expected = fmt.Sprintf("ChunkerOptions.ChunkSize(%d) was out of bounds [%d, %d]",
+		options.ChunkSize, minimumChunkSize, maximumChunkSize)
 	assert.EqualError(options.Validate(), expected)
 
-	options.Size = defaultChunkSize
+	options.ChunkSize = defaultChunkSize
 	// element expiry is validated
-	options.ElementExpiry = minimumExpiry - 1
-	expected = fmt.Sprintf("ChunkerOptions.ElementExpiry(%s) was out of bounds [%s,%s]",
-		options.ElementExpiry.String(), minimumExpiry, maximumExpiry)
+	options.MaxElementWait = minimumWait - 1
+	expected = fmt.Sprintf("ChunkerOptions.MaxElementWait(%s) was out of bounds [%s,%s]",
+		options.MaxElementWait.String(), minimumWait, maximumWait)
 	assert.EqualError(options.Validate(), expected)
 
-	options.ElementExpiry = maximumExpiry + 2
-	expected = fmt.Sprintf("ChunkerOptions.ElementExpiry(%s) was out of bounds [%s,%s]",
-		options.ElementExpiry.String(), minimumExpiry, maximumExpiry)
+	options.MaxElementWait = maximumWait + 2
+	expected = fmt.Sprintf("ChunkerOptions.MaxElementWait(%s) was out of bounds [%s,%s]",
+		options.MaxElementWait.String(), minimumWait, maximumWait)
 	assert.EqualError(options.Validate(), expected)
 }

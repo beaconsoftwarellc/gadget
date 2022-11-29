@@ -3,7 +3,6 @@ package messagequeue
 import (
 	"fmt"
 	"testing"
-	"time"
 
 	assert1 "github.com/stretchr/testify/assert"
 )
@@ -11,12 +10,8 @@ import (
 func TestNewEnqueuerOptions(t *testing.T) {
 	assert := assert1.New(t)
 	actual := NewEnqueuerOptions()
-	assert.Equal(uint(defaultBufferSize), actual.BufferSize)
-	assert.Equal(uint(defaultBatchSize), actual.BatchSize)
-	assert.Equal(uint(defaultFailedBufferSize), actual.FailedBufferSize)
-	assert.Equal(defaultMaxMessageWait, actual.MaxMessageWait)
-	assert.Nil(actual.FailureHandler)
-	assert.NotNil(actual.Logger)
+	assert.NotNil(actual)
+	assert.NoError(actual.Validate())
 }
 
 func TestEnqueuerOptions_Validate(t *testing.T) {
@@ -31,49 +26,49 @@ func TestEnqueuerOptions_Validate(t *testing.T) {
 
 	// buffer
 	actual = NewEnqueuerOptions()
-	actual.BufferSize = minBufferSize - 1
+	actual.BufferSize = minimumBufferSize - 1
 	expectedError := fmt.Sprintf("EnqueuerOptions.BufferSize(%d) was out of bounds [%d, %d]",
-		actual.BufferSize, minBufferSize, maxBufferSize)
+		actual.BufferSize, minimumBufferSize, maximumBufferSize)
 	assert.EqualError(actual.Validate(), expectedError)
 
-	actual.BufferSize = maxBufferSize + 1
+	actual.BufferSize = maximumBufferSize + 1
 	expectedError = fmt.Sprintf("EnqueuerOptions.BufferSize(%d) was out of bounds [%d, %d]",
-		actual.BufferSize, minBufferSize, maxBufferSize)
+		actual.BufferSize, minimumBufferSize, maximumBufferSize)
 	assert.EqualError(actual.Validate(), expectedError)
 
-	// batch
+	// size is validated
 	actual = NewEnqueuerOptions()
-	actual.BatchSize = minBatchSize - 1
-	expectedError = fmt.Sprintf("EnqueuerOptions.BatchSize(%d) was out of bounds [%d, %d)",
-		actual.BatchSize, minBatchSize, actual.BufferSize)
-	assert.EqualError(actual.Validate(), expectedError)
+	actual.ChunkSize = minimumChunkSize - 1
+	expected := fmt.Sprintf("ChunkerOptions.ChunkSize(%d) was out of bounds [%d, %d]",
+		actual.ChunkSize, minimumChunkSize, maximumChunkSize)
+	assert.EqualError(actual.Validate(), expected)
 
-	actual.BatchSize = actual.BufferSize + 1
-	expectedError = fmt.Sprintf("EnqueuerOptions.BatchSize(%d) was out of bounds [%d, %d)",
-		actual.BatchSize, minBatchSize, actual.BufferSize)
-	assert.EqualError(actual.Validate(), expectedError)
+	actual.ChunkSize = maximumChunkSize + 1
+	expected = fmt.Sprintf("ChunkerOptions.ChunkSize(%d) was out of bounds [%d, %d]",
+		actual.ChunkSize, minimumChunkSize, maximumChunkSize)
+	assert.EqualError(actual.Validate(), expected)
+
+	// element expiry is validated
+	actual = NewEnqueuerOptions()
+	actual.MaxElementWait = minimumWait - 1
+	expected = fmt.Sprintf("ChunkerOptions.MaxElementWait(%s) was out of bounds [%s,%s]",
+		actual.MaxElementWait.String(), minimumWait, maximumWait)
+	assert.EqualError(actual.Validate(), expected)
+
+	actual.MaxElementWait = maximumWait + 2
+	expected = fmt.Sprintf("ChunkerOptions.MaxElementWait(%s) was out of bounds [%s,%s]",
+		actual.MaxElementWait.String(), minimumWait, maximumWait)
+	assert.EqualError(actual.Validate(), expected)
 
 	// fail buffer
 	actual = NewEnqueuerOptions()
-
-	actual.FailedBufferSize = minFailedBufferSize - 1
+	actual.FailedBufferSize = minimumFailedBufferSize - 1
 	expectedError = fmt.Sprintf("EnqueuerOptions.FailedBufferSize(%d) was out of bounds [%d, %d)",
-		actual.FailedBufferSize, minFailedBufferSize, maxFailedBufferSize)
+		actual.FailedBufferSize, minimumFailedBufferSize, maximumFailedBufferSize)
 	assert.EqualError(actual.Validate(), expectedError)
 
-	actual.FailedBufferSize = maxFailedBufferSize + 1
+	actual.FailedBufferSize = maximumFailedBufferSize + 1
 	expectedError = fmt.Sprintf("EnqueuerOptions.FailedBufferSize(%d) was out of bounds [%d, %d)",
-		actual.FailedBufferSize, minFailedBufferSize, maxFailedBufferSize)
-	assert.EqualError(actual.Validate(), expectedError)
-
-	// wait
-	actual = NewEnqueuerOptions()
-	actual.MaxMessageWait = time.Microsecond
-	expectedError = fmt.Sprintf("EnqueuerOptions.MaxMessageWait(%s) was out of bounds [%s, %s)",
-		actual.MaxMessageWait, minMaxMessageWait.String(), maxMaxMessageWait.String())
-	assert.EqualError(actual.Validate(), expectedError)
-	actual.MaxMessageWait = 24 * time.Hour
-	expectedError = fmt.Sprintf("EnqueuerOptions.MaxMessageWait(%s) was out of bounds [%s, %s)",
-		actual.MaxMessageWait, minMaxMessageWait.String(), maxMaxMessageWait.String())
+		actual.FailedBufferSize, minimumFailedBufferSize, maximumFailedBufferSize)
 	assert.EqualError(actual.Validate(), expectedError)
 }
