@@ -30,39 +30,6 @@ type Chunker[T any] interface {
 	Stop() error
 }
 
-// ChunkerOptions for configuring a Chunker instance
-type ChunkerOptions struct {
-	// Size determines the desired chunk size for entries to be returned
-	// from the buffer.
-	Size uint
-	// ElementExpiry determines the maximum time an entry will wait to be chunked
-	// smaller durations may result in chunks that are less than the desired size.
-	ElementExpiry time.Duration
-}
-
-// Valid returns an error if an options value is out of bounds.
-func (o *ChunkerOptions) Valid() error {
-	if o.Size < minimumChunkSize || o.Size > maximumChunkSize {
-		return errors.New("ChunkerOptions.Size(%d) was out of bounds [%d, %d]",
-			o.Size, minimumChunkSize, maximumChunkSize,
-		)
-	}
-	if o.ElementExpiry < minimumExpiry || o.ElementExpiry > maximumExpiry {
-		return errors.New("ChunkerOptions.ElementExpiry(%s) was out of bounds [%s,%s]",
-			minimumExpiry.String(), minimumExpiry, maximumExpiry)
-	}
-	return nil
-}
-
-// NewChunkerOptions creates a ChunkerOptions with default values that can
-// be used to create a NewChunker
-func NewChunkerOptions() *ChunkerOptions {
-	return &ChunkerOptions{
-		Size:          defaultChunkSize,
-		ElementExpiry: defaultEntryExpiry,
-	}
-}
-
 type chunker[T any] struct {
 	options *ChunkerOptions
 	buffer  <-chan T
@@ -103,7 +70,7 @@ func (c *chunker[T]) Start() error {
 		return errors.New("Chunker.Run called while not in state 'Stopped'")
 	}
 	// validate our options
-	if err := c.options.Valid(); err != nil {
+	if err := c.options.Validate(); err != nil {
 		return err
 	}
 	c.control = make(chan bool)
