@@ -30,18 +30,19 @@ type Enqueuer interface {
 }
 
 // New enqueuer for inserting messages into a MessageQueue
-func New(failHandler HandleFailedEnqueue, options *EnqueuerOptions) Enqueuer {
+func New(options *EnqueuerOptions) Enqueuer {
+	if nil == options {
+		options = NewEnqueuerOptions()
+	}
 	return &enqueuer{
-		options:       options,
-		failedHandler: failHandler,
+		options: options,
 	}
 }
 
 type enqueuer struct {
-	status        atomic.Uint32
-	messageQueue  MessageQueue
-	options       *EnqueuerOptions
-	failedHandler HandleFailedEnqueue
+	status       atomic.Uint32
+	messageQueue MessageQueue
+	options      *EnqueuerOptions
 	// buffer used by the chunker
 	buffer chan *Message
 	// buffer where we send messages that fail to enqueue that will
@@ -54,30 +55,46 @@ type enqueuer struct {
 
 func (qr *enqueuer) Start(messageQueue MessageQueue) error {
 	if nil == messageQueue {
-		return errors.New("MessageQueue cannot be nil")
+		return errors.New("messageQueue cannot be nil")
 	}
 	qr.mux.Lock()
-	defer qr.mux.Unlock()
+	var err error
 	if !qr.status.CompareAndSwap(statusStopped, statusRunning) {
-		return errors.New("MessageQueue.Start called while not in state 'Stopped'")
+		qr.mux.Unlock()
+		return errors.New("Enqueuer.Start called while not in state 'Stopped'")
+	}
+	if err = qr.options.Validate(); nil != err {
+		qr.status.Store(statusStopped)
+		qr.mux.Unlock()
+		return err
 	}
 	qr.messageQueue = messageQueue
 	qr.buffer = make(chan *Message)
-	qr.failed = make(chan *EnqueueMessageResult, int(qr.options.FailedBufferSize))
 	options := NewChunkerOptions()
 	options.ElementExpiry = qr.options.MaxMessageWait
 	options.Size = qr.options.BatchSize
 	qr.chunker = NewChunker(qr.buffer, qr.sendBatch, options)
+	err = qr.chunker.Start()
+	qr.failed = make(chan *EnqueueMessageResult, int(qr.options.FailedBufferSize))
 	go qr.handleFailed()
-	return qr.chunker.Start()
+	qr.mux.Unlock()
+	if nil != err {
+		qr.Stop()
+	}
+	// set the failure handler to just log if one is not defined
+	if nil == qr.options.FailureHandler {
+		qr.options.FailureHandler = qr.logFailed
+	}
+	return err
 }
 
 func (qr *enqueuer) Stop() error {
 	qr.mux.Lock()
-	defer qr.mux.Unlock()
-	if !qr.status.CompareAndSwap(statusRunning, statusDraining) {
-		return errors.New("MessageQueue.Stop called while not in state 'Running'")
+	if !qr.status.CompareAndSwap(statusRunning, statusStopped) {
+		qr.mux.Unlock()
+		return errors.New("Enqueuer.Stop called while not in state 'Running'")
 	}
+	defer qr.mux.Unlock()
 	qr.chunker.Stop()
 	close(qr.buffer)
 	close(qr.failed)
@@ -98,6 +115,11 @@ func (qr *enqueuer) Enqueue(message *Message) error {
 	return nil
 }
 
+func (qr *enqueuer) logFailed(nqr Enqueuer, result *EnqueueMessageResult) {
+	qr.options.Logger.Errorf("failed to enqueue message(%s, %s): %s",
+		result.Service, result.Method, result.Error)
+}
+
 func (qr *enqueuer) handleFailed() {
 	var (
 		emr *EnqueueMessageResult
@@ -108,7 +130,7 @@ func (qr *enqueuer) handleFailed() {
 		if !ok {
 			return
 		}
-		qr.failedHandler(qr, emr)
+		qr.options.FailureHandler(qr, emr)
 	}
 }
 
@@ -124,13 +146,15 @@ func (qr *enqueuer) sendBatch(batch []*Message) {
 	if nil != err {
 		// the whole batch failed so call the handler
 		// with all emr's for all the messages
-		result = make([]*EnqueueMessageResult, len(batch))
+		result = make([]*EnqueueMessageResult, 0, len(batch))
 		for _, m := range batch {
 			result = append(result, &EnqueueMessageResult{
 				Message: m, Success: false, Error: err.Error()})
 		}
 	}
 	for _, r := range result {
-		qr.failed <- r
+		if !r.Success {
+			qr.failed <- r
+		}
 	}
 }

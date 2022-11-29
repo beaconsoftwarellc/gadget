@@ -34,7 +34,7 @@ func Test_Chunker_StartStop(t *testing.T) {
 		resultChannel <- chunk
 	}
 	options := NewChunkerOptions()
-	options.Size = uint32(batchSize)
+	options.Size = uint(batchSize)
 	options.ElementExpiry = expiry
 	c := NewChunker(buffer, handler, options)
 	// stop on not started should error
@@ -77,7 +77,7 @@ func Test_Chunker_Expiry(t *testing.T) {
 		resultChannel <- chunk
 	}
 	options := NewChunkerOptions()
-	options.Size = uint32(batchSize)
+	options.Size = uint(batchSize)
 	options.ElementExpiry = expiry
 	c := NewChunker(buffer, handler, options)
 	assert.NoError(c.Start())

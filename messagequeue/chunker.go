@@ -83,7 +83,8 @@ func NewChunker[T any](buffer <-chan T, handler Handler[T],
 		options: options,
 		buffer:  buffer,
 		// we need a control channel since we are not controlling the
-		// buffer
+		// buffer, at least two so that a premature buffer close does
+		// not lock us on stop
 		control: make(chan bool),
 		handler: handler,
 		state:   &atomic.Uint32{},
@@ -111,9 +112,7 @@ func (c *chunker[T]) Stop() error {
 	if !c.state.CompareAndSwap(stateRunning, stateStopped) {
 		return errors.New("Chunker.Run called while not in state 'Running'")
 	}
-	// we only have one worker so a single stop into the control
-	// channel will stop it
-	c.control <- true
+	// we only have one worker so we can just close the control channel
 	close(c.control)
 	return nil
 }

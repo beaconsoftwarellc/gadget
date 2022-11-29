@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+//go:generate mockgen -package messagequeue -destination messagequeue_mock_test.gen.go . MessageQueue
+
 // MessageQueue for enqueueing and dequeueing messages
 type MessageQueue interface {
 	// Enqueue all the passed messages as a batch
