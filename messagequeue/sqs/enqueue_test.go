@@ -89,7 +89,7 @@ func Test_setXRayTrace(t *testing.T) {
 	assert.EqualError(actual, expected)
 
 	mapping = make(map[string]types.MessageSystemAttributeValue)
-	expected = bodyMinimumError.Error()
+	expected = bodyMinimumError
 	actual = setXRayTrace(mapping, value)
 	assert.EqualError(actual, expected)
 

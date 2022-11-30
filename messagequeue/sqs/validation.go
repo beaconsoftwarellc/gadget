@@ -1,6 +1,7 @@
 package sqs
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 	"unicode/utf8"
@@ -20,10 +21,9 @@ const (
 
 var nameAllowedCharacters = regexp.MustCompile(`^[a-zA-Z0-9_\-\.]+$`)
 var (
-	prohibitedPrefixError = errors.
-				New("name has invalid prefix (%s|%s)", prohibitedAmazon, prohibitedAWS)
-	dotError         = errors.New("name cannot begin, end, or contain sequences of '%s'", period)
-	bodyMinimumError = errors.New("minimum character count is 1")
+	prohibitedPrefixError = fmt.Sprintf("name has invalid prefix (%s|%s)", prohibitedAmazon, prohibitedAWS)
+	dotError              = fmt.Sprintf("name cannot begin, end, or contain sequences of '%s'", period)
+	bodyMinimumError      = "minimum character count is 1"
 )
 
 // NameIsValid for use as an attribute or system attribute name
@@ -57,11 +57,11 @@ func NameIsValid(s string) error {
 
 	if strings.HasPrefix(s, period) || strings.HasSuffix(s, period) ||
 		strings.Contains(s, period+period) {
-		return dotError
+		return errors.New(dotError)
 	}
 	low := strings.ToLower(s)
 	if strings.HasPrefix(low, prohibitedAmazon) || strings.HasPrefix(low, prohibitedAWS) {
-		return prohibitedPrefixError
+		return errors.New(prohibitedPrefixError)
 	}
 	return nil
 }
@@ -80,7 +80,7 @@ func BodyIsValid(s string) error {
 	see the W3C specification for characters (http://www.w3.org/TR/REC-xml/#charsets).
 	*/
 	if utf8.RuneCountInString(s) == 0 {
-		return bodyMinimumError
+		return errors.New(bodyMinimumError)
 	}
 	if len(s) > maxBodyKilobytes {
 		return errors.New("body cannot exceed %d kilobytes (was %d kb)",
