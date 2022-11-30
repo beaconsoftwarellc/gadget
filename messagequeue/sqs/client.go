@@ -35,7 +35,7 @@ const (
 )
 
 // New SQS instance located at the passed URL
-func New(region string, queueLocator *url.URL) messagequeue.Implementation {
+func New(region string, queueLocator *url.URL) messagequeue.MessageQueue {
 	return &sdk{
 		region:   region,
 		queueUrl: queueLocator,

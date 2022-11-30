@@ -3,7 +3,6 @@ package messagequeue
 import (
 	"sync"
 	"sync/atomic"
-	"time"
 
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
 
@@ -11,64 +10,29 @@ import (
 )
 
 const (
-	stateStopped                     = 0
-	stateRunning                     = 1
-	defaultChunkSize   uint32        = 10
-	defaultEntryExpiry time.Duration = 10 * time.Second
-	minimumExpiry                    = time.Millisecond
-	maximumExpiry                    = 24 * time.Hour
-	minimumChunkSize                 = 1
-	maximumChunkSize                 = 1024
+	stateStopped = 0
+	stateRunning = 1
 )
 
 // Chunker interface for 'chunking' entries on a buffer into slices of a desired
 // size.
 type Chunker[T any] interface {
 	// Start the chunker
-	Start() error
+	Start(buffer <-chan T, handler Handler[T]) error
 	// Stop the chunker and clean up any resources
 	Stop() error
-}
-
-// ChunkerOptions for configuring a Chunker instance
-type ChunkerOptions struct {
-	// Size determines the desired chunk size for entries to be returned
-	// from the buffer.
-	Size uint32
-	// ElementExpiry determines the maximum time an entry will wait to be chunked
-	// smaller durations may result in chunks that are less than the desired size.
-	ElementExpiry time.Duration
-}
-
-// Valid returns an error if an options value is out of bounds.
-func (o *ChunkerOptions) Valid() error {
-	if o.Size < minimumChunkSize || o.Size > maximumChunkSize {
-		return errors.New("ChunkerOptions.Size(%d) was out of bounds [%d, %d]",
-			o.Size, minimumChunkSize, maximumChunkSize,
-		)
-	}
-	if o.ElementExpiry < minimumExpiry || o.ElementExpiry > maximumExpiry {
-		return errors.New("ChunkerOptions.ElementExpiry(%s) was out of bounds [%s,%s]",
-			minimumExpiry.String(), minimumExpiry, maximumExpiry)
-	}
-	return nil
-}
-
-// NewChunkerOptions creates a ChunkerOptions with default values that can
-// be used to create a NewChunker
-func NewChunkerOptions() *ChunkerOptions {
-	return &ChunkerOptions{
-		Size:          defaultChunkSize,
-		ElementExpiry: defaultEntryExpiry,
-	}
 }
 
 type chunker[T any] struct {
 	options *ChunkerOptions
 	buffer  <-chan T
+	// we need a control channel since we are not controlling the
+	// buffer, at least two so that a premature buffer close does
+	// not lock us on stop
 	control chan bool
 	handler Handler[T]
 	state   *atomic.Uint32
+	wait    sync.WaitGroup
 	mux     sync.Mutex
 }
 
@@ -79,32 +43,36 @@ type Handler[T any] func(chunk []T)
 // slices of a specified size from the passed buffer and pass them to the handler.
 // Entries retrieved from the buffer are guaranteed to be delivered to
 // the handler within the configured ChunkElementExpiry duration.
-func NewChunker[T any](buffer <-chan T, handler Handler[T],
-	options *ChunkerOptions) Chunker[T] {
+func NewChunker[T any](options *ChunkerOptions) Chunker[T] {
 	if nil == options {
 		options = NewChunkerOptions()
 	}
 	return &chunker[T]{
 		options: options,
-		buffer:  buffer,
-		// we need a control channel since we are not controlling the
-		// buffer
-		control: make(chan bool),
-		handler: handler,
 		state:   &atomic.Uint32{},
 	}
 }
 
-func (c *chunker[T]) Start() error {
+func (c *chunker[T]) Start(buffer <-chan T, handler Handler[T]) error {
+	if nil == buffer {
+		return errors.New("buffer cannot be nil")
+	}
+	if nil == handler {
+		return errors.New("handler cannot be nil")
+	}
 	c.mux.Lock()
 	defer c.mux.Unlock()
 	if !c.state.CompareAndSwap(stateStopped, stateRunning) {
 		return errors.New("Chunker.Run called while not in state 'Stopped'")
 	}
+	c.buffer = buffer
+	c.handler = handler
 	// validate our options
-	if err := c.options.Valid(); err != nil {
+	if err := c.options.Validate(); err != nil {
 		return err
 	}
+	c.buffer = buffer
+	c.handler = handler
 	c.control = make(chan bool)
 	go c.chunk()
 	return nil
@@ -116,10 +84,12 @@ func (c *chunker[T]) Stop() error {
 	if !c.state.CompareAndSwap(stateRunning, stateStopped) {
 		return errors.New("Chunker.Run called while not in state 'Running'")
 	}
-	// we only have one worker so a single stop into the control
-	// channel will stop it
-	c.control <- true
+	// we only have one worker so we can just close the control channel
 	close(c.control)
+	c.wait.Wait()
+	// release references to the buffer and handler so they can be gc'd
+	c.buffer = nil
+	c.handler = nil
 	return nil
 }
 
@@ -127,9 +97,10 @@ func (c *chunker[T]) chunk() {
 	var (
 		staleBatch = false
 		stop       = false
-		batch      = make([]T, 0, c.options.Size)
-		ticker     = timeutil.NewTicker(c.options.ElementExpiry).Start()
+		batch      = make([]T, 0, c.options.ChunkSize)
+		ticker     = timeutil.NewTicker(c.options.MaxElementWait).Start()
 	)
+	c.wait.Add(1)
 	defer ticker.Stop()
 	for !stop {
 		select {
@@ -155,11 +126,12 @@ func (c *chunker[T]) chunk() {
 		// 2. stop was called
 		// 3. we are at our batch size
 		if len(batch) > 0 && (staleBatch || stop ||
-			len(batch) >= int(c.options.Size)) {
+			len(batch) >= int(c.options.ChunkSize)) {
 			c.handler(batch)
-			batch = make([]T, 0, c.options.Size)
+			batch = make([]T, 0, c.options.ChunkSize)
 		}
 		if stop {
+			c.wait.Done()
 			return
 		}
 	}
