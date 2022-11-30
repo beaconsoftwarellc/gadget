@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/beaconsoftwarellc/gadget/v2/log"
 	assert1 "github.com/stretchr/testify/assert"
 )
 
@@ -30,7 +31,7 @@ func TestAddWorkerForPool(t *testing.T) {
 	assert := assert1.New(t)
 	pool := make(chan Worker)
 	complete := make(chan *internalTask, 50)
-	w := NewWorker(pool, complete)
+	w := NewWorker(pool, complete, log.NewStackLogger())
 	actual, ok := w.(*worker)
 	assert.True(ok)
 	assert.Equal(pool, actual.pool)
@@ -42,7 +43,7 @@ func TestWorkerRun(t *testing.T) {
 	// so we do not block
 	pool := make(chan Worker, 2)
 	complete := make(chan *internalTask, 50)
-	worker := NewWorker(pool, complete)
+	worker := NewWorker(pool, complete, log.NewStackLogger())
 	expected := "foo"
 	task := newTestTask(expected, false)
 	worker.Run()
@@ -59,7 +60,7 @@ func TestWorkerWithErrorMessageContinues(t *testing.T) {
 	assert := assert1.New(t)
 	pool := make(chan Worker, 3)
 	complete := make(chan *internalTask, 50)
-	w := NewWorker(pool, complete)
+	w := NewWorker(pool, complete, log.NewStackLogger())
 	expected := "foo"
 	errorTask := newTestTask("I throw errors", true)
 	task := newTestTask(expected, false)
@@ -78,7 +79,7 @@ func TestWorkerExec(t *testing.T) {
 	assert := assert1.New(t)
 	pool := make(chan Worker, 3)
 	complete := make(chan *internalTask, 50)
-	w := NewWorker(pool, complete)
+	w := NewWorker(pool, complete, log.NewStackLogger())
 	task := newTestTask("expected", false)
 	assert.False(w.Exec(task))
 

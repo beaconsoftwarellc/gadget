@@ -44,7 +44,7 @@ func (b *Bucket) Add(bucket, item string, data map[string]interface{}) {
 }
 
 // Get pulls a value from a map loaded from and S3 bucket
-func (b *Bucket) Get(bucket, item, key string) interface{} {
+func (b *Bucket) Get(bucket, item, key string, logger log.Logger) interface{} {
 	if value, ok := b.Has(bucket, item, key); ok {
 		return value
 	}
@@ -58,13 +58,13 @@ func (b *Bucket) Get(bucket, item, key string) interface{} {
 			Key:    aws.String(item),
 		})
 	if err != nil {
-		log.Errorf("Issue loading from S3, %s/%s (%s)", bucket, item, err)
+		logger.Errorf("Issue loading from S3, %s/%s (%s)", bucket, item, err)
 		return nil
 	}
 
 	err = json.Unmarshal(data.Bytes(), &items)
 	if err != nil {
-		log.Errorf("Issue unmarshalling from S3, %s/%s (%s)", bucket, item, err)
+		logger.Errorf("Issue unmarshalling from S3, %s/%s (%s)", bucket, item, err)
 		return nil
 	}
 

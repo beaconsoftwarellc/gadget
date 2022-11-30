@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/beaconsoftwarellc/gadget/v2/generator"
+	"github.com/beaconsoftwarellc/gadget/v2/log"
 )
 
 func getTestPath() string {
@@ -157,7 +158,7 @@ func TestRemoveFileMatches(t *testing.T) {
 				}
 			}
 
-			err = RemoveFileMatches(tt.pattern)
+			err = RemoveFileMatches(tt.pattern, log.NewStackLogger())
 			if err != nil {
 				t.Error(err)
 			}

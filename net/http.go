@@ -81,7 +81,7 @@ type DoHTTPRequest interface {
 }
 
 // NewHTTPRedirectClient is the default net/http client with headers being set on redirect
-func NewHTTPRedirectClient(timeout time.Duration) DoHTTPRequest {
+func NewHTTPRedirectClient(timeout time.Duration, logger log.Logger) DoHTTPRequest {
 	transport := &http.Transport{}
 	return &httpRedirectClient{
 		client: &http.Client{
@@ -103,12 +103,14 @@ func NewHTTPRedirectClient(timeout time.Duration) DoHTTPRequest {
 			},
 		},
 		transport: transport,
+		log:       logger,
 	}
 }
 
 type httpRedirectClient struct {
 	client    *http.Client
 	transport *http.Transport
+	log       log.Logger
 }
 
 // Do the request by sending the payload to the remote server and returning the response and any errors
@@ -123,7 +125,7 @@ func (client *httpRedirectClient) Do(req *http.Request) (*http.Response, errors.
 	if nil != err {
 		message = err.Error()
 	}
-	log.Debugf("%d %s %s (%s) - %s", statusCode, req.Method, req.URL.String(), time.Now().Sub(now), message)
+	client.log.Debugf("%d %s %s (%s) - %s", statusCode, req.Method, req.URL.String(), time.Now().Sub(now), message)
 	if nil == err && (resp.StatusCode < 200 || resp.StatusCode > 299) {
 		err = NewBadStatusError(req.Method, req.URL.String(), resp.StatusCode)
 	}

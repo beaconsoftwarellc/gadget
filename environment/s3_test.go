@@ -3,6 +3,7 @@ package environment
 import (
 	"testing"
 
+	"github.com/beaconsoftwarellc/gadget/v2/log"
 	assert1 "github.com/stretchr/testify/assert"
 )
 
@@ -31,6 +32,6 @@ func TestBucketName(t *testing.T) {
 	assert.Equal(expected, value)
 	assert.True(ok)
 
-	value = bucket.Get(bucketName, item, key)
+	value = bucket.Get(bucketName, item, key, log.NewStackLogger())
 	assert.Equal(expected, value)
 }

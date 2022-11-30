@@ -52,7 +52,7 @@ func newSpecification() *specification {
 		DatabaseType: "mysql",
 		DatabaseURL:  "test:test@/test_db?parseTime=true",
 	}
-	environment.Process(config)
+	environment.Process(config, log.NewStackLogger())
 	config.DB = Initialize(config)
 	return config
 }

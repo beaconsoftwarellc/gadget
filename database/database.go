@@ -33,7 +33,7 @@ func (db *Database) Create(obj Record) errors.TracerError {
 		return errors.Wrap(err)
 	}
 	err = db.CreateTx(obj, tx)
-	return CommitOrRollback(tx, err)
+	return CommitOrRollback(tx, err, db.Logger)
 }
 
 // CreateTx initializes a Record and inserts it into the Database
@@ -158,7 +158,7 @@ func (db *Database) ListWhere(meta Record, target interface{}, condition *qb.Con
 	options = db.enforceLimits(options)
 	tracerErr := db.ListWhereTx(tx, meta, target, condition, options)
 	if nil != tracerErr {
-		log.Error(tx.Rollback())
+		db.Logger.Error(tx.Rollback())
 		return tracerErr
 	}
 	return errors.Wrap(tx.Commit())
@@ -245,7 +245,7 @@ func (db *Database) Update(obj Record) errors.TracerError {
 		return errors.Wrap(err)
 	}
 	err = db.UpdateTx(obj, tx)
-	return CommitOrRollback(tx, err)
+	return CommitOrRollback(tx, err, db.Logger)
 }
 
 // UpdateTx replaces an entry in the database for the Record using a transaction
@@ -275,7 +275,7 @@ func (db *Database) Delete(obj Record) errors.TracerError {
 		return errors.Wrap(err)
 	}
 	err = db.DeleteTx(obj, tx)
-	return CommitOrRollback(tx, err)
+	return CommitOrRollback(tx, err, db.Logger)
 }
 
 // DeleteTx removes a row from the database using a transaction
@@ -291,7 +291,7 @@ func (db *Database) DeleteWhere(obj Record, where *qb.ConditionExpression) error
 		return errors.Wrap(err)
 	}
 	err = db.DeleteWhereTx(obj, tx, where)
-	return CommitOrRollback(tx, err)
+	return CommitOrRollback(tx, err, db.Logger)
 }
 
 // DeleteWhereTx removes row(s) from the database based on a supplied where clause in a transaction
@@ -319,7 +319,7 @@ func (db *Database) UpdateWhere(obj Record,
 	}
 
 	rowsAffected, err := db.UpdateWhereTx(obj, tx, where, fields...)
-	return rowsAffected, CommitOrRollback(tx, err)
+	return rowsAffected, CommitOrRollback(tx, err, db.Logger)
 }
 
 // UpdateWhereTx updates fields for the Record based on a supplied where clause in a transaction

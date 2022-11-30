@@ -45,14 +45,17 @@ type worker struct {
 	exited chan bool
 	// channel where we put completed tasks.
 	complete chan<- *internalTask
+	// logger interface
+	log log.Logger
 }
 
 // NewWorker for the passed worker pool.
-func NewWorker(pool chan Worker, complete chan<- *internalTask) Worker {
+func NewWorker(pool chan Worker, complete chan<- *internalTask, logger log.Logger) Worker {
 	worker := &worker{
 		pool:     pool,
 		running:  0,
 		complete: complete,
+		log:      logger,
 	}
 	return worker
 }
@@ -63,7 +66,7 @@ func (w *worker) Running() bool {
 
 func (w *worker) Exec(t *internalTask) bool {
 	if !w.Running() {
-		log.Warnf("attempt to exec a task on a stopped worker")
+		w.log.Warnf("attempt to exec a task on a stopped worker")
 		return false
 	}
 	success := false
@@ -75,7 +78,7 @@ func (w *worker) Exec(t *internalTask) bool {
 		default:
 			// this is not an error, it can happen if the worker has been added
 			// but is not yet listening
-			log.Debugf("failed to add task to worker channel")
+			w.log.Debugf("failed to add task to worker channel")
 			success = false
 		}
 	}
@@ -98,7 +101,7 @@ func (w *worker) run(loaded chan bool) {
 		// never succeed
 		select {
 		case task := <-w.tasks:
-			log.Error(task.Execute())
+			w.log.Error(task.Execute())
 			w.completeTask(task)
 			if exit {
 				w.exited <- true
@@ -124,7 +127,7 @@ func (w *worker) completeTask(task *internalTask) {
 func (w *worker) Run() <-chan bool {
 	loaded := make(chan bool, 2)
 	if w.Running() {
-		log.Infof("run called on an already running worker")
+		w.log.Infof("run called on an already running worker")
 		loaded <- true
 		return loaded
 	}

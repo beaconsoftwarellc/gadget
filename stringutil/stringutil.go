@@ -10,7 +10,6 @@ import (
 	"github.com/golang/protobuf/proto"
 
 	"github.com/beaconsoftwarellc/gadget/v2/intutil"
-	"github.com/beaconsoftwarellc/gadget/v2/log"
 )
 
 type Direction int
@@ -193,7 +192,6 @@ func ConstantTimeComparison(expected, actual string) bool {
 // GetSchemaName from an object for use in the schema field on a routed message payload.
 func GetSchemaName(obj proto.Message) (name string) {
 	if nil == obj {
-		log.Infof("GetSchemaName called with nil")
 		return "<nil>"
 	}
 	ptrtype := reflect.TypeOf(obj)

@@ -24,9 +24,9 @@ func TableExists(db *Database, schema, name string) (bool, error) {
 }
 
 // CommitOrRollback will rollback on an errors.TracerError otherwise commit
-func CommitOrRollback(tx *sqlx.Tx, err error) errors.TracerError {
+func CommitOrRollback(tx *sqlx.Tx, err error, logger log.Logger) errors.TracerError {
 	if err != nil {
-		log.Error(tx.Rollback())
+		logger.Error(tx.Rollback())
 		return errors.Wrap(err)
 	}
 	return errors.Wrap(tx.Commit())

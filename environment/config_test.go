@@ -10,6 +10,7 @@ import (
 	assert1 "github.com/stretchr/testify/assert"
 
 	"github.com/beaconsoftwarellc/gadget/v2/generator"
+	"github.com/beaconsoftwarellc/gadget/v2/log"
 )
 
 type specification struct {
@@ -57,7 +58,7 @@ func TestValidConfig(t *testing.T) {
 
 	expectedNotEnvironmentField := "How many roads must a man walk down?"
 	config := &specification{NotEnvironmentField: expectedNotEnvironmentField}
-	err := Process(config)
+	err := Process(config, log.NewStackLogger())
 
 	assert.NoError(err)
 	assert.Equal(expectedStringField, config.StringField)
@@ -79,7 +80,7 @@ func TestProcessNonPointerFails(t *testing.T) {
 
 	expectedNotEnvironmentField := "How many roads must a man walk down?"
 	config := specification{NotEnvironmentField: expectedNotEnvironmentField}
-	err := Process(config)
+	err := Process(config, log.NewStackLogger())
 
 	assert.EqualError(err, NewInvalidSpecificationError().Error())
 	assert.Equal(specification{NotEnvironmentField: expectedNotEnvironmentField}, config)
@@ -94,7 +95,7 @@ func TestMissingEnviroment(t *testing.T) {
 
 	expectedNotEnvironmentField := "How many roads must a man walk down?"
 	config := &specification{NotEnvironmentField: expectedNotEnvironmentField}
-	err := Process(config)
+	err := Process(config, log.NewStackLogger())
 
 	assert.EqualError(err, MissingEnvironmentVariableError{Tag: "INT_FIELD", Field: "IntField"}.Error())
 	assert.Equal(expectedStringField, config.StringField)
@@ -109,7 +110,7 @@ func TestNotImplementedType(t *testing.T) {
 	os.Setenv("BOOL_FIELD", "true")
 
 	config := &unsupportedTypeSpecification{}
-	err := Process(config)
+	err := Process(config, log.NewStackLogger())
 
 	assert.EqualError(err, UnsupportedDataTypeError{Type: reflect.Bool, Field: "BoolField"}.Error())
 	assert.Equal(&unsupportedTypeSpecification{}, config)
@@ -126,7 +127,7 @@ func TestInvalidConfigValue(t *testing.T) {
 
 	expectedNotEnvironmentField := "How many roads must a man walk down?"
 	config := &specification{NotEnvironmentField: expectedNotEnvironmentField}
-	err := Process(config)
+	err := Process(config, log.NewStackLogger())
 
 	assert.Error(err)
 	assert.Equal("strconv.Atoi: parsing \"j\": invalid syntax while converting INT_FIELD", err.Error())
@@ -141,7 +142,7 @@ func TestNonStructProcessed(t *testing.T) {
 	os.Clearenv()
 
 	config := "42"
-	err := Process(&config)
+	err := Process(&config, log.NewStackLogger())
 
 	assert.EqualError(err, NewInvalidSpecificationError().Error())
 }

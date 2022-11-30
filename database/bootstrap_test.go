@@ -33,8 +33,9 @@ func TestBootstrapSuccess(t *testing.T) {
 func TestToSQLString(t *testing.T) {
 	assert := assert1.New(t)
 	spec := newSpecification()
+	logger := log.NewStackLogger()
 
-	bs, ok := NewBootstrapper(spec.DB).(*bootstrapper)
+	bs, ok := NewBootstrapper(spec.DB, logger).(*bootstrapper)
 	assert.True(ok)
 	assert.Equal("0", bs.toSQLString(float64(0)))
 	assert.Equal("'bob'", bs.toSQLString("bob"))

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
+	"github.com/beaconsoftwarellc/gadget/v2/log"
 	"github.com/beaconsoftwarellc/gadget/v2/stringutil"
 )
 
@@ -17,17 +18,19 @@ const NoS3EnvVar = "NO_S3_ENV_VARS"
 // Process takes a Specification that describes the configuration for the application
 // only attributes tagged with `env:""` will be imported from the environment
 // Example Specification:
-//    type Specification struct {
-//        DatabaseURL string `env:"DATABASE_URL"`
-//        ServiceID   string `env:"SERVICE_ID,optional"`
-//    }
+//
+//	type Specification struct {
+//	    DatabaseURL string `env:"DATABASE_URL"`
+//	    ServiceID   string `env:"SERVICE_ID,optional"`
+//	}
+//
 // Supported options: optional
-func Process(config interface{}) error {
-	return ProcessMap(config, GetEnvMap())
+func Process(config interface{}, logger log.Logger) error {
+	return ProcessMap(config, GetEnvMap(), logger)
 }
 
 // ProcessMap is the same as Process except that the environment variable map is supplied instead of retrieved
-func ProcessMap(config interface{}, envVars map[string]string) error {
+func ProcessMap(config interface{}, envVars map[string]string, logger log.Logger) error {
 	val := reflect.ValueOf(config)
 
 	if val.Kind() != reflect.Ptr {
@@ -50,7 +53,7 @@ func ProcessMap(config interface{}, envVars map[string]string) error {
 
 		s3Bucket, s3Item := stringutil.ParseTag(typ.Tag.Get("s3"))
 		if "" != s3Bucket && !noS3 {
-			s3Env := bucket.Get(s3Bucket, s3Item[0], envTag)
+			s3Env := bucket.Get(s3Bucket, s3Item[0], envTag, logger)
 			if nil != s3Env {
 				switch t := typ.Type.Kind(); t {
 				case reflect.String:

@@ -8,6 +8,7 @@ import (
 	assert1 "github.com/stretchr/testify/assert"
 
 	"github.com/beaconsoftwarellc/gadget/v2/generator"
+	"github.com/beaconsoftwarellc/gadget/v2/log"
 )
 
 type GenericTask struct {
@@ -20,7 +21,7 @@ func (task *GenericTask) Execute() error {
 
 func TestDispatchTask(t *testing.T) {
 	assert := assert1.New(t)
-	d := NewDispatcher(10, 1, 1)
+	d := NewDispatcher(10, 1, 1, log.NewStackLogger())
 	d.Run()
 	expected := generator.String(20)
 	task := newTestTask(expected, false)
@@ -38,14 +39,14 @@ func TestDispatchTask(t *testing.T) {
 }
 
 func TestNewDispatcherDoesNotFail(t *testing.T) {
-	d := NewDispatcher(1, 1, 10)
+	d := NewDispatcher(1, 1, 10, log.NewStackLogger())
 	d.Run()
 	d.Quit(true)
 }
 
 func TestDispatchTasks(t *testing.T) {
 	assert := assert1.New(t)
-	d := NewDispatcher(1000, 10, 100)
+	d := NewDispatcher(1000, 10, 100, log.NewStackLogger())
 	d.Run()
 	tasks := []TestTask{}
 	values := []string{}
@@ -69,7 +70,7 @@ func TestMinWorkerSize(t *testing.T) {
 	assert := assert1.New(t)
 	minWorkers := 5
 	maxWorkers := minWorkers + 10
-	obj := NewDispatcher(1000, minWorkers, maxWorkers)
+	obj := NewDispatcher(1000, minWorkers, maxWorkers, log.NewStackLogger())
 	d, ok := obj.(*dispatcher)
 	assert.True(ok)
 	d.Run()
@@ -82,7 +83,7 @@ func TestMaxWorkerSize(t *testing.T) {
 	minWorkers := 1
 	maxWorkers := 100
 	// use 10 buffered doc to slow things down a bit
-	obj := NewDispatcher(10, minWorkers, maxWorkers)
+	obj := NewDispatcher(10, minWorkers, maxWorkers, log.NewStackLogger())
 	d, ok := obj.(*dispatcher)
 	assert.True(ok)
 	d.Run()
@@ -106,7 +107,7 @@ func TestMaxWorkerSize(t *testing.T) {
 
 func TestQuitExitsWithoutCompletingQueue(t *testing.T) {
 	assert := assert1.New(t)
-	obj := NewDispatcher(1, 1, 2)
+	obj := NewDispatcher(1, 1, 2, log.NewStackLogger())
 	d, ok := obj.(*dispatcher)
 	assert.True(ok)
 	d.Run()
@@ -127,7 +128,7 @@ func TestQuitExitsWithoutCompletingQueue(t *testing.T) {
 
 func TestAddTaskWhileDrainingStillCompletes(t *testing.T) {
 	assert := assert1.New(t)
-	d := NewDispatcher(100, 1, 20)
+	d := NewDispatcher(100, 1, 20, log.NewStackLogger())
 	d.Run()
 	var completedTasks int32
 	var taskCount int32 = 1000
@@ -151,7 +152,7 @@ func TestAddTaskWhileDrainingStillCompletes(t *testing.T) {
 func TestQuitDrainDrains(t *testing.T) {
 	t.SkipNow()
 	assert := assert1.New(t)
-	d := NewDispatcher(100, 1, 30)
+	d := NewDispatcher(100, 1, 30, log.NewStackLogger())
 	d.Run()
 	var completedTasks int32
 	var taskCount int32 = 1000

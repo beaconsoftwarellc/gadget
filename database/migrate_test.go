@@ -10,6 +10,7 @@ import (
 	assert1 "github.com/stretchr/testify/assert"
 
 	"github.com/beaconsoftwarellc/gadget/v2/environment"
+	"github.com/beaconsoftwarellc/gadget/v2/log"
 )
 
 func TestGenerateSqlFiles(t *testing.T) {
@@ -63,7 +64,7 @@ func TestMigrateAndResetErrors(t *testing.T) {
 	config := &specification{
 		DatabaseType: "mysql",
 	}
-	environment.Process(config)
+	environment.Process(config, log.Global())
 
 	// Triggers second panic since it cannot find any files due to the name not conforming to 00_stuff.up.sql
 	assert.Panics(func() { Migrate(migrations, config.DatabaseDialectURL()) })

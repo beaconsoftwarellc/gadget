@@ -60,27 +60,27 @@ type Administration interface {
 }
 
 // GetAdministration for cloud watch logs
-func GetAdministration() (Administration, errors.TracerError) {
+func GetAdministration(logger log.Logger) (Administration, errors.TracerError) {
 	if nil != admin.cwlogs {
 		return admin, nil
 	}
 	sess, err := newSession()
 	if nil != err {
-		log.Error(err)
+		logger.Error(err)
 		return nil, err
 	}
 	admin.cwlogs = cloudwatchlogs.New(sess)
 	err = admin.UpdateLogGroups()
-	log.Error(err)
+	logger.Error(err)
 	return admin, errors.Wrap(err)
 }
 
-func (cwa *administration) Run() {
+func (cwa *administration) Run(logger log.Logger) {
 	cwa.Lock()
 	defer cwa.Unlock()
 	timeutil.RunEvery(func() {
 		for _, output := range cwa.outputs {
-			log.Error(output.SendEvents())
+			logger.Error(output.SendEvents(logger))
 		}
 	}, cwa.sendWait)
 }
@@ -231,11 +231,11 @@ func (cwa *administration) GetLogStream(group *cloudwatchlogs.LogGroup, streamNa
 	return stream, errors.Wrap(err)
 }
 
-func (cwa *administration) UpdateLogStream(groupName, streamName string) {
+func (cwa *administration) UpdateLogStream(groupName, streamName string, logger log.Logger) {
 	streamKey := createStreamKey(groupName, streamName)
 	stream, err := cwa.FindLogStream(groupName, streamName)
 	if nil != err {
-		log.Errorf("failed to update log stream: %s", err)
+		logger.Errorf("failed to update log stream: %s", err)
 	}
 	cwa.Lock()
 	s, ok := cwa.logStreams[streamKey]
@@ -298,7 +298,7 @@ func (o *output) Log(message log.Message) {
 	})
 }
 
-func (o *output) SendEvents() error {
+func (o *output) SendEvents(logger log.Logger) error {
 	o.Lock()
 	defer o.Unlock()
 	if o.buffer.Size() == 0 {
@@ -333,15 +333,15 @@ func (o *output) SendEvents() error {
 	}
 	if awsErr, ok := err.(awserr.Error); !ok || awsErr.Code() != cloudwatchlogs.ErrCodeInvalidSequenceTokenException {
 		// our sequence token got out of data so refresh it
-		o.admin.UpdateLogStream(*o.group.LogGroupName, *o.stream.LogStreamName)
+		o.admin.UpdateLogStream(*o.group.LogGroupName, *o.stream.LogStreamName, logger)
 		// don't log this error
 		err = nil
 	} else if nil != err {
-		log.Error(err)
+		logger.Error(err)
 	}
 	// if we still have events run again
 	if o.buffer.Size() > 0 && nil == err {
-		return o.SendEvents()
+		return o.SendEvents(logger)
 	}
 	return err
 }
@@ -349,10 +349,10 @@ func (o *output) SendEvents() error {
 var groupNameRegex = regexp.MustCompile("[^a-zA-Z0-9_\\-/.]+")
 
 // EnsureGroupNameIsValid based upon the rules from aws:
-// * Log group names must be unique within a region for an AWS account.
-// * Log group names can be between 1 and 512 characters long.
-// * Log group names consist of the following characters: a-z, A-Z, 0-9,
-// 		'_' (underscore), '-' (hyphen), '/' (forward slash), and '.' (period).
+//   - Log group names must be unique within a region for an AWS account.
+//   - Log group names can be between 1 and 512 characters long.
+//   - Log group names consist of the following characters: a-z, A-Z, 0-9,
+//     '_' (underscore), '-' (hyphen), '/' (forward slash), and '.' (period).
 func EnsureGroupNameIsValid(name string) string {
 	validName := groupNameRegex.ReplaceAllString(name, "")
 	if stringutil.IsWhiteSpace(validName) {
@@ -362,9 +362,9 @@ func EnsureGroupNameIsValid(name string) string {
 }
 
 // EnsureStreamNameIsValid based upon the provided rules from AWS
-//	* Log stream names must be unique within the log group.
-//	* Log stream names can be between 1 and 512 characters long.
-//	* The ':' (colon) and '*' (asterisk) characters are not allowed.
+//   - Log stream names must be unique within the log group.
+//   - Log stream names can be between 1 and 512 characters long.
+//   - The ':' (colon) and '*' (asterisk) characters are not allowed.
 func EnsureStreamNameIsValid(name string) string {
 	validName := strings.Replace(name, ":", "", -1)
 	validName = strings.Replace(validName, "*", "", -1)
