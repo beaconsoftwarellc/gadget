@@ -88,11 +88,10 @@ func (qr *enqueuer) Start(messageQueue MessageQueue) error {
 
 func (qr *enqueuer) Stop() error {
 	qr.mux.Lock()
+	defer qr.mux.Unlock()
 	if !qr.status.CompareAndSwap(statusRunning, statusStopped) {
-		qr.mux.Unlock()
 		return errors.New("Enqueuer.Stop called while not in state 'Running'")
 	}
-	defer qr.mux.Unlock()
 	qr.chunker.Stop()
 	close(qr.buffer)
 	close(qr.failed)
@@ -143,7 +142,7 @@ func (qr *enqueuer) sendBatch(batch []*Message) {
 	result, err = qr.messageQueue.EnqueueBatch(context.Background(), batch)
 	if nil != err {
 		// the whole batch failed so call the handler
-		// with all emr's for all the messages
+		// with all EnqueueMessageResult's for all the messages
 		result = make([]*EnqueueMessageResult, 0, len(batch))
 		for _, m := range batch {
 			result = append(result, &EnqueueMessageResult{

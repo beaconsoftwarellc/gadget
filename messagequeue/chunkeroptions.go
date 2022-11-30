@@ -7,12 +7,12 @@ import (
 )
 
 const (
-	defaultChunkSize                  = 10
-	defaultEntryMaxWait time.Duration = 10 * time.Second
-	minimumWait                       = time.Millisecond
-	maximumWait                       = 24 * time.Hour
-	minimumChunkSize                  = 1
-	maximumChunkSize                  = 1024
+	defaultMaxElementWait time.Duration = 10 * time.Second
+	minimumWait                         = time.Millisecond
+	maximumWait                         = 24 * time.Hour
+	minimumChunkSize                    = 1
+	maximumChunkSize                    = 1024
+	defaultChunkSize                    = 10
 )
 
 // ChunkerOptions for configuring a Chunker instance
@@ -30,7 +30,7 @@ type ChunkerOptions struct {
 func NewChunkerOptions() *ChunkerOptions {
 	return &ChunkerOptions{
 		ChunkSize:      defaultChunkSize,
-		MaxElementWait: defaultEntryMaxWait,
+		MaxElementWait: defaultMaxElementWait,
 	}
 }
 
