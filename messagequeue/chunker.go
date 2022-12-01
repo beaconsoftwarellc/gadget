@@ -65,8 +65,6 @@ func (c *chunker[T]) Start(buffer <-chan T, handler Handler[T]) error {
 	if !c.state.CompareAndSwap(stateStopped, stateRunning) {
 		return errors.New("Chunker.Run called while not in state 'Stopped'")
 	}
-	c.buffer = buffer
-	c.handler = handler
 	// validate our options
 	if err := c.options.Validate(); err != nil {
 		return err
