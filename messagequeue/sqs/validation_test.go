@@ -167,18 +167,18 @@ func Test_BodyIsValid(t *testing.T) {
 		},
 		{
 			name:  "too long",
-			input: generator.String(256*1000 + 1),
-			err:   errors.New("body cannot exceed 256 kilobytes (was 256001 bytes)"),
+			input: generator.String(256*1024 + 1),
+			err:   errors.New("body cannot exceed 256 KiB (was 262145 bytes)"),
 		},
 		{
 			name:  "null char",
 			input: "foo\x00",
-			err:   errors.New("char 0x0 is not allowed unicode character"),
+			err:   errors.New("body cannot contain forbidden unicode character 0x0"),
 		},
 		{
 			name:  "forbidden utf char",
 			input: "foo\x0f",
-			err:   errors.New("char 0xf is not allowed unicode character"),
+			err:   errors.New("body cannot contain forbidden unicode character 0xf"),
 		},
 		{
 			name:  "ok",

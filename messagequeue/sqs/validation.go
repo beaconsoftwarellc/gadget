@@ -14,7 +14,7 @@ const (
 	minNameCharacters = 1
 	maxNameCharacters = 256
 	minBodyCharacters = 1
-	maxBodyKilobytes  = 256
+	maxBodyKibibytes  = 256
 	prohibitedAWS     = "aws"
 	prohibitedAmazon  = "amazon"
 	period            = "."
@@ -97,13 +97,13 @@ func BodyIsValid(s string) error {
 		return errors.New(bodyMinimumError)
 	}
 
-	if len(s) > maxBodyKilobytes*1000 {
-		return errors.New("body cannot exceed %d kilobytes (was %d bytes)", maxBodyKilobytes, len(s))
+	if len(s) > maxBodyKibibytes*1024 {
+		return errors.New("body cannot exceed %d KiB (was %d bytes)", maxBodyKibibytes, len(s))
 	}
 
 	for _, r := range s {
 		if !unicode.In(r, allowedRanges) {
-			return errors.New("char 0x%x is not allowed unicode character", r)
+			return errors.New("body cannot contain forbidden unicode character 0x%x", r)
 		}
 	}
 	return nil
