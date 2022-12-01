@@ -1,6 +1,8 @@
 package sqs
 
 import (
+	"fmt"
+	"regexp"
 	"strings"
 	"unicode/utf8"
 
@@ -17,11 +19,11 @@ const (
 	period            = "."
 )
 
+var nameAllowedCharacters = regexp.MustCompile(`^[a-zA-Z0-9_\-\.]+$`)
 var (
-	prohibitedPrefixError = errors.
-				New("name has invalid prefix (%s|%s)", prohibitedAmazon, prohibitedAWS)
-	dotError         = errors.New("name cannot begin, end, or contain sequences of '%s'", period)
-	bodyMinimumError = "minimum character count is 1"
+	prohibitedPrefixError = fmt.Sprintf("name has invalid prefix (%s|%s)", prohibitedAmazon, prohibitedAWS)
+	dotError              = fmt.Sprintf("name cannot begin, end, or contain sequences of '%s'", period)
+	bodyMinimumError      = "minimum character count is 1"
 )
 
 // NameIsValid for use as an attribute or system attribute name
@@ -42,18 +44,24 @@ func NameIsValid(s string) error {
 		- Must not start or end with a period
 		- Must not have periods in a sequence
 	*/
+
 	runeCount := utf8.RuneCountInString(s)
-	if runeCount < minBodyCharacters || runeCount > maxNameCharacters {
+	if runeCount < minNameCharacters || runeCount > maxNameCharacters {
 		return errors.New("name character count out of bounds [%d, %d] (%d)",
 			minNameCharacters, maxNameCharacters, runeCount)
 	}
+
+	if !nameAllowedCharacters.MatchString(s) {
+		return errors.New("name has invalid characters")
+	}
+
 	if strings.HasPrefix(s, period) || strings.HasSuffix(s, period) ||
 		strings.Contains(s, period+period) {
-		return dotError
+		return errors.New(dotError)
 	}
 	low := strings.ToLower(s)
 	if strings.HasPrefix(low, prohibitedAmazon) || strings.HasPrefix(low, prohibitedAWS) {
-		return prohibitedPrefixError
+		return errors.New(prohibitedPrefixError)
 	}
 	return nil
 }

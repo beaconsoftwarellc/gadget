@@ -5,88 +5,149 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/beaconsoftwarellc/gadget/v2/errors"
 	"github.com/beaconsoftwarellc/gadget/v2/generator"
-	"github.com/beaconsoftwarellc/gadget/v2/stringutil"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNameIsValid(t *testing.T) {
-	var tests = []struct {
-		name     string
-		s        string
-		expected string
+func Test_NameIsValid(t *testing.T) {
+
+	tcs := []struct {
+		name  string
+		input string
+		err   error
 	}{
 		{
-			name:     "too short",
-			s:        "",
-			expected: "name character count out of bounds [1, 256] (0)",
+			name:  "invalid character",
+			input: "foo$",
+			err:   errors.New("name has invalid characters"),
 		},
 		{
-			name:     "too long",
-			s:        generator.String(257),
-			expected: "name character count out of bounds [1, 256] (257)",
+			name:  "invalid utf-8 character",
+			input: "fóó",
+			err:   errors.New("name has invalid characters"),
 		},
 		{
-			name:     "bad prefix 1",
-			s:        fmt.Sprintf(".%s", generator.String(20)),
-			expected: dotError.Error(),
+			name:  "start with period",
+			input: ".foo",
+			err:   errors.New("name cannot begin, end, or contain sequences of '.'"),
 		},
 		{
-			name:     "bad prefix 2",
-			s:        fmt.Sprintf("%s%s", prohibitedAWS, generator.String(20)),
-			expected: prohibitedPrefixError.Error(),
+			name:  "ends with period",
+			input: "foo.",
+			err:   errors.New("name cannot begin, end, or contain sequences of '.'"),
+		},
+		{
+			name:  "period sequence",
+			input: "foo..bar",
+			err:   errors.New("name cannot begin, end, or contain sequences of '.'"),
+		},
+		{
+			name:  "invalid prefix aws",
+			input: "aws.foo",
+			err:   errors.New("name has invalid prefix (amazon|aws)"),
+		},
+		{
+			name:  "invalid prefix aws case insensitive",
+			input: "AwS.foo",
+			err:   errors.New("name has invalid prefix (amazon|aws)"),
+		},
+		{
+			name:  "invalid prefix amazon",
+			input: "amazon.foo",
+			err:   errors.New("name has invalid prefix (amazon|aws)"),
+		},
+		{
+			name:  "invalid prefix amazon case insensitive",
+			input: "amAzon.foo",
+			err:   errors.New("name has invalid prefix (amazon|aws)"),
+		},
+		{
+			name:  "valid",
+			input: "foo.bar",
+			err:   nil,
+		},
+		{
+			name:  "valid",
+			input: "foo.bar-baz",
+			err:   nil,
+		},
+		{
+			name:  "valid",
+			input: "foo.bar--baz_v_9.11",
+			err:   nil,
+		},
+		{
+			name:  "too short",
+			input: "",
+			err:   errors.New("name character count out of bounds [1, 256] (0)"),
+		},
+		{
+			name:  "too long",
+			input: generator.String(257),
+			err:   errors.New("name character count out of bounds [1, 256] (257)"),
+		},
+		{
+			name:  "bad prefix 1",
+			input: fmt.Sprintf(".%s", generator.String(20)),
+			err:   errors.New(dotError),
+		},
+		{
+			name:  "bad prefix 2",
+			input: fmt.Sprintf("%s%s", prohibitedAWS, generator.String(20)),
+			err:   errors.New(prohibitedPrefixError),
 		},
 		{
 			name: "bad prefix 3",
-			s: fmt.Sprintf("%s%s", strings.ToUpper(prohibitedAWS),
+			input: fmt.Sprintf("%s%s", strings.ToUpper(prohibitedAWS),
 				generator.String(20)),
-			expected: prohibitedPrefixError.Error(),
+			err: errors.New(prohibitedPrefixError),
 		},
 		{
 			name: "bad prefix 4",
-			s: fmt.Sprintf("%s%s", strings.ToUpper(prohibitedAmazon),
+			input: fmt.Sprintf("%s%s", strings.ToUpper(prohibitedAmazon),
 				generator.String(20)),
-			expected: prohibitedPrefixError.Error(),
+			err: errors.New(prohibitedPrefixError),
 		},
 		{
-			name:     "bad prefix 5",
-			s:        fmt.Sprintf("%s%s", prohibitedAmazon, generator.String(20)),
-			expected: prohibitedPrefixError.Error(),
+			name:  "bad prefix 5",
+			input: fmt.Sprintf("%s%s", prohibitedAmazon, generator.String(20)),
+			err:   errors.New(prohibitedPrefixError),
 		},
 		{
-			name:     "bad suffix",
-			s:        fmt.Sprintf("%s%s", generator.String(20), "."),
-			expected: dotError.Error(),
+			name:  "bad suffix",
+			input: fmt.Sprintf("%s%s", generator.String(20), "."),
+			err:   errors.New(dotError),
 		},
 		{
-			name:     "bad sequence",
-			s:        fmt.Sprintf("%s..%s", generator.String(20), generator.String(20)),
-			expected: dotError.Error(),
+			name:  "bad sequence",
+			input: fmt.Sprintf("%s..%s", generator.String(20), generator.String(20)),
+			err:   errors.New(dotError),
 		},
 		{
-			name:     "min",
-			s:        generator.String(1),
-			expected: "",
+			name:  "min",
+			input: generator.String(1),
+			err:   nil,
 		},
 		{
-			name:     "max",
-			s:        generator.String(256),
-			expected: "",
+			name:  "max",
+			input: generator.String(256),
+			err:   nil,
 		},
 		{
-			name:     "typical",
-			s:        generator.String(32),
-			expected: "",
+			name:  "typical",
+			input: generator.String(32),
+			err:   nil,
 		},
 	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			assert := assert.New(t)
-			actual := NameIsValid(test.s)
-			if stringutil.IsWhiteSpace(test.expected) {
-				assert.NoError(actual)
+
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			err := NameIsValid(tc.input)
+			if tc.err != nil {
+				assert.EqualError(t, err, tc.err.Error())
 			} else {
-				assert.EqualError(actual, test.expected)
+				assert.NoError(t, err)
 			}
 		})
 	}
@@ -94,34 +155,34 @@ func TestNameIsValid(t *testing.T) {
 
 func TestBodyIsValid(t *testing.T) {
 	var tests = []struct {
-		name     string
-		s        string
-		expected string
+		name  string
+		input string
+		err   error
 	}{
 		{
-			name:     "below minimum char count",
-			s:        "",
-			expected: bodyMinimumError,
+			name:  "below minimum char count",
+			input: "",
+			err:   errors.New(bodyMinimumError),
 		},
 		{
-			name:     "above maximum byte count",
-			s:        generator.String((maxBodyKilobytes+1)*1024 + 1),
-			expected: "body cannot exceed 255 kilobytes (was 256 kb)",
+			name:  "above maximum byte count",
+			input: generator.String((maxBodyKilobytes+1)*1024 + 1),
+			err:   errors.New("body cannot exceed 255 kilobytes (was 256 kb)"),
 		},
 		{
-			name:     "typical",
-			s:        generator.String(32),
-			expected: "",
+			name:  "typical",
+			input: generator.String(32),
+			err:   nil,
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			assert := assert.New(t)
-			actual := BodyIsValid(test.s)
-			if stringutil.IsWhiteSpace(test.expected) {
-				assert.NoError(actual)
+			err := BodyIsValid(test.input)
+			if test.err != nil {
+				assert.EqualError(err, test.err.Error())
 			} else {
-				assert.EqualError(actual, test.expected)
+				assert.NoError(err)
 			}
 		})
 	}
