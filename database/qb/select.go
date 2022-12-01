@@ -37,6 +37,28 @@ func Alias(tableField TableField, aliasName string) SelectExpression {
 	return alias{field: tableField, alias: aliasName}
 }
 
+type count struct {
+	field TableField
+	alias string
+}
+
+func (c count) GetName() string {
+	return c.alias
+}
+
+func (c count) GetTables() []string {
+	return c.field.GetTables()
+}
+
+func (c count) SQL() string {
+	return fmt.Sprintf("COUNT(%s) AS `%s`", c.field.SQL(), c.alias)
+}
+
+// Count the passed table field for use in or as a SelectExpression
+func Count(tableField TableField, aliasName string) SelectExpression {
+	return count{field: tableField, alias: aliasName}
+}
+
 type notNull struct {
 	field TableField
 	alias string

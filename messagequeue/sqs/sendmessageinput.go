@@ -1,7 +1,9 @@
 package sqs
 
 import (
-	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
 	"github.com/beaconsoftwarellc/gadget/v2/messagequeue"
 )
 
@@ -10,23 +12,33 @@ type smiWrapper struct {
 }
 
 func (smi *smiWrapper) SetQueueUrl(value string) {
-	smi.SendMessageInput.SetQueueUrl(value)
+	if nil != smi && nil != smi.SendMessageInput {
+		smi.SendMessageInput.QueueUrl = aws.String(value)
+	}
 }
 
 func (smi *smiWrapper) SetMessageBody(value string) {
-	smi.SendMessageInput.SetMessageBody(value)
+	if nil != smi && nil != smi.SendMessageInput {
+		smi.SendMessageInput.MessageBody = aws.String(value)
+	}
 }
 
-func (smi *smiWrapper) SetDelaySeconds(value int64) {
-	smi.SendMessageInput.SetDelaySeconds(value)
+func (smi *smiWrapper) SetDelaySeconds(value int32) {
+	if nil != smi && nil != smi.SendMessageInput {
+		smi.SendMessageInput.DelaySeconds = value
+	}
 }
 
-func (smi *smiWrapper) SetMessageAttributes(value map[string]*sqs.MessageAttributeValue) {
-	smi.SendMessageInput.SetMessageAttributes(value)
+func (smi *smiWrapper) SetMessageAttributes(value map[string]types.MessageAttributeValue) {
+	if nil != smi && nil != smi.SendMessageInput {
+		smi.SendMessageInput.MessageAttributes = value
+	}
 }
 
-func (smi *smiWrapper) SetMessageSystemAttributes(value map[string]*sqs.MessageSystemAttributeValue) {
-	smi.SendMessageInput.SetMessageSystemAttributes(value)
+func (smi *smiWrapper) SetMessageSystemAttributes(value map[string]types.MessageSystemAttributeValue) {
+	if nil != smi && nil != smi.SendMessageInput {
+		smi.SendMessageInput.MessageSystemAttributes = value
+	}
 }
 
 func sendMessageInputFromMessage(message *messagequeue.Message) (*sqs.SendMessageInput, error) {
@@ -38,5 +50,5 @@ func sendMessageInputFromMessage(message *messagequeue.Message) (*sqs.SendMessag
 		// See: https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/using-messagegroupid-property.html
 		MessageGroupId: nil,
 	}}
-	return wrapper.SendMessageInput, updateRequestFromMessage(wrapper, message)
+	return wrapper.SendMessageInput, updateEnqueueFromMessage(wrapper, message)
 }
