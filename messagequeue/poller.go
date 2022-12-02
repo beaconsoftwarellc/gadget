@@ -24,6 +24,8 @@ type Poller interface {
 	Stop() error
 }
 
+// NewPoller with the passed options, if options are nil, default options
+// will be used.
 func NewPoller(options *PollerOptions) Poller {
 	if nil == options {
 		options = NewPollerOptions()
