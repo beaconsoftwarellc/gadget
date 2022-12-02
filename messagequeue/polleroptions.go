@@ -13,11 +13,12 @@ const (
 	minimumWaitForBatch              = time.Second
 	maximumWaitForBatch              = time.Hour
 	defaultWaitForBatch              = 30 * time.Second
-	maximumTimeoutDequeueAfter       = time.Hour
-	defaultTimeoutDequeueAfter       = 40 * time.Second
 	minimumDequeueCount              = 1
 	maximumDequeueCount              = 10
 	defaultDequeueCount              = 10
+	minimumQueueOperationTimeout     = time.Second
+	maximumQueueOperationTimeout     = time.Hour
+	defaultQueueOperationTimeout     = 5 * time.Second
 )
 
 type PollerOptions struct {
@@ -28,12 +29,11 @@ type PollerOptions struct {
 	// WaitForBatch the specified duration before prematurely returning with less
 	// than the desired number of messages.
 	WaitForBatch time.Duration
-	// TimeoutDequeueAfter the specified duration and consider the dequeue attempt
-	// to be in an error state.
-	TimeoutDequeueAfter time.Duration
 	// DequeueCount is the number of messages to attempt to dequeue per request.
 	// maximum will vary by implementation
 	DequeueCount int
+	// QueueOperationTimeout
+	QueueOperationTimeout time.Duration
 }
 
 // NewPollerOptions with valid values that can be used to initialize a new Poller
@@ -42,7 +42,7 @@ func NewPollerOptions() *PollerOptions {
 		Logger:                    log.Global(),
 		ConcurrentMessageHandlers: defaultConcurrentMessageHandlers,
 		WaitForBatch:              defaultWaitForBatch,
-		TimeoutDequeueAfter:       defaultTimeoutDequeueAfter,
+		QueueOperationTimeout:     defaultQueueOperationTimeout,
 		DequeueCount:              defaultDequeueCount,
 	}
 }
@@ -62,9 +62,10 @@ func (po *PollerOptions) Validate() error {
 		return errors.New("PollerOptions.WaitForBatch(%s) was out of bounds [%s, %s]",
 			po.WaitForBatch, minimumWaitForBatch, maximumWaitForBatch)
 	}
-	if po.TimeoutDequeueAfter < po.WaitForBatch || po.TimeoutDequeueAfter > maximumTimeoutDequeueAfter {
-		return errors.New("PollerOptions.TimeoutDequeueAfter(%s) was out of bounds (WaitForBatch(%s), %s]",
-			po.TimeoutDequeueAfter, po.WaitForBatch, maximumTimeoutDequeueAfter)
+	if po.QueueOperationTimeout < minimumQueueOperationTimeout ||
+		po.QueueOperationTimeout > maximumQueueOperationTimeout {
+		return errors.New("PollerOptions.QueueOperationTimeout(%s) was out of bounds [%s, %s]",
+			po.QueueOperationTimeout, minimumQueueOperationTimeout, maximumQueueOperationTimeout)
 	}
 	if po.DequeueCount < minimumDequeueCount || po.DequeueCount > maximumDequeueCount {
 		return errors.New("PollerOptions.DequeueCount(%d) was out of bounds [%d, %d]",

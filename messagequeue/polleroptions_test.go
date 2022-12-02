@@ -37,11 +37,11 @@ func TestPollerOptions_Validate(t *testing.T) {
 	assert.EqualError(actual.Validate(), "PollerOptions.WaitForBatch(1h0m0.000000001s) was out of bounds [1s, 1h0m0s]")
 	actual = NewPollerOptions()
 
-	// TimeoutDequeueAfter
-	actual.TimeoutDequeueAfter = actual.WaitForBatch - 1
-	assert.EqualError(actual.Validate(), "PollerOptions.TimeoutDequeueAfter(29.999999999s) was out of bounds (WaitForBatch(30s), 1h0m0s]")
-	actual.TimeoutDequeueAfter = maximumTimeoutDequeueAfter + 1
-	assert.EqualError(actual.Validate(), "PollerOptions.TimeoutDequeueAfter(1h0m0.000000001s) was out of bounds (WaitForBatch(30s), 1h0m0s]")
+	// QueueOperationTimeout
+	actual.QueueOperationTimeout = minimumQueueOperationTimeout - 1
+	assert.EqualError(actual.Validate(), "PollerOptions.QueueOperationTimeout(999.999999ms) was out of bounds [1s, 1h0m0s]")
+	actual.QueueOperationTimeout = maximumQueueOperationTimeout + 1
+	assert.EqualError(actual.Validate(), "PollerOptions.QueueOperationTimeout(1h0m0.000000001s) was out of bounds [1s, 1h0m0s]")
 	actual = NewPollerOptions()
 
 	// DequeueCount
@@ -49,6 +49,4 @@ func TestPollerOptions_Validate(t *testing.T) {
 	assert.EqualError(actual.Validate(), "PollerOptions.DequeueCount(0) was out of bounds [1, 10]")
 	actual.DequeueCount = maximumDequeueCount + 1
 	assert.EqualError(actual.Validate(), "PollerOptions.DequeueCount(11) was out of bounds [1, 10]")
-	actual = NewPollerOptions()
-
 }

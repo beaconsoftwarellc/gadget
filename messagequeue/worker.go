@@ -1,53 +1,57 @@
 package messagequeue
 
 import (
-	"context"
 	"sync"
 	"sync/atomic"
-	"time"
 )
 
-func newWorker(handler HandleMessage) *worker {
-	return &worker{
-		handler: handler,
+// Work done by a worker, returns true if the worker should continue, or false
+// if the worker should exit
+type Work func() bool
+
+func Stop() bool {
+	return false
+}
+
+// Worker can be used to asynchronously call work added via AddWork until
+// work returns false.
+type Worker struct {
+	work   chan *Work
+	pool   chan<- *Worker
+	closed atomic.Bool
+}
+
+// Add work to this worker. If the work returns false this workers
+// routine will exit.
+// This function will block.
+func (w *Worker) Add(work *Work) {
+	w.work <- work
+}
+
+// Exit this workers internal routing once current processing ends.
+// This function will not block.
+func (w *Worker) Exit() {
+	if !w.closed.Load() {
+		var stop Work = Stop
+		w.work <- &stop
+		close(w.work)
+		w.closed.Store(true)
 	}
 }
 
-type worker struct {
-	handler HandleMessage
-	pool    chan<- *worker
-	ctrl    *atomic.Uint32
-	wg      *sync.WaitGroup
-}
-
-func (w *worker) Run(wg *sync.WaitGroup, ctrl *atomic.Uint32, pool chan<- *worker) {
-	w.wg.Add(1)
-	w.pool = pool
-	w.ctrl = ctrl
-	w.wg = wg
+// AddWorker to the passed pool
+func AddWorker(wg *sync.WaitGroup, pool chan<- *Worker) {
+	w := &Worker{
+		pool: pool,
+		work: make(chan *Work, 1),
+	}
+	wg.Add(1)
 	w.pool <- w
-}
-
-func (w *worker) HandleMessage(message *Message) {
-	var (
-		ctx    = context.Background()
-		cancel context.CancelFunc
-	)
-	if message.Deadline.After(time.Now()) {
-		ctx, cancel = context.WithDeadline(ctx, message.Deadline)
-		defer cancel()
-	}
-	w.handler(ctx, message)
-	if w.ctrl.Load() != statusRunning {
-		select {
-		case w.pool <- w:
-		default:
-			// the pool was inappropriately sized or we got an extra worker
-			// don't block, just exit.
-			w.wg.Done()
-			return
+	go func() {
+		for work, ok := <-w.work; ok && (*work)(); work, ok = <-w.work {
+			w.pool <- w
 		}
-	} else {
-		w.wg.Done()
-	}
+		wg.Done()
+		w.work = nil
+	}()
 }

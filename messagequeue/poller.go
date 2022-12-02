@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
 )
@@ -24,6 +25,9 @@ type Poller interface {
 }
 
 func NewPoller(options *PollerOptions) Poller {
+	if nil == options {
+		options = NewPollerOptions()
+	}
 	return &poller{
 		options: options,
 	}
@@ -32,8 +36,10 @@ func NewPoller(options *PollerOptions) Poller {
 type poller struct {
 	options *PollerOptions
 	queue   MessageQueue
-	pool    chan *worker
-	status  *atomic.Uint32
+	handler HandleMessage
+	pool    chan *Worker
+	status  atomic.Uint32
+	cancel  context.CancelFunc
 	workers sync.WaitGroup
 	mux     sync.Mutex
 }
@@ -51,11 +57,13 @@ func (p *poller) Poll(handler HandleMessage, messageQueue MessageQueue) error {
 		return errors.New("Poller.Poll called on instance not in state stopped (%d)",
 			statusStopped)
 	}
+	// this is just so we don't panic if stop is called before the first poll
+	p.handler = handler
+	p.cancel = func() {}
 	p.queue = messageQueue
-	p.pool = make(chan *worker, p.options.ConcurrentMessageHandlers)
+	p.pool = make(chan *Worker, p.options.ConcurrentMessageHandlers)
 	for i := 0; i < p.options.ConcurrentMessageHandlers; i++ {
-		newWorker(handler).Run(&p.workers, p.status, p.pool)
-
+		AddWorker(&p.workers, p.pool)
 	}
 	go p.poll()
 	return nil
@@ -63,16 +71,14 @@ func (p *poller) Poll(handler HandleMessage, messageQueue MessageQueue) error {
 
 func (p *poller) poll() {
 	var (
-		ctx      = context.Background()
-		cancel   context.CancelFunc
+		ctx      context.Context
 		messages []*Message
 		err      error
 	)
 	for p.status.Load() == statusRunning {
-		if p.options.TimeoutDequeueAfter > 0 {
-			ctx, cancel = context.WithTimeout(ctx, p.options.TimeoutDequeueAfter)
-			defer cancel()
-		}
+		ctx, p.cancel = context.WithTimeout(context.Background(),
+			p.options.QueueOperationTimeout+p.options.WaitForBatch)
+		defer p.cancel()
 		messages, err = p.queue.Dequeue(ctx, p.options.DequeueCount,
 			p.options.WaitForBatch)
 		if nil != err {
@@ -90,8 +96,49 @@ func (p *poller) handleMessages(messages []*Message) {
 			// this is early termination. The channel was closed so just exit.
 			return
 		}
-		go worker.HandleMessage(message)
+		var work Work = func() bool {
+			return p.handle(message)
+		}
+		worker.Add(&work)
 	}
+}
+
+func (p *poller) handle(message *Message) bool {
+	var (
+		ctx    = context.Background()
+		cancel context.CancelFunc
+	)
+	if message.Deadline.After(time.Now()) {
+		ctx, cancel = context.WithDeadline(ctx, message.Deadline)
+		defer cancel()
+	}
+	if p.handler(ctx, message) {
+		p.delete(message)
+	}
+	return p.status.Load() == statusRunning
+}
+
+func (p *poller) delete(message *Message) {
+	ctx, cancel := context.WithTimeout(context.Background(),
+		p.options.QueueOperationTimeout)
+	defer cancel()
+	p.queue.Delete(ctx, message)
+}
+
+func (p *poller) drain() {
+	for i := 0; i < p.options.ConcurrentMessageHandlers; i++ {
+		w := <-p.pool
+		w.Exit()
+	}
+	// for draining := true; draining; {
+	// 	select {
+	// 	case w := <-p.pool:
+	// 		w.Exit()
+	// 	default:
+	// 		draining = false
+	// 	}
+	// }
+	p.workers.Wait()
 }
 
 func (p *poller) Stop() error {
@@ -101,7 +148,11 @@ func (p *poller) Stop() error {
 		return errors.New("Poller.Stop called on instance not in state running (%d)",
 			statusRunning)
 	}
-	p.workers.Wait()
+	p.cancel()
+	// wait for any workers to exit, this will take up to Message.VisibilityTimeout
+	// assuming one was provided and the Message Handlers are well behaved.
+	// we could time this out as well and throw an error.
+	p.drain()
 	close(p.pool)
 	p.status.Store(statusStopped)
 	return nil
