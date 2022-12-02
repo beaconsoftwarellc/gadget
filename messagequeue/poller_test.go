@@ -71,12 +71,7 @@ func TestPoller_Poll(t *testing.T) {
 	firstCall := messageQueue.EXPECT().Dequeue(gomock.Any(),
 		options.DequeueCount, options.WaitForBatch).Return(
 		[]*Message{successfulMessage, unsuccessfulMessage}, nil)
-	// and then just return an empty response every 100ms so that we don't turn
-	// our computers into space heaters.
-	// messageQueue.EXPECT().Dequeue(gomock.Any(), options.DequeueCount, options.WaitForBatch).
-	// 	Return(nil, nil).After(firstCall).Do(func(interface{}, interface{}, interface{}) {
-	// 	time.Sleep(100 * time.Millisecond)
-	// })
+
 	messageQueue.EXPECT().Dequeue(gomock.Any(),
 		options.DequeueCount, options.WaitForBatch).Return(nil, nil).
 		After(firstCall).AnyTimes()
@@ -91,5 +86,15 @@ func TestPoller_Poll(t *testing.T) {
 }
 
 func TestPoller_Stop(t *testing.T) {
-
+	assert := assert1.New(t)
+	options := NewPollerOptions()
+	controller := gomock.NewController(t)
+	messageQueue := NewMockMessageQueue(controller)
+	messageQueue.EXPECT().Dequeue(gomock.Any(),
+		options.DequeueCount, options.WaitForBatch).Return(nil, nil).AnyTimes()
+	poller := NewPoller(options)
+	assert.EqualError(poller.Stop(), "Poller.Stop called on instance not in state running (1)")
+	handler := func(_ context.Context, m *Message) bool { return true }
+	assert.NoError(poller.Poll(handler, messageQueue))
+	assert.NoError(poller.Stop())
 }

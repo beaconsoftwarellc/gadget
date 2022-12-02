@@ -2,6 +2,7 @@ package messagequeue
 
 import (
 	"sync"
+	"sync/atomic"
 	"testing"
 
 	assert1 "github.com/stretchr/testify/assert"
@@ -26,26 +27,32 @@ func TestAddWorker(t *testing.T) {
 	close(pool)
 }
 
+type increment struct {
+	value  atomic.Int32
+	rvalue bool
+}
+
+func (a *increment) Work() bool {
+	a.value.Add(1)
+	return a.rvalue
+}
+
 func TestWorker_Add(t *testing.T) {
 	assert := assert1.New(t)
 	wg := &sync.WaitGroup{}
 	pool := make(chan *Worker, 1)
 	AddWorker(wg, pool)
-	workComplete := 0
-	var work Work = func() bool {
-		workComplete += 1
-		return true
-	}
 	expected := 5
+	job := &increment{rvalue: true}
 	var w *Worker
 	for i := 0; i < expected; i++ {
 		w = <-pool
-		w.Add(&work)
+		w.Add(job)
 	}
 	w = <-pool
 	w.Exit()
 	wg.Wait()
-	assert.Equal(workComplete, expected)
+	assert.Equal(int32(expected), job.value.Load())
 }
 
 func TestWorker_Multi(t *testing.T) {
@@ -56,24 +63,19 @@ func TestWorker_Multi(t *testing.T) {
 	for i := 0; i < workerCount; i++ {
 		AddWorker(wg, pool)
 	}
-	workComplete := 0
-	expected := 0
+	job := &increment{rvalue: true}
+	expected := 50
 	var w *Worker
 	for i := 0; i < expected; i++ {
-		expected += i
 		w = <-pool
-		var work Work = func() bool {
-			workComplete += i
-			return true
-		}
-		w.Add(&work)
+		w.Add(job)
 	}
 	for i := 0; i < workerCount; i++ {
 		w = <-pool
 		w.Exit()
 	}
 	wg.Wait()
-	assert.Equal(expected, workComplete)
+	assert.Equal(int32(expected), job.value.Load())
 }
 
 func TestWorker_Exit(t *testing.T) {

@@ -33,6 +33,15 @@ func NewPoller(options *PollerOptions) Poller {
 	}
 }
 
+type messageJob struct {
+	p       *poller
+	message *Message
+}
+
+func (mw *messageJob) Work() bool {
+	return mw.p.handle(mw.message)
+}
+
 type poller struct {
 	options *PollerOptions
 	queue   MessageQueue
@@ -96,10 +105,7 @@ func (p *poller) handleMessages(messages []*Message) {
 			// this is early termination. The channel was closed so just exit.
 			return
 		}
-		var work Work = func() bool {
-			return p.handle(message)
-		}
-		worker.Add(&work)
+		worker.Add(&messageJob{p: p, message: message})
 	}
 }
 
@@ -130,14 +136,6 @@ func (p *poller) drain() {
 		w := <-p.pool
 		w.Exit()
 	}
-	// for draining := true; draining; {
-	// 	select {
-	// 	case w := <-p.pool:
-	// 		w.Exit()
-	// 	default:
-	// 		draining = false
-	// 	}
-	// }
 	p.workers.Wait()
 }
 
@@ -155,5 +153,7 @@ func (p *poller) Stop() error {
 	p.drain()
 	close(p.pool)
 	p.status.Store(statusStopped)
+	p.handler = nil
+	p.queue = nil
 	return nil
 }

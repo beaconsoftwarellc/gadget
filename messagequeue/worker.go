@@ -5,18 +5,22 @@ import (
 	"sync/atomic"
 )
 
-// Work done by a worker, returns true if the worker should continue, or false
+// Job done by a worker, returns true if the worker should continue, or false
 // if the worker should exit
-type Work func() bool
+type Job interface {
+	Work() bool
+}
 
-func Stop() bool {
+type stop struct{}
+
+func (s *stop) Work() bool {
 	return false
 }
 
 // Worker can be used to asynchronously call work added via AddWork until
 // work returns false.
 type Worker struct {
-	work   chan *Work
+	jobs   chan Job
 	pool   chan<- *Worker
 	closed atomic.Bool
 }
@@ -24,17 +28,16 @@ type Worker struct {
 // Add work to this worker. If the work returns false this workers
 // routine will exit.
 // This function will block.
-func (w *Worker) Add(work *Work) {
-	w.work <- work
+func (w *Worker) Add(job Job) {
+	w.jobs <- job
 }
 
 // Exit this workers internal routing once current processing ends.
 // This function will not block.
 func (w *Worker) Exit() {
 	if !w.closed.Load() {
-		var stop Work = Stop
-		w.work <- &stop
-		close(w.work)
+		w.jobs <- &stop{}
+		close(w.jobs)
 		w.closed.Store(true)
 	}
 }
@@ -43,15 +46,15 @@ func (w *Worker) Exit() {
 func AddWorker(wg *sync.WaitGroup, pool chan<- *Worker) {
 	w := &Worker{
 		pool: pool,
-		work: make(chan *Work, 1),
+		jobs: make(chan Job, 1),
 	}
 	wg.Add(1)
 	w.pool <- w
 	go func() {
-		for work, ok := <-w.work; ok && (*work)(); work, ok = <-w.work {
+		for job, ok := <-w.jobs; ok && job.Work(); job, ok = <-w.jobs {
 			w.pool <- w
 		}
 		wg.Done()
-		w.work = nil
+		w.jobs = nil
 	}()
 }
