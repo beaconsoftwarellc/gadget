@@ -66,8 +66,8 @@ func (p *poller) Poll(handler HandleMessage, messageQueue MessageQueue) error {
 		return errors.New("Poller.Poll called on instance not in state stopped (%d)",
 			statusStopped)
 	}
-	// this is just so we don't panic if stop is called before the first poll
 	p.handler = handler
+	// this is just so we don't panic if stop is called before the first poll
 	p.cancel = func() {}
 	p.queue = messageQueue
 	p.pool = make(chan *Worker, p.options.ConcurrentMessageHandlers)
