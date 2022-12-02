@@ -153,36 +153,57 @@ func Test_NameIsValid(t *testing.T) {
 	}
 }
 
-func TestBodyIsValid(t *testing.T) {
-	var tests = []struct {
+func Test_BodyIsValid(t *testing.T) {
+
+	tcs := []struct {
 		name  string
 		input string
 		err   error
 	}{
 		{
-			name:  "below minimum char count",
+			name:  "empty",
 			input: "",
-			err:   errors.New(bodyMinimumError),
+			err:   errors.New("minimum character count is 1"),
 		},
 		{
-			name:  "above maximum byte count",
-			input: generator.String((maxBodyKilobytes+1)*1024 + 1),
-			err:   errors.New("body cannot exceed 255 kilobytes (was 256 kb)"),
+			name:  "too long",
+			input: generator.String(256*1024 + 1),
+			err:   errors.New("body cannot exceed 256 KiB (was 262145 bytes)"),
 		},
 		{
-			name:  "typical",
-			input: generator.String(32),
+			name:  "null char",
+			input: "foo\x00",
+			err:   errors.New("body cannot contain forbidden unicode character 0x0"),
+		},
+		{
+			name:  "forbidden utf char",
+			input: "foo\x0f",
+			err:   errors.New("body cannot contain forbidden unicode character 0xf"),
+		},
+		{
+			name:  "ok",
+			input: "foo 😁",
+			err:   nil,
+		},
+		{
+			name:  "single allowed chars",
+			input: "\x09\x0A\x0D",
+			err:   nil,
+		},
+		{
+			name:  "allowed ranges",
+			input: "\x20 \ud7fe \ud7ff \ue000 \ue001 \ufffd \u10000 \U00010000 \U00010001 \U0010ffff",
 			err:   nil,
 		},
 	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			assert := assert.New(t)
-			err := BodyIsValid(test.input)
-			if test.err != nil {
-				assert.EqualError(err, test.err.Error())
+
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			err := BodyIsValid(tc.input)
+			if tc.err != nil {
+				assert.EqualError(t, err, tc.err.Error())
 			} else {
-				assert.NoError(err)
+				assert.NoError(t, err)
 			}
 		})
 	}
