@@ -9,11 +9,6 @@ import (
 	"github.com/beaconsoftwarellc/gadget/v2/timeutil"
 )
 
-const (
-	stateStopped = 0
-	stateRunning = 1
-)
-
 // Chunker interface for 'chunking' entries on a buffer into slices of a desired
 // size.
 type Chunker[T any] interface {
@@ -62,7 +57,7 @@ func (c *chunker[T]) Start(buffer <-chan T, handler Handler[T]) error {
 	}
 	c.mux.Lock()
 	defer c.mux.Unlock()
-	if !c.state.CompareAndSwap(stateStopped, stateRunning) {
+	if !c.state.CompareAndSwap(statusStopped, statusRunning) {
 		return errors.New("Chunker.Run called while not in state 'Stopped'")
 	}
 	// validate our options
@@ -79,7 +74,7 @@ func (c *chunker[T]) Start(buffer <-chan T, handler Handler[T]) error {
 func (c *chunker[T]) Stop() error {
 	c.mux.Lock()
 	defer c.mux.Unlock()
-	if !c.state.CompareAndSwap(stateRunning, stateStopped) {
+	if !c.state.CompareAndSwap(statusRunning, statusStopped) {
 		return errors.New("Chunker.Run called while not in state 'Running'")
 	}
 	// we only have one worker so we can just close the control channel

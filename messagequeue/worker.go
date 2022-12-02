@@ -2,31 +2,29 @@ package messagequeue
 
 import (
 	"context"
+	"sync"
 	"sync/atomic"
 	"time"
-
-	"github.com/beaconsoftwarellc/gadget/v2/log"
 )
 
-const stop = 1
-
-func newWorker(handler HandleMessage, extend ExtendDeadline) *worker {
+func newWorker(handler HandleMessage) *worker {
 	return &worker{
 		handler: handler,
-		extend:  extend,
 	}
 }
 
 type worker struct {
 	handler HandleMessage
-	extend  ExtendDeadline
 	pool    chan<- *worker
-	ctrl    *int32
+	ctrl    *atomic.Uint32
+	wg      *sync.WaitGroup
 }
 
-func (w *worker) Run(ctrl *int32, pool chan<- *worker) {
+func (w *worker) Run(wg *sync.WaitGroup, ctrl *atomic.Uint32, pool chan<- *worker) {
+	w.wg.Add(1)
 	w.pool = pool
 	w.ctrl = ctrl
+	w.wg = wg
 	w.pool <- w
 }
 
@@ -39,12 +37,17 @@ func (w *worker) HandleMessage(message *Message) {
 		ctx, cancel = context.WithDeadline(ctx, message.Deadline)
 		defer cancel()
 	}
-	w.handler(ctx, message, w.extend)
-	if atomic.LoadInt32(w.ctrl) != stop {
+	w.handler(ctx, message)
+	if w.ctrl.Load() != statusRunning {
 		select {
 		case w.pool <- w:
 		default:
-			log.Warnf("could not add worker to pool as the operation would block")
+			// the pool was inappropriately sized or we got an extra worker
+			// don't block, just exit.
+			w.wg.Done()
+			return
 		}
+	} else {
+		w.wg.Done()
 	}
 }
