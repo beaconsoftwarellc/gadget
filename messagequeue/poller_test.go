@@ -12,9 +12,6 @@ import (
 )
 
 type waitQueue struct {
-	dq       []*Message
-	notFirst bool
-	deleted  *Message
 }
 
 func (wq *waitQueue) EnqueueBatch(context.Context, []*Message) ([]*EnqueueMessageResult, error) {
@@ -22,16 +19,11 @@ func (wq *waitQueue) EnqueueBatch(context.Context, []*Message) ([]*EnqueueMessag
 }
 
 func (wq *waitQueue) Dequeue(ctx context.Context, count int, wait time.Duration) ([]*Message, error) {
-	if !wq.notFirst {
-		wq.notFirst = true
-		return wq.dq, nil
-	}
 	<-ctx.Done()
 	return nil, nil
 }
 
 func (wq *waitQueue) Delete(ctx context.Context, m *Message) error {
-	wq.deleted = m
 	return nil
 }
 
