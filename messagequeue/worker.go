@@ -32,7 +32,7 @@ func (w *Worker) Add(job Job) {
 	w.jobs <- job
 }
 
-// Exit this workers internal routing once current processing ends.
+// Exit this workers internal routine once current processing ends.
 // This function will not block.
 func (w *Worker) Exit() {
 	if !w.closed.Load() {
