@@ -1,7 +1,10 @@
 package sqs
 
 import (
+	"fmt"
+	"regexp"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
@@ -11,18 +14,31 @@ const (
 	minNameCharacters = 1
 	maxNameCharacters = 256
 	minBodyCharacters = 1
-	maxBodyKilobytes  = 255
+	maxBodyKibibytes  = 256
 	prohibitedAWS     = "aws"
 	prohibitedAmazon  = "amazon"
 	period            = "."
 )
 
+var nameAllowedCharacters = regexp.MustCompile(`^[a-zA-Z0-9_\-\.]+$`)
 var (
-	prohibitedPrefixError = errors.
-				New("name has invalid prefix (%s|%s)", prohibitedAmazon, prohibitedAWS)
-	dotError         = errors.New("name cannot begin, end, or contain sequences of '%s'", period)
-	bodyMinimumError = "minimum character count is 1"
+	prohibitedPrefixError = fmt.Sprintf("name has invalid prefix (%s|%s)", prohibitedAmazon, prohibitedAWS)
+	dotError              = fmt.Sprintf("name cannot begin, end, or contain sequences of '%s'", period)
+	bodyMinimumError      = "minimum character count is 1"
 )
+
+var allowedRanges = &unicode.RangeTable{
+	R16: []unicode.Range16{
+		{0x9, 0x9, 1},
+		{0xA, 0xA, 1},
+		{0xD, 0xD, 1},
+		{0x20, 0xD7FF, 1},
+		{0xE000, 0xFFFD, 1},
+	},
+	R32: []unicode.Range32{
+		{0x10000, 0x10FFFF, 1},
+	},
+}
 
 // NameIsValid for use as an attribute or system attribute name
 func NameIsValid(s string) error {
@@ -42,18 +58,24 @@ func NameIsValid(s string) error {
 		- Must not start or end with a period
 		- Must not have periods in a sequence
 	*/
+
 	runeCount := utf8.RuneCountInString(s)
-	if runeCount < minBodyCharacters || runeCount > maxNameCharacters {
+	if runeCount < minNameCharacters || runeCount > maxNameCharacters {
 		return errors.New("name character count out of bounds [%d, %d] (%d)",
 			minNameCharacters, maxNameCharacters, runeCount)
 	}
+
+	if !nameAllowedCharacters.MatchString(s) {
+		return errors.New("name has invalid characters")
+	}
+
 	if strings.HasPrefix(s, period) || strings.HasSuffix(s, period) ||
 		strings.Contains(s, period+period) {
-		return dotError
+		return errors.New(dotError)
 	}
 	low := strings.ToLower(s)
 	if strings.HasPrefix(low, prohibitedAmazon) || strings.HasPrefix(low, prohibitedAWS) {
-		return prohibitedPrefixError
+		return errors.New(prohibitedPrefixError)
 	}
 	return nil
 }
@@ -74,9 +96,15 @@ func BodyIsValid(s string) error {
 	if utf8.RuneCountInString(s) == 0 {
 		return errors.New(bodyMinimumError)
 	}
-	if len(s) > maxBodyKilobytes {
-		return errors.New("body cannot exceed %d kilobytes (was %d kb)",
-			maxBodyKilobytes, len(s)/1024)
+
+	if len(s) > maxBodyKibibytes*1024 {
+		return errors.New("body cannot exceed %d KiB (was %d bytes)", maxBodyKibibytes, len(s))
+	}
+
+	for _, r := range s {
+		if !unicode.In(r, allowedRanges) {
+			return errors.New("body cannot contain forbidden unicode character 0x%x", r)
+		}
 	}
 	return nil
 }

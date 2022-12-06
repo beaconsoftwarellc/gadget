@@ -29,27 +29,13 @@ const (
 //		the message
 // Best Practice is Queue per Producer
 
-// SQS interface for sending and receiving messages from a simple queueing service
-// instance.
-type Client interface {
-	// Enqueue all the passed messages as a batch
-	EnqueueBatch(context.Context, []*messagequeue.Message) (
-		[]*messagequeue.EnqueueMessageResult, error)
-	// Dequeue up to the passed count of messages waiting up to the passed
-	// duration
-	Dequeue(ctx context.Context, count int, wait time.Duration) ([]*messagequeue.Message, error)
-	// Delete the passed message from the queue so that it is not processed by
-	// other workers
-	Delete(context.Context, *messagequeue.Message) error
-}
-
 const (
 	// RegionUSEast1 is the AWS Region located in N. Virginia, USA
 	RegionUSEast1 = "us-east-1"
 )
 
 // New SQS instance located at the passed URL
-func New(region string, queueLocator *url.URL) Client {
+func New(region string, queueLocator *url.URL) messagequeue.MessageQueue {
 	return &sdk{
 		region:   region,
 		queueUrl: queueLocator,
