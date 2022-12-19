@@ -202,7 +202,7 @@ func (db *dbapi) slowlog(fn func() error) error {
 	start := time.Now()
 	defer func() {
 		elapsed := time.Since(start)
-		err := errors.New("query execution time: %s", elapsed)
+		err := errors.New("query execution time: %s transaction: %s", elapsed, db.txID)
 
 		if elapsed > db.slowQueryThreshold {
 			_ = db.log.Error(err)
