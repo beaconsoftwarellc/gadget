@@ -2,14 +2,20 @@
 package database
 
 import (
+	"time"
+
 	"github.com/beaconsoftwarellc/gadget/v2/database/qb"
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
+	"github.com/beaconsoftwarellc/gadget/v2/generator"
 	"github.com/beaconsoftwarellc/gadget/v2/log"
 	"github.com/jmoiron/sqlx"
 )
 
 // API is a database interface
 type API interface {
+	// SetSlowQueryDuration threshold, logs errors for queries above a threshold
+	SetSlowQueryDuration(threshold time.Duration)
+
 	// Begin starts a transaction
 	Begin() error
 	// Commit commits the transaction
@@ -41,9 +47,11 @@ type API interface {
 	DeleteWhere(obj Record, condition *qb.ConditionExpression) error
 }
 
+const defaultSlowQueryThreshold = 100 * time.Millisecond
+
 // NewAPI using the passed database and transaction. Transaction may be null
 func NewAPI(db *Database, tx *sqlx.Tx, log log.Logger) API {
-	return &dbapi{tx: tx, db: db, log: log}
+	return &dbapi{tx: tx, db: db, log: log, slowQueryThreshold: defaultSlowQueryThreshold}
 }
 
 var _ API = &dbapi{}
@@ -51,9 +59,15 @@ var _ API = &dbapi{}
 var ErrMissingTransaction = errors.New("missing transaction")
 
 type dbapi struct {
-	tx  *sqlx.Tx
-	db  *Database
-	log log.Logger
+	tx                 *sqlx.Tx
+	txID               string
+	db                 *Database
+	log                log.Logger
+	slowQueryThreshold time.Duration
+}
+
+func (d *dbapi) SetSlowQueryDuration(threshold time.Duration) {
+	d.slowQueryThreshold = threshold
 }
 
 func (d *dbapi) Begin() error {
@@ -61,6 +75,7 @@ func (d *dbapi) Begin() error {
 
 	if d.tx == nil {
 		d.tx, err = d.db.Beginx()
+		d.txID = generator.ID("tx")
 	}
 
 	return err
@@ -167,7 +182,9 @@ func (d *dbapi) DeleteWhere(obj Record, condition *qb.ConditionExpression) error
 func (d *dbapi) runInTransaction(fn func(*sqlx.Tx) error) error {
 	// if the transaction exists, execute a function in tx context
 	if d.tx != nil {
-		return fn(d.tx)
+		return d.slowlog(func() error {
+			return fn(d.tx)
+		})
 	}
 
 	// otherwise create a temporary transaction and commit or rollback after execution
@@ -176,5 +193,23 @@ func (d *dbapi) runInTransaction(fn func(*sqlx.Tx) error) error {
 		return err
 	}
 
-	return d.CommitOrRollback(fn(d.tx))
+	return d.CommitOrRollback(d.slowlog(func() error {
+		return fn(d.tx)
+	}))
+}
+
+func (db *dbapi) slowlog(fn func() error) error {
+	start := time.Now()
+	defer func() {
+		elapsed := time.Since(start)
+		err := errors.New("query execution time: %s", elapsed)
+
+		if elapsed > db.slowQueryThreshold {
+			_ = db.log.Error(err)
+		} else {
+			_ = db.log.Debug(err)
+		}
+	}()
+
+	return fn()
 }

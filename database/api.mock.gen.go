@@ -6,6 +6,7 @@ package database
 
 import (
 	reflect "reflect"
+	time "time"
 
 	qb "github.com/beaconsoftwarellc/gadget/v2/database/qb"
 	gomock "github.com/golang/mock/gomock"
@@ -200,6 +201,18 @@ func (m *MockAPI) SelectList(target interface{}, query *qb.SelectQuery, options 
 func (mr *MockAPIMockRecorder) SelectList(target, query, options interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SelectList", reflect.TypeOf((*MockAPI)(nil).SelectList), target, query, options)
+}
+
+// SetSlowQueryDuration mocks base method.
+func (m *MockAPI) SetSlowQueryDuration(threshold time.Duration) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SetSlowQueryDuration", threshold)
+}
+
+// SetSlowQueryDuration indicates an expected call of SetSlowQueryDuration.
+func (mr *MockAPIMockRecorder) SetSlowQueryDuration(threshold interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetSlowQueryDuration", reflect.TypeOf((*MockAPI)(nil).SetSlowQueryDuration), threshold)
 }
 
 // Update mocks base method.
