@@ -270,32 +270,36 @@ func (db *Database) UpdateTx(obj Record, tx *sqlx.Tx) errors.TracerError {
 
 // Delete removes a row from the database
 func (db *Database) Delete(obj Record) errors.TracerError {
-	tx, err := db.Beginx()
+	tx := newTxQueryAPI(db)
+
+	err := tx.Begin()
 	if nil != err {
 		return errors.Wrap(err)
 	}
 	err = db.DeleteTx(obj, tx)
-	return CommitOrRollback(tx, err, db.Logger)
+	return errors.Wrap(tx.CommitOrRollback(err))
 }
 
 // DeleteTx removes a row from the database using a transaction
-func (db *Database) DeleteTx(obj Record, tx *sqlx.Tx) errors.TracerError {
+func (db *Database) DeleteTx(obj Record, tx TransactionQuery) errors.TracerError {
 	where := obj.Meta().PrimaryKey().Equal(obj.PrimaryKey().Value())
 	return db.DeleteWhereTx(obj, tx, where)
 }
 
 // DeleteWhere removes a row(s) from the database based on a supplied where clause
 func (db *Database) DeleteWhere(obj Record, where *qb.ConditionExpression) errors.TracerError {
-	tx, err := db.Beginx()
+	tx := newTxQueryAPI(db)
+
+	err := tx.Begin()
 	if nil != err {
 		return errors.Wrap(err)
 	}
 	err = db.DeleteWhereTx(obj, tx, where)
-	return CommitOrRollback(tx, err, db.Logger)
+	return errors.Wrap(tx.CommitOrRollback(err))
 }
 
 // DeleteWhereTx removes row(s) from the database based on a supplied where clause in a transaction
-func (db *Database) DeleteWhereTx(obj Record, tx *sqlx.Tx,
+func (db *Database) DeleteWhereTx(obj Record, tx TransactionQuery,
 	condition *qb.ConditionExpression) errors.TracerError {
 	stmt, values, err := qb.Delete(obj.Meta()).Where(condition).SQL()
 	if nil != err {

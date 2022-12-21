@@ -6,24 +6,12 @@ import (
 
 	"github.com/beaconsoftwarellc/gadget/v2/database/qb"
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
-	"github.com/beaconsoftwarellc/gadget/v2/generator"
-	"github.com/beaconsoftwarellc/gadget/v2/log"
 	"github.com/jmoiron/sqlx"
 )
 
 // API is a database interface
 type API interface {
-	// SetSlowQueryDuration threshold, logs errors for queries above a threshold
-	SetSlowQueryDuration(threshold time.Duration)
-
-	// Begin starts a transaction
-	Begin() error
-	// Commit commits the transaction
-	Commit() error
-	// Rollback aborts the transaction
-	Rollback() error
-	// CommitOrRollback will rollback on an errors.TracerError otherwise commit
-	CommitOrRollback(err error) error
+	Transaction
 
 	// Create initializes a Record and inserts it into the Database
 	Create(obj Record) error
@@ -49,9 +37,9 @@ type API interface {
 
 const defaultSlowQueryThreshold = 100 * time.Millisecond
 
-// NewAPI using the passed database and transaction. Transaction may be null
-func NewAPI(db *Database, tx *sqlx.Tx, log log.Logger) API {
-	return &dbapi{tx: tx, db: db, log: log, slowQueryThreshold: defaultSlowQueryThreshold}
+// NewDBAPI using the passed database and transaction. Transaction may be null
+func NewDBAPI(db *Database, tx *sqlx.Tx) API {
+	return &dbapi{txAPI: NewTxAPI(db, tx)}
 }
 
 var _ API = &dbapi{}
@@ -59,97 +47,48 @@ var _ API = &dbapi{}
 var ErrMissingTransaction = errors.New("missing transaction")
 
 type dbapi struct {
-	tx                 *sqlx.Tx
-	txID               string
-	db                 *Database
-	log                log.Logger
-	slowQueryThreshold time.Duration
-}
-
-func (d *dbapi) SetSlowQueryDuration(threshold time.Duration) {
-	d.slowQueryThreshold = threshold
-}
-
-func (d *dbapi) Begin() error {
-	var err error
-
-	if d.tx == nil {
-		d.tx, err = d.db.Beginx()
-		d.txID = generator.ID("tx")
-	}
-
-	return err
-}
-
-func (d *dbapi) Rollback() error {
-	if d.tx != nil {
-		err := d.tx.Rollback()
-		d.tx = nil
-		return err
-	}
-
-	return ErrMissingTransaction
-}
-
-func (d *dbapi) Commit() error {
-	if d.tx != nil {
-		err := d.tx.Commit()
-		d.tx = nil
-		return err
-	}
-
-	return ErrMissingTransaction
-}
-
-func (d *dbapi) CommitOrRollback(err error) error {
-	if d.tx != nil {
-		err = CommitOrRollback(d.tx, err, d.log)
-		d.tx = nil
-		return err
-	}
-
-	return ErrMissingTransaction
+	*txAPI
 }
 
 func (d *dbapi) Create(obj Record) error {
-	return d.runInTransaction(func(tx *sqlx.Tx) error {
+	return d.RunInTransaction(func(tx *sqlx.Tx) error {
 		return d.db.CreateTx(obj, d.tx)
 	})
 }
 
 func (d *dbapi) Read(obj Record, pk PrimaryKeyValue) error {
-	return d.runInTransaction(func(tx *sqlx.Tx) error {
+	return d.RunInTransaction(func(tx *sqlx.Tx) error {
 		return d.db.ReadTx(obj, pk, d.tx)
 	})
 }
 
 func (d *dbapi) ReadOneWhere(obj Record, condition *qb.ConditionExpression) error {
-	return d.runInTransaction(func(tx *sqlx.Tx) error {
+	return d.RunInTransaction(func(tx *sqlx.Tx) error {
 		return d.db.ReadOneWhereTx(obj, d.tx, condition)
 	})
 }
 
 func (d *dbapi) Select(target interface{}, query *qb.SelectQuery) error {
-	return d.runInTransaction(func(tx *sqlx.Tx) error {
+	return d.RunInTransaction(func(tx *sqlx.Tx) error {
 		return d.db.SelectTx(d.tx, target, query)
 	})
 }
 
 func (d *dbapi) SelectList(target interface{}, query *qb.SelectQuery, options *ListOptions) error {
-	return d.runInTransaction(func(tx *sqlx.Tx) error {
+	return d.RunInTransaction(func(tx *sqlx.Tx) error {
 		return d.db.SelectListTx(d.tx, target, query, options)
 	})
 }
 
 func (d *dbapi) ListWhere(meta Record, target interface{},
 	condition *qb.ConditionExpression, options *ListOptions) error {
-	return d.runInTransaction(func(tx *sqlx.Tx) error {
+	return d.RunInTransaction(func(tx *sqlx.Tx) error {
 		return d.db.ListWhereTx(d.tx, meta, target, condition, options)
 	})
 }
 
 func (d *dbapi) Update(obj Record) error {
-	return d.runInTransaction(func(tx *sqlx.Tx) error {
+	return d.RunInTransaction(func(tx *sqlx.Tx) error {
 		return d.db.UpdateTx(obj, d.tx)
 	})
 }
@@ -159,7 +98,7 @@ func (d *dbapi) UpdateWhere(obj Record, where *qb.ConditionExpression, fields ..
 		total int64
 		err   error
 	)
-	err = d.runInTransaction(func(tx *sqlx.Tx) error {
+	err = d.RunInTransaction(func(tx *sqlx.Tx) error {
 		total, err = d.db.UpdateWhereTx(obj, d.tx, where, fields...)
 		return err
 	})
@@ -168,48 +107,13 @@ func (d *dbapi) UpdateWhere(obj Record, where *qb.ConditionExpression, fields ..
 }
 
 func (d *dbapi) Delete(obj Record) error {
-	return d.runInTransaction(func(tx *sqlx.Tx) error {
-		return d.db.DeleteTx(obj, d.tx)
+	return d.RunInTransaction(func(tx *sqlx.Tx) error {
+		return d.db.DeleteTx(obj, newTxQueryAPIFromTxAPI(d.txAPI))
 	})
 }
 
 func (d *dbapi) DeleteWhere(obj Record, condition *qb.ConditionExpression) error {
-	return d.runInTransaction(func(tx *sqlx.Tx) error {
-		return d.db.DeleteWhereTx(obj, d.tx, condition)
+	return d.RunInTransaction(func(tx *sqlx.Tx) error {
+		return d.db.DeleteWhereTx(obj, newTxQueryAPIFromTxAPI(d.txAPI), condition)
 	})
-}
-
-func (d *dbapi) runInTransaction(fn func(*sqlx.Tx) error) error {
-	// if the transaction exists, execute a function in tx context
-	if d.tx != nil {
-		return d.slowlog(func() error {
-			return fn(d.tx)
-		})
-	}
-
-	// otherwise create a temporary transaction and commit or rollback after execution
-	err := d.Begin()
-	if err != nil {
-		return err
-	}
-
-	return d.CommitOrRollback(d.slowlog(func() error {
-		return fn(d.tx)
-	}))
-}
-
-func (db *dbapi) slowlog(fn func() error) error {
-	start := time.Now()
-	defer func() {
-		elapsed := time.Since(start)
-		err := errors.New("query execution time: %s transaction: %s", elapsed, db.txID)
-
-		if elapsed > db.slowQueryThreshold {
-			_ = db.log.Error(err)
-		} else {
-			_ = db.log.Debug(err)
-		}
-	}()
-
-	return fn()
 }
