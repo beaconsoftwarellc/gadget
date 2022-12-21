@@ -29,6 +29,30 @@ type SlowQueryLoggerTx struct {
 	id   string
 }
 
+func (tx *SlowQueryLoggerTx) NamedQuery(query string, arg interface{}) (*sqlx.Rows, error) {
+	start := time.Now()
+	defer func() { tx.logSlow(query, time.Since(start)) }()
+	return tx.Tx.NamedQuery(query, arg)
+}
+
+func (tx *SlowQueryLoggerTx) NamedExec(query string, arg interface{}) (sql.Result, error) {
+	start := time.Now()
+	defer func() { tx.logSlow(query, time.Since(start)) }()
+	return tx.Tx.NamedExec(query, arg)
+}
+
+func (tx *SlowQueryLoggerTx) QueryRowx(query string, args ...interface{}) *sqlx.Row {
+	start := time.Now()
+	defer func() { tx.logSlow(query, time.Since(start)) }()
+	return tx.Tx.QueryRowx(query, args...)
+}
+
+func (tx *SlowQueryLoggerTx) Select(dest interface{}, query string, args ...interface{}) error {
+	start := time.Now()
+	defer func() { tx.logSlow(query, time.Since(start)) }()
+	return tx.Tx.Select(dest, query, args...)
+}
+
 func (tx *SlowQueryLoggerTx) Exec(query string, args ...any) (sql.Result, error) {
 	start := time.Now()
 	defer func() { tx.logSlow(query, time.Since(start)) }()

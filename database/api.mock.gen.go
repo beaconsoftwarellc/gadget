@@ -5,12 +5,153 @@
 package database
 
 import (
+	sql "database/sql"
 	reflect "reflect"
 	time "time"
 
 	qb "github.com/beaconsoftwarellc/gadget/v2/database/qb"
 	gomock "github.com/golang/mock/gomock"
+	sqlx "github.com/jmoiron/sqlx"
 )
+
+// MockTransaction is a mock of Transaction interface.
+type MockTransaction struct {
+	ctrl     *gomock.Controller
+	recorder *MockTransactionMockRecorder
+}
+
+// MockTransactionMockRecorder is the mock recorder for MockTransaction.
+type MockTransactionMockRecorder struct {
+	mock *MockTransaction
+}
+
+// NewMockTransaction creates a new mock instance.
+func NewMockTransaction(ctrl *gomock.Controller) *MockTransaction {
+	mock := &MockTransaction{ctrl: ctrl}
+	mock.recorder = &MockTransactionMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockTransaction) EXPECT() *MockTransactionMockRecorder {
+	return m.recorder
+}
+
+// Commit mocks base method.
+func (m *MockTransaction) Commit() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Commit")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Commit indicates an expected call of Commit.
+func (mr *MockTransactionMockRecorder) Commit() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Commit", reflect.TypeOf((*MockTransaction)(nil).Commit))
+}
+
+// Exec mocks base method.
+func (m *MockTransaction) Exec(query string, args ...any) (sql.Result, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{query}
+	for _, a := range args {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Exec", varargs...)
+	ret0, _ := ret[0].(sql.Result)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Exec indicates an expected call of Exec.
+func (mr *MockTransactionMockRecorder) Exec(query interface{}, args ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{query}, args...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Exec", reflect.TypeOf((*MockTransaction)(nil).Exec), varargs...)
+}
+
+// NamedExec mocks base method.
+func (m *MockTransaction) NamedExec(query string, arg interface{}) (sql.Result, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "NamedExec", query, arg)
+	ret0, _ := ret[0].(sql.Result)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// NamedExec indicates an expected call of NamedExec.
+func (mr *MockTransactionMockRecorder) NamedExec(query, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NamedExec", reflect.TypeOf((*MockTransaction)(nil).NamedExec), query, arg)
+}
+
+// NamedQuery mocks base method.
+func (m *MockTransaction) NamedQuery(query string, arg interface{}) (*sqlx.Rows, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "NamedQuery", query, arg)
+	ret0, _ := ret[0].(*sqlx.Rows)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// NamedQuery indicates an expected call of NamedQuery.
+func (mr *MockTransactionMockRecorder) NamedQuery(query, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NamedQuery", reflect.TypeOf((*MockTransaction)(nil).NamedQuery), query, arg)
+}
+
+// QueryRowx mocks base method.
+func (m *MockTransaction) QueryRowx(query string, args ...interface{}) *sqlx.Row {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{query}
+	for _, a := range args {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "QueryRowx", varargs...)
+	ret0, _ := ret[0].(*sqlx.Row)
+	return ret0
+}
+
+// QueryRowx indicates an expected call of QueryRowx.
+func (mr *MockTransactionMockRecorder) QueryRowx(query interface{}, args ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{query}, args...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueryRowx", reflect.TypeOf((*MockTransaction)(nil).QueryRowx), varargs...)
+}
+
+// Rollback mocks base method.
+func (m *MockTransaction) Rollback() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Rollback")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Rollback indicates an expected call of Rollback.
+func (mr *MockTransactionMockRecorder) Rollback() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Rollback", reflect.TypeOf((*MockTransaction)(nil).Rollback))
+}
+
+// Select mocks base method.
+func (m *MockTransaction) Select(dest interface{}, query string, args ...interface{}) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{dest, query}
+	for _, a := range args {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Select", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Select indicates an expected call of Select.
+func (mr *MockTransactionMockRecorder) Select(dest, query interface{}, args ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{dest, query}, args...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Select", reflect.TypeOf((*MockTransaction)(nil).Select), varargs...)
+}
 
 // MockAPI is a mock of API interface.
 type MockAPI struct {
