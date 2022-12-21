@@ -8,7 +8,6 @@ import (
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
 	"github.com/beaconsoftwarellc/gadget/v2/log"
 	"github.com/beaconsoftwarellc/gadget/v2/stringutil"
-	"github.com/jmoiron/sqlx"
 )
 
 // TableExists for the passed schema and table name on the passed database
@@ -24,7 +23,7 @@ func TableExists(db *Database, schema, name string) (bool, error) {
 }
 
 // CommitOrRollback will rollback on an errors.TracerError otherwise commit
-func CommitOrRollback(tx *sqlx.Tx, err error, logger log.Logger) errors.TracerError {
+func CommitOrRollback(tx Transaction, err error, logger log.Logger) errors.TracerError {
 	if err != nil {
 		logger.Error(tx.Rollback())
 		return errors.Wrap(err)

@@ -37,7 +37,7 @@ func (db *Database) Create(obj Record) errors.TracerError {
 }
 
 // CreateTx initializes a Record and inserts it into the Database
-func (db *Database) CreateTx(obj Record, tx *sqlx.Tx) errors.TracerError {
+func (db *Database) CreateTx(obj Record, tx Transaction) errors.TracerError {
 	var tracerErr errors.TracerError
 	var previousPK PrimaryKeyValue
 	obj.Initialize()
@@ -71,7 +71,7 @@ func (db *Database) CreateTx(obj Record, tx *sqlx.Tx) errors.TracerError {
 }
 
 // UpsertTx a new entry into the database for the Record
-func (db *Database) UpsertTx(obj Record, tx *sqlx.Tx) errors.TracerError {
+func (db *Database) UpsertTx(obj Record, tx Transaction) errors.TracerError {
 	insertCols := appendIfMissing(obj.Meta().ReadColumns(), obj.Meta().PrimaryKey())
 	updateCols := make([]qb.TableField, len(obj.Meta().WriteColumns()))
 	copy(updateCols, obj.Meta().WriteColumns())
@@ -106,7 +106,7 @@ func (db *Database) Read(obj Record, pk PrimaryKeyValue) errors.TracerError {
 }
 
 // ReadTx populates a Record from the database using a transaction
-func (db *Database) ReadTx(obj Record, pk PrimaryKeyValue, tx *sqlx.Tx) errors.TracerError {
+func (db *Database) ReadTx(obj Record, pk PrimaryKeyValue, tx Transaction) errors.TracerError {
 	return db.ReadOneWhereTx(obj, tx, obj.Meta().PrimaryKey().Equal(pk.Value()))
 }
 
@@ -121,7 +121,7 @@ func (db *Database) ReadOneWhere(obj Record, condition *qb.ConditionExpression) 
 }
 
 // ReadOneWhereTx populates a Record from a custom where clause using a transaction
-func (db *Database) ReadOneWhereTx(obj Record, tx *sqlx.Tx, condition *qb.ConditionExpression) errors.TracerError {
+func (db *Database) ReadOneWhereTx(obj Record, tx Transaction, condition *qb.ConditionExpression) errors.TracerError {
 	stmt, args, err := qb.Select(obj.Meta().AllColumns()).From(obj.Meta()).Where(condition).SQL(1, 0)
 	if nil != err {
 		return errors.Wrap(err)
@@ -165,7 +165,7 @@ func (db *Database) ListWhere(meta Record, target interface{}, condition *qb.Con
 }
 
 // ListWhereTx populates target with a list of Records from the database using the transaction
-func (db *Database) ListWhereTx(tx *sqlx.Tx, meta Record, target interface{},
+func (db *Database) ListWhereTx(tx Transaction, meta Record, target interface{},
 	condition *qb.ConditionExpression, options *ListOptions) errors.TracerError {
 	options = db.enforceLimits(options)
 	stmt, values, err := db.buildListWhere(meta, condition).SQL(options.Limit, options.Offset)
@@ -196,7 +196,7 @@ func (db *Database) Select(target interface{}, query *qb.SelectQuery) errors.Tra
 }
 
 // SelectTx executes a given select query and populates the target
-func (db *Database) SelectTx(tx *sqlx.Tx, target interface{}, query *qb.SelectQuery) errors.TracerError {
+func (db *Database) SelectTx(tx Transaction, target interface{}, query *qb.SelectQuery) errors.TracerError {
 	stmt, values, err := query.SQL(db.Configuration.MaxQueryLimit(), 0)
 	if err != nil {
 		return errors.Wrap(err)
@@ -225,7 +225,7 @@ func (db *Database) SelectList(target interface{}, query *qb.SelectQuery,
 }
 
 // SelectListTx of Records into target in a transaction based upon the passed query
-func (db *Database) SelectListTx(tx *sqlx.Tx, target interface{}, query *qb.SelectQuery,
+func (db *Database) SelectListTx(tx Transaction, target interface{}, query *qb.SelectQuery,
 	options *ListOptions) errors.TracerError {
 	options = db.enforceLimits(options)
 	stmt, values, err := query.SQL(options.Limit, options.Offset)
@@ -249,7 +249,7 @@ func (db *Database) Update(obj Record) errors.TracerError {
 }
 
 // UpdateTx replaces an entry in the database for the Record using a transaction
-func (db *Database) UpdateTx(obj Record, tx *sqlx.Tx) errors.TracerError {
+func (db *Database) UpdateTx(obj Record, tx Transaction) errors.TracerError {
 	query := qb.Update(obj.Meta())
 	for _, col := range obj.Meta().WriteColumns() {
 		query.SetParam(col)
@@ -279,7 +279,7 @@ func (db *Database) Delete(obj Record) errors.TracerError {
 }
 
 // DeleteTx removes a row from the database using a transaction
-func (db *Database) DeleteTx(obj Record, tx *sqlx.Tx) errors.TracerError {
+func (db *Database) DeleteTx(obj Record, tx Transaction) errors.TracerError {
 	where := obj.Meta().PrimaryKey().Equal(obj.PrimaryKey().Value())
 	return db.DeleteWhereTx(obj, tx, where)
 }
@@ -295,7 +295,7 @@ func (db *Database) DeleteWhere(obj Record, where *qb.ConditionExpression) error
 }
 
 // DeleteWhereTx removes row(s) from the database based on a supplied where clause in a transaction
-func (db *Database) DeleteWhereTx(obj Record, tx *sqlx.Tx,
+func (db *Database) DeleteWhereTx(obj Record, tx Transaction,
 	condition *qb.ConditionExpression) errors.TracerError {
 	stmt, values, err := qb.Delete(obj.Meta()).Where(condition).SQL()
 	if nil != err {
@@ -323,7 +323,7 @@ func (db *Database) UpdateWhere(obj Record,
 }
 
 // UpdateWhereTx updates fields for the Record based on a supplied where clause in a transaction
-func (db *Database) UpdateWhereTx(obj Record, tx *sqlx.Tx,
+func (db *Database) UpdateWhereTx(obj Record, tx Transaction,
 	where *qb.ConditionExpression, fields ...qb.FieldValue) (int64, error) {
 	query := qb.Update(obj.Meta())
 

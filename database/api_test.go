@@ -58,7 +58,6 @@ func TestAPISlowLog(t *testing.T) {
 	e0s := strings.Split(e0.Error(), "transaction:")
 	e1s := strings.Split(e1.Error(), "transaction:")
 	e2s := strings.Split(e2.Error(), "transaction:")
-
 	assert.NotEqual(t, e0s[1], e1s[1], "transaction id shoul be different")
 	assert.Equal(t, e1s[1], e2s[1], "transaction id should be equal")
 }

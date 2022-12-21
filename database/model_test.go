@@ -122,7 +122,7 @@ func TestList(t *testing.T) {
 
 	records := make([]TestRecord, 5)
 	for i := range records {
-		record := &TestRecord{Name: fmt.Sprintf("Test %s", strconv.Itoa(i))}
+		record := &TestRecord{Name: fmt.Sprintf("Test %s %s", strconv.Itoa(i), generator.String(5))}
 		assert.NoError(spec.DB.Create(record))
 		records[i] = *record
 	}
@@ -219,7 +219,6 @@ func TestWhereIn(t *testing.T) {
 		record := &TestRecord{Name: generator.Name()}
 		assert.NoError(spec.DB.Create(record))
 		records[i] = record
-		time.Sleep(time.Second)
 	}
 
 	where := TestMeta.Name.In(records[0].Name, records[1].Name)
