@@ -7,8 +7,8 @@ type ListOptions struct {
 }
 
 // NewListOptions generates a ListOptions
-func NewListOptions(limit int, offset int) ListOptions {
-	return ListOptions{
+func NewListOptions(limit int, offset int) *ListOptions {
+	return &ListOptions{
 		Limit:  uint(limit),
 		Offset: uint(offset),
 	}

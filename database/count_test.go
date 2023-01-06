@@ -104,7 +104,7 @@ func Test_Count(t *testing.T) {
 
 			assert.NoError(err)
 			assert.Equal([]interface{}{clauseValue}, arguments)
-			assert.Equal(query, "SELECT COUNT(*) as count FROM `action` AS `action` INNER JOIN `action` AS `action` ON `action`.`id` = `action`.`id` WHERE `action`.`name` = ?")
+			assert.Equal(query, "SELECT COUNT(*) as count FROM `test_record` AS `test_record` INNER JOIN `test_record` AS `test_record` ON `test_record`.`id` = `test_record`.`id` WHERE `test_record`.`name` = ?")
 
 			return nil
 		}).Return(nil)
@@ -157,7 +157,7 @@ func Test_TableCount(t *testing.T) {
 
 			assert.NoError(err)
 			assert.Equal([]interface{}([]interface{}(nil)), arguments)
-			assert.Equal(query, "SELECT COUNT(*) as count FROM `action` AS `action`")
+			assert.Equal(query, "SELECT COUNT(*) as count FROM `test_record` AS `test_record`")
 
 			return nil
 		}).Return(nil)
@@ -205,7 +205,7 @@ func Test_CountWhere(t *testing.T) {
 
 			assert.NoError(err)
 			assert.Equal([]interface{}{"name"}, arguments)
-			assert.Equal(query, "SELECT COUNT(*) as count FROM `action` AS `action` WHERE `action`.`name` = ?")
+			assert.Equal(query, "SELECT COUNT(*) as count FROM `test_record` AS `test_record` WHERE `test_record`.`name` = ?")
 
 			return nil
 		}).Return(nil)

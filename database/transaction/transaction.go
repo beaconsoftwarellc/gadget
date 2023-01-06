@@ -28,15 +28,15 @@ type Transaction interface {
 	// ReadOneWhere populates a Record from a custom where clause
 	ReadOneWhere(record.Record, *qb.ConditionExpression) errors.TracerError
 	// List populates obj with a list of Records from the database
-	// TODO: we can expand the Record interface to return an collection
+	// TODO: [COR-586] we can expand the Record interface to return an collection
 	// 		 of it's type so we don't have to pass this clumsily
 	List(record.Record, any, record.ListOptions) errors.TracerError
 	// ListWhere populates target with a list of Records from the database
-	// TODO: we can expand the Record interface to return a collection
+	// TODO: [COR-586] we can expand the Record interface to return a collection
 	// 		 of it's type so we don't have to pass this clumsily
 	ListWhere(record.Record, any, *qb.ConditionExpression, record.ListOptions) errors.TracerError
 	// Select executes a given select query and populates the target
-	// TODO: we can expand the Record interface to return a collection
+	// TODO: [COR-586] we can expand the Record interface to return a collection
 	// 		 of it's type so we don't have to pass this clumsily
 	Select(target any, query *qb.SelectQuery, limit, offset uint) errors.TracerError
 	// SelectList of Records based upon the passed query

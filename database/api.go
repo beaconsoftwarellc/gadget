@@ -134,7 +134,7 @@ func (d *api) Select(target interface{}, query *qb.SelectQuery) errors.TracerErr
 
 func (d *api) SelectList(target interface{}, query *qb.SelectQuery,
 	options *record.ListOptions) errors.TracerError {
-	d.enforceLimits(options)
+	options = d.enforceLimits(options)
 	return d.runInTransaction(func(tx transaction.Transaction) errors.TracerError {
 		return tx.SelectList(target, query, *options)
 	})
@@ -142,7 +142,7 @@ func (d *api) SelectList(target interface{}, query *qb.SelectQuery,
 
 func (d *api) ListWhere(meta record.Record, target interface{},
 	condition *qb.ConditionExpression, options *record.ListOptions) errors.TracerError {
-	d.enforceLimits(options)
+	options = d.enforceLimits(options)
 	return d.runInTransaction(func(tx transaction.Transaction) errors.TracerError {
 		return tx.ListWhere(meta, target, condition, *options)
 	})
@@ -180,13 +180,17 @@ func (d *api) DeleteWhere(obj record.Record, condition *qb.ConditionExpression) 
 	})
 }
 
-func (d *api) enforceLimits(options *record.ListOptions) {
+func (d *api) enforceLimits(options *record.ListOptions) *record.ListOptions {
+	if options == nil {
+		options = record.NewListOptions(DefaultMaxLimit, 0)
+	}
 	if d.configuration.MaxQueryLimit() != qb.NoLimit &&
 		options.Limit > d.configuration.MaxQueryLimit() {
 		d.configuration.Logger().Warnf("limit %d exceeds max limit of %d", options.Limit,
 			d.configuration.MaxQueryLimit())
 		options.Limit = d.configuration.MaxQueryLimit()
 	}
+	return options
 }
 
 func (d *api) runInTransaction(fn func(transaction.Transaction) errors.TracerError) errors.TracerError {

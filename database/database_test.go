@@ -39,8 +39,8 @@ func Test_database_enforceLimits(t *testing.T) {
 			conf := &InstanceConfig{}
 			conf.MaxLimit = tc.maxQueryLimit
 			database := &api{configuration: conf}
-			database.enforceLimits(tc.options)
-			assert.Equal(tc.expected, tc.options)
+			actual := database.enforceLimits(tc.options)
+			assert.Equal(tc.expected, actual)
 		})
 	}
 }
