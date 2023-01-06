@@ -1,18 +1,16 @@
 package deltas
 
 import (
-	"database/sql"
 	"fmt"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/beaconsoftwarellc/gadget/v2/database"
-	"github.com/beaconsoftwarellc/gadget/v2/database/qb"
+	dberrors "github.com/beaconsoftwarellc/gadget/v2/database/errors"
+	"github.com/beaconsoftwarellc/gadget/v2/database/lock"
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
 	"github.com/beaconsoftwarellc/gadget/v2/log"
 	"github.com/beaconsoftwarellc/gadget/v2/net"
-	"github.com/jmoiron/sqlx"
 )
 
 const (
@@ -46,58 +44,27 @@ func setMultiStatement(connString string) string {
 
 // Execute the passed deltas sequentially if they have not already been applied to the database.
 // WARN: This function will create the table 'delta' which is needs to track changes if it does not
-//		 already exist.
+//
+//	already exist.
+//
 // NOTE: This function assumes that the database has fully transactional DDL
-// 		 (not MySQL). Using this function with a non-transactional DDL database
-// 		 will cause errors to leave the database in an indeterminate state.
+//
+//	(not MySQL). Using this function with a non-transactional DDL database
+//	will cause errors to leave the database in an indeterminate state.
 func Execute(config database.InstanceConfig, schema string, deltas []*Delta) errors.TracerError {
 	mutex.Lock()
 	defer mutex.Unlock()
 	config.Connection = setMultiStatement(config.Connection)
-	return execute(config, schema, deltas, &lockingDB{db: database.Initialize(&config)})
-}
-
-type lockingDB struct {
-	db *database.Database
-	tx *sqlx.Tx
-}
-
-func (locker *lockingDB) AcquireNamedLock(name string, timeout time.Duration) (bool, errors.TracerError) {
-	return database.AcquireDatabaseLock(locker.db, name, timeout)
-}
-
-func (locker *lockingDB) ReleaseNamedLock(name string) errors.TracerError {
-	return database.ReleaseDatabaseLock(locker.db, name)
-}
-
-func (locker *lockingDB) Beginx() (lockingDatabaseTx, error) {
-	tx, err := locker.db.Beginx()
-	if nil == err {
-		locker.tx = tx
+	connection, err := database.Connect(&config)
+	if nil != err {
+		return errors.Wrap(err)
 	}
-	return tx, err
+	return execute(config, connection, schema, deltas)
 }
 
-func (locker *lockingDB) CreateTx(record database.Record) errors.TracerError {
-	return locker.db.CreateTx(record, locker.tx)
-}
-
-func (locker *lockingDB) Close() error {
-	return locker.db.Close()
-}
-
-func (locker *lockingDB) ReadOneWhereTx(record database.Record,
-	condition *qb.ConditionExpression) errors.TracerError {
-	return locker.db.ReadOneWhereTx(record, locker.tx, condition)
-}
-
-func (locker *lockingDB) TableExists(schema, name string) (bool, error) {
-	return database.TableExists(locker.db, schema, name)
-}
-
-func getLock(db lockingDatabase) func() error {
+func getLock(client database.Client) func() error {
 	return func() error {
-		locked, err := db.AcquireNamedLock(LockName, 0)
+		locked, err := lock.Acquire(client, LockName, 0)
 		if nil != err {
 			return err
 		}
@@ -108,28 +75,15 @@ func getLock(db lockingDatabase) func() error {
 	}
 }
 
-type lockingDatabase interface {
-	AcquireNamedLock(name string, ttl time.Duration) (bool, errors.TracerError)
-	ReleaseNamedLock(name string) errors.TracerError
-	Beginx() (lockingDatabaseTx, error)
-	CreateTx(database.Record) errors.TracerError
-	Close() error
-	ReadOneWhereTx(database.Record, *qb.ConditionExpression) errors.TracerError
-	TableExists(schema, name string) (bool, error)
-}
-
-type lockingDatabaseTx interface {
-	Exec(query string, args ...interface{}) (sql.Result, error)
-	Rollback() error
-	Commit() error
-}
-
-func execute(config database.InstanceConfig, schema string, deltas []*Delta, db lockingDatabase) errors.TracerError {
+func execute(config database.InstanceConfig, connection database.Connection,
+	schema string, deltas []*Delta) errors.TracerError {
+	defer connection.Close()
 	var err error
 
 	log.Infof("executing %d deltas on %s", len(deltas), schema)
+	// get the lock first
 	err = net.BackoffExtended(
-		getLock(db),
+		getLock(connection.Client()),
 		config.NumberOfDeltaLockTries(),
 		config.MinimumWaitBetweenDeltaLockRetries(),
 		config.MaxWaitBetweenDeltaLockRetries(),
@@ -137,60 +91,58 @@ func execute(config database.InstanceConfig, schema string, deltas []*Delta, db 
 	if nil != err {
 		return errors.Wrap(err)
 	}
-
 	log.Debugf("db lock acquired")
-	defer db.ReleaseNamedLock(LockName)
+	defer lock.Release(connection.Client(), LockName)
 
-	// get the lock first
-	tx, err := db.Beginx()
-	if nil != err {
+	db := connection.Database()
+	if err = db.Begin(); nil != err {
 		return errors.Wrap(err)
 	}
-	exists, err := db.TableExists(schema, DeltaTableName)
+
+	exists, err := database.TableExists(connection.Client(), schema, DeltaTableName)
 	if nil != err {
 		return errors.Wrap(err)
 	}
 	if !exists {
 		log.Infof("deltas table does not exist, it will be created")
-		_, err = tx.Exec(CreateDeltaTableSQL)
+		_, err = db.GetTransaction().Implementation().Exec(CreateDeltaTableSQL)
 		if nil != err {
 			return errors.Wrap(err)
 		}
 	}
 	for i, delta := range deltas {
-		if err := ExecuteDelta(tx, db, delta); nil != err {
+		if err := ExecuteDelta(db, delta); nil != err {
 			log.Errorf("rolling back deltas: error encountered executing delta %d %s: %s",
 				i, delta.Name, err)
-			log.Error(tx.Rollback())
+			log.Error(db.Rollback())
 			return err
 		}
 	}
 	log.Infof("all deltas processed")
-	terr := errors.Wrap(log.Error(tx.Commit()))
-	log.Error(db.Close())
+	terr := errors.Wrap(log.Error(db.Commit()))
 	return terr
 }
 
 // ExecuteDelta checks if the passed delta has already been executed according to the Deltas table, and then executes
 // if it has not been using the passed transaction for both queries.
-func ExecuteDelta(tx lockingDatabaseTx, db lockingDatabase, delta *Delta) errors.TracerError {
+func ExecuteDelta(db database.API, delta *Delta) errors.TracerError {
 	log.Infof("processing delta %d %s", delta.ID, delta.Name)
 	// check that the delta has not already been executed
 	existing := new(DeltaRecord)
 	var err error
-	err = db.ReadOneWhereTx(existing, DeltaMeta.ID.Equal(delta.ID))
+	err = db.ReadOneWhere(existing, DeltaMeta.ID.Equal(delta.ID))
 	if nil == err {
 		log.Infof("%d %s already executed at %s", delta.ID, delta.Name, existing.Created)
 		return nil
 	}
-	if !database.IsNotFoundError(err) {
+	if !dberrors.IsNotFoundError(err) {
 		return errors.Wrap(err)
 	}
 
 	// actually execute the script
-	if _, err = tx.Exec(delta.Script); nil != err {
+	if _, err = db.GetTransaction().Implementation().Exec(delta.Script); nil != err {
 		return errors.Wrap(err)
 	}
 	log.Infof("successfully applied delta %d %s", delta.ID, delta.Name)
-	return db.CreateTx(&DeltaRecord{ID: delta.ID, Name: delta.Name})
+	return db.Create(&DeltaRecord{ID: delta.ID, Name: delta.Name})
 }

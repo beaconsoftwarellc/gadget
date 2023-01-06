@@ -1,52 +1,24 @@
+//go:generate mockgen -source=$GOFILE -package mocks -destination mocks/configuration.mock.gen.go
 package database
 
 import (
+	"fmt"
 	"time"
 
-	"github.com/beaconsoftwarellc/gadget/v2/errors"
 	"github.com/beaconsoftwarellc/gadget/v2/log"
-	"github.com/jmoiron/sqlx"
 )
 
-// Initialize establishes the database connection
-func Initialize(config Config) *Database {
-	logger := log.New("Database", log.FunctionFromEnv())
-	obfuscatedConnection := obfuscateConnection(config.DatabaseConnection())
-	log.Infof("initializing database connection: %s, %s", config.DatabaseDialect(), obfuscatedConnection)
-	var err errors.TracerError
-	var conn *sqlx.DB
-	for retries := 0; retries < config.NumberOfRetries(); retries++ {
-		conn, err = connect(config.DatabaseDialect(), config.DatabaseConnection(), logger)
-		if nil == err {
-			break
-		}
-		log.Warnf("database connection failed retrying in %s: %s", config.WaitBetweenRetries(), err)
-		time.Sleep(config.WaitBetweenRetries())
-	}
-	if nil != err {
-		panic(err)
-	}
-	log.Infof("database connection success: %s, %s", config.DatabaseDialect(), obfuscatedConnection)
+const (
+	// DefaultMaxTries for connecting to the database
+	DefaultMaxTries = 10
+	// DefaultMaxLimit for row counts on select queries
+	DefaultMaxLimit = 100
+)
 
-	return &Database{DB: conn, Logger: logger, Configuration: config}
-}
-
-func connect(dialect, url string, logger log.Logger) (*sqlx.DB, errors.TracerError) {
-	conn, err := sqlx.Connect(dialect, url)
-
-	if nil != err {
-		return nil, NewDatabaseConnectionError(err)
-	}
-
-	if err = conn.Ping(); nil != err {
-		logger.Warnf("Could not ping the database\n%v", err)
-		return nil, NewDatabaseConnectionError(err)
-	}
-	return conn, nil
-}
-
-// Config defines the interface for a config to establish a database connection
-type Config interface {
+// Configuration defines the interface for a specification to establish a database connection
+type Configuration interface {
+	// Logger for use with databases configured by this instance
+	Logger() log.Logger
 	// DatabaseDialect of SQL
 	DatabaseDialect() string
 	// DatabaseConnection string for addressing the database
@@ -57,6 +29,8 @@ type Config interface {
 	WaitBetweenRetries() time.Duration
 	// MaxQueryLimit for row counts on select queries
 	MaxQueryLimit() uint
+	// SlowQueryThreshold for logging slow queries
+	SlowQueryThreshold() time.Duration
 }
 
 // InstanceConfig is a simple struct that satisfies the Config interface
@@ -77,6 +51,10 @@ type InstanceConfig struct {
 	DeltaLockMaxCycle time.Duration
 	// MaxLimit for row counts on select queries
 	MaxLimit uint
+	// SlowQuery duration establishes the defintion of a slow query for logging
+	SlowQuery time.Duration
+	// Log for this instance
+	Log log.Logger
 }
 
 // DatabaseDialect indicates the type of SQL this database uses
@@ -126,9 +104,28 @@ func (config *InstanceConfig) MaxWaitBetweenDeltaLockRetries() time.Duration {
 	return config.ConnectRetryWait
 }
 
+// MaxQueryLimit for row counts on select queries
 func (config *InstanceConfig) MaxQueryLimit() uint {
 	if config.MaxLimit == 0 {
 		config.MaxLimit = DefaultMaxLimit
 	}
 	return config.MaxLimit
+}
+
+// SlowQueryThreshold for logging slow queries
+func (config *InstanceConfig) SlowQueryThreshold() time.Duration {
+	if config.SlowQuery == 0 {
+		config.SlowQuery = defaultSlowQueryThreshold
+	}
+	return config.SlowQuery
+}
+
+// Logger for use with databases configured by this instance
+func (config *InstanceConfig) Logger() log.Logger {
+	if nil == config.Log {
+		config.Log = log.New(
+			fmt.Sprintf("%sInstance", config.DatabaseDialect()),
+			log.FunctionFromEnv())
+	}
+	return config.Log
 }

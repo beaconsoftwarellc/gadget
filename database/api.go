@@ -2,125 +2,83 @@
 package database
 
 import (
-	"database/sql"
 	"time"
 
 	"github.com/beaconsoftwarellc/gadget/v2/database/qb"
+	"github.com/beaconsoftwarellc/gadget/v2/database/record"
+	"github.com/beaconsoftwarellc/gadget/v2/database/transaction"
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
-	"github.com/beaconsoftwarellc/gadget/v2/generator"
-	"github.com/beaconsoftwarellc/gadget/v2/log"
-	"github.com/jmoiron/sqlx"
 )
-
-type Transaction interface {
-	NamedQuery(query string, arg interface{}) (*sqlx.Rows, error)
-	NamedExec(query string, arg interface{}) (sql.Result, error)
-	QueryRowx(query string, args ...interface{}) *sqlx.Row
-	Select(dest interface{}, query string, args ...interface{}) error
-	Exec(query string, args ...any) (sql.Result, error)
-	Commit() error
-	Rollback() error
-}
-
-type SlowQueryLoggerTx struct {
-	*sqlx.Tx
-	slow time.Duration
-	log  log.Logger
-	id   string
-}
-
-func (tx *SlowQueryLoggerTx) Exec(query string, args ...any) (sql.Result, error) {
-	start := time.Now()
-	defer func() { tx.logSlow(query, time.Since(start)) }()
-	return tx.Tx.Exec(query, args...)
-}
-
-func (tx *SlowQueryLoggerTx) logSlow(query string, elapsed time.Duration) {
-	err := errors.New(
-		"[%s] query execution time: %s query: %s", tx.id, elapsed, query)
-	if elapsed > tx.slow {
-		_ = tx.log.Error(err)
-	} else {
-		_ = tx.log.Debug(err)
-	}
-}
-
-// API is a database interface
-type API interface {
-	// SetSlowQueryDuration threshold, logs errors for queries above a threshold
-	SetSlowQueryDuration(threshold time.Duration)
-
-	// Begin starts a transaction
-	Begin() error
-	// Commit commits the transaction
-	Commit() error
-	// Rollback aborts the transaction
-	Rollback() error
-	// CommitOrRollback will rollback on an errors.TracerError otherwise commit
-	CommitOrRollback(err error) error
-
-	// Create initializes a Record and inserts it into the Database
-	Create(obj Record) error
-	// Read populates a Record from the database
-	Read(obj Record, pk PrimaryKeyValue) error
-	// ReadOneWhere populates a Record from a custom where clause
-	ReadOneWhere(obj Record, condition *qb.ConditionExpression) error
-	// Select executes a given select query and populates the target
-	Select(target interface{}, query *qb.SelectQuery) error
-	// SelectList of Records into target based upon the passed query
-	SelectList(target interface{}, query *qb.SelectQuery, options *ListOptions) error
-	// ListWhere populates target with a list of records from the database
-	ListWhere(meta Record, target interface{}, condition *qb.ConditionExpression, options *ListOptions) error
-	// Update replaces an entry in the database for the Record using a transaction
-	Update(obj Record) error
-	// UpdateWhere updates fields for the Record based on a supplied where clause
-	UpdateWhere(obj Record, where *qb.ConditionExpression, fields ...qb.FieldValue) (int64, error)
-	// Delete removes a row from the database
-	Delete(obj Record) error
-	// DeleteWhereTx removes row(s) from the database based on a supplied where clause in a transaction
-	DeleteWhere(obj Record, condition *qb.ConditionExpression) error
-}
 
 const defaultSlowQueryThreshold = 100 * time.Millisecond
 
-// NewAPI using the passed database and transaction. Transaction may be null
-func NewAPI(db *Database, tx Transaction, log log.Logger) API {
-	return &dbapi{tx: tx, db: db, log: log, slowQueryThreshold: defaultSlowQueryThreshold}
+// API is a database interface
+type API interface {
+	// Begin starts a transaction
+	Begin() errors.TracerError
+	// GetTransaction that is currently on this instance, Begin must be called first.
+	GetTransaction() transaction.Transaction
+	// Commit commits the transaction
+	Commit() errors.TracerError
+	// Rollback aborts the transaction
+	Rollback() errors.TracerError
+	// CommitOrRollback will rollback on an errors.TracerError otherwise commit
+	CommitOrRollback(err error) errors.TracerError
+
+	// Create initializes a Record and inserts it into the Database
+	Create(obj record.Record) errors.TracerError
+	// Read populates a Record from the database
+	Read(obj record.Record, pk record.PrimaryKeyValue) errors.TracerError
+	// ReadOneWhere populates a Record from a custom where clause
+	ReadOneWhere(obj record.Record, condition *qb.ConditionExpression) errors.TracerError
+	// Select executes a given select query and populates the target
+	Select(target interface{}, query *qb.SelectQuery) errors.TracerError
+	// SelectList of Records into target based upon the passed query
+	SelectList(target interface{}, query *qb.SelectQuery,
+		options *record.ListOptions) errors.TracerError
+	// ListWhere populates target with a list of records from the database
+	ListWhere(meta record.Record, target interface{},
+		condition *qb.ConditionExpression, options *record.ListOptions) errors.TracerError
+	// Update replaces an entry in the database for the Record using a transaction
+	Update(obj record.Record) errors.TracerError
+	// UpdateWhere updates fields for the Record based on a supplied where clause
+	UpdateWhere(obj record.Record, where *qb.ConditionExpression,
+		fields ...qb.FieldValue) (int64, errors.TracerError)
+	// Delete removes a row from the database
+	Delete(obj record.Record) errors.TracerError
+	// DeleteWhereTx removes row(s) from the database based on a supplied where
+	// clause in a transaction
+	DeleteWhere(obj record.Record, condition *qb.ConditionExpression) errors.TracerError
 }
 
-var _ API = &dbapi{}
-
+// ErrMissingTransaction is returned when a call requiring a transaction is made
+// prior to Begin being called.
 var ErrMissingTransaction = errors.New("missing transaction")
 
-type dbapi struct {
-	tx                 Transaction
-	txID               string
-	db                 *Database
-	log                log.Logger
-	slowQueryThreshold time.Duration
+type api struct {
+	tx            transaction.Transaction
+	db            *transactable
+	configuration Configuration
 }
 
-func (d *dbapi) SetSlowQueryDuration(threshold time.Duration) {
-	d.slowQueryThreshold = threshold
-}
-
-func (d *dbapi) Begin() error {
+func (d *api) Begin() errors.TracerError {
 	if d.tx != nil {
 		return nil
 	}
-	tx, err := d.db.Beginx()
-	if nil == err {
-		d.tx = &SlowQueryLoggerTx{
-			id:   generator.ID("tx"),
-			log:  d.log,
-			slow: d.slowQueryThreshold,
-			Tx:   tx,
-		}
-	}
-	return err
+	var err error
+	d.tx, err = transaction.New(
+		d.db,
+		d.configuration.Logger(),
+		d.configuration.SlowQueryThreshold(),
+	)
+	return errors.Wrap(err)
 }
 
-func (d *dbapi) Rollback() error {
+func (d *api) GetTransaction() transaction.Transaction {
+	return d.tx
+}
+
+func (d *api) Rollback() errors.TracerError {
 	if d.tx != nil {
 		err := d.tx.Rollback()
 		d.tx = nil
@@ -130,7 +88,7 @@ func (d *dbapi) Rollback() error {
 	return ErrMissingTransaction
 }
 
-func (d *dbapi) Commit() error {
+func (d *api) Commit() errors.TracerError {
 	if d.tx != nil {
 		err := d.tx.Commit()
 		d.tx = nil
@@ -140,87 +98,100 @@ func (d *dbapi) Commit() error {
 	return ErrMissingTransaction
 }
 
-func (d *dbapi) CommitOrRollback(err error) error {
+func (d *api) CommitOrRollback(err error) errors.TracerError {
 	if d.tx != nil {
-		err = CommitOrRollback(d.tx, err, d.log)
+		err = CommitOrRollback(d.tx, err, d.configuration.Logger())
 		d.tx = nil
-		return err
+		return errors.Wrap(err)
 	}
 
 	return ErrMissingTransaction
 }
 
-func (d *dbapi) Create(obj Record) error {
-	return d.runInTransaction(func(tx Transaction) error {
-		return d.db.CreateTx(obj, d.tx)
+func (d *api) Create(obj record.Record) errors.TracerError {
+	return d.runInTransaction(func(tx transaction.Transaction) errors.TracerError {
+		return tx.Create(obj)
 	})
 }
 
-func (d *dbapi) Read(obj Record, pk PrimaryKeyValue) error {
-	return d.runInTransaction(func(tx Transaction) error {
-		return d.db.ReadTx(obj, pk, d.tx)
+func (d *api) Read(obj record.Record, pk record.PrimaryKeyValue) errors.TracerError {
+	return d.runInTransaction(func(tx transaction.Transaction) errors.TracerError {
+		return tx.Read(obj, pk)
 	})
 }
 
-func (d *dbapi) ReadOneWhere(obj Record, condition *qb.ConditionExpression) error {
-	return d.runInTransaction(func(tx Transaction) error {
-		return d.db.ReadOneWhereTx(obj, d.tx, condition)
+func (d *api) ReadOneWhere(obj record.Record, condition *qb.ConditionExpression) errors.TracerError {
+	return d.runInTransaction(func(tx transaction.Transaction) errors.TracerError {
+		return tx.ReadOneWhere(obj, condition)
 	})
 }
 
-func (d *dbapi) Select(target interface{}, query *qb.SelectQuery) error {
-	return d.runInTransaction(func(tx Transaction) error {
-		return d.db.SelectTx(d.tx, target, query)
+func (d *api) Select(target interface{}, query *qb.SelectQuery) errors.TracerError {
+	return d.runInTransaction(func(tx transaction.Transaction) errors.TracerError {
+		return tx.Select(target, query, d.configuration.MaxQueryLimit(), 0)
 	})
 }
 
-func (d *dbapi) SelectList(target interface{}, query *qb.SelectQuery, options *ListOptions) error {
-	return d.runInTransaction(func(tx Transaction) error {
-		return d.db.SelectListTx(d.tx, target, query, options)
+func (d *api) SelectList(target interface{}, query *qb.SelectQuery,
+	options *record.ListOptions) errors.TracerError {
+	d.enforceLimits(options)
+	return d.runInTransaction(func(tx transaction.Transaction) errors.TracerError {
+		return tx.SelectList(target, query, *options)
 	})
 }
 
-func (d *dbapi) ListWhere(meta Record, target interface{},
-	condition *qb.ConditionExpression, options *ListOptions) error {
-	return d.runInTransaction(func(tx Transaction) error {
-		return d.db.ListWhereTx(d.tx, meta, target, condition, options)
+func (d *api) ListWhere(meta record.Record, target interface{},
+	condition *qb.ConditionExpression, options *record.ListOptions) errors.TracerError {
+	d.enforceLimits(options)
+	return d.runInTransaction(func(tx transaction.Transaction) errors.TracerError {
+		return tx.ListWhere(meta, target, condition, *options)
 	})
 }
 
-func (d *dbapi) Update(obj Record) error {
-	return d.runInTransaction(func(tx Transaction) error {
-		return d.db.UpdateTx(obj, d.tx)
+func (d *api) Update(obj record.Record) errors.TracerError {
+	return d.runInTransaction(func(tx transaction.Transaction) errors.TracerError {
+		return tx.Update(obj)
 	})
 }
 
-func (d *dbapi) UpdateWhere(obj Record, where *qb.ConditionExpression, fields ...qb.FieldValue) (int64, error) {
+func (d *api) UpdateWhere(obj record.Record, where *qb.ConditionExpression,
+	fields ...qb.FieldValue) (int64, errors.TracerError) {
 	var (
 		total int64
-		err   error
+		err   errors.TracerError
 	)
-	err = d.runInTransaction(func(tx Transaction) error {
-		total, err = d.db.UpdateWhereTx(obj, d.tx, where, fields...)
+	err = d.runInTransaction(func(tx transaction.Transaction) errors.TracerError {
+		total, err = tx.UpdateWhere(obj, where, fields...)
 		return err
 	})
 
 	return total, err
 }
 
-func (d *dbapi) Delete(obj Record) error {
-	return d.runInTransaction(func(tx Transaction) error {
-		return d.db.DeleteTx(obj, d.tx)
+func (d *api) Delete(obj record.Record) errors.TracerError {
+	return d.runInTransaction(func(tx transaction.Transaction) errors.TracerError {
+		return tx.Delete(obj)
 	})
 }
 
-func (d *dbapi) DeleteWhere(obj Record, condition *qb.ConditionExpression) error {
-	return d.runInTransaction(func(tx Transaction) error {
-		return d.db.DeleteWhereTx(obj, d.tx, condition)
+func (d *api) DeleteWhere(obj record.Record, condition *qb.ConditionExpression) errors.TracerError {
+	return d.runInTransaction(func(tx transaction.Transaction) errors.TracerError {
+		return tx.DeleteWhere(obj, condition)
 	})
 }
 
-func (d *dbapi) runInTransaction(fn func(Transaction) error) error {
+func (d *api) enforceLimits(options *record.ListOptions) {
+	if d.configuration.MaxQueryLimit() != qb.NoLimit &&
+		options.Limit > d.configuration.MaxQueryLimit() {
+		d.configuration.Logger().Warnf("limit %d exceeds max limit of %d", options.Limit,
+			d.configuration.MaxQueryLimit())
+		options.Limit = d.configuration.MaxQueryLimit()
+	}
+}
+
+func (d *api) runInTransaction(fn func(transaction.Transaction) errors.TracerError) errors.TracerError {
 	var (
-		err    error
+		err    errors.TracerError
 		commit bool
 	)
 	if d.tx == nil {

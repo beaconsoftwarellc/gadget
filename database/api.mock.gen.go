@@ -6,9 +6,11 @@ package database
 
 import (
 	reflect "reflect"
-	time "time"
 
 	qb "github.com/beaconsoftwarellc/gadget/v2/database/qb"
+	record "github.com/beaconsoftwarellc/gadget/v2/database/record"
+	transaction "github.com/beaconsoftwarellc/gadget/v2/database/transaction"
+	errors "github.com/beaconsoftwarellc/gadget/v2/errors"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -36,10 +38,10 @@ func (m *MockAPI) EXPECT() *MockAPIMockRecorder {
 }
 
 // Begin mocks base method.
-func (m *MockAPI) Begin() error {
+func (m *MockAPI) Begin() errors.TracerError {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Begin")
-	ret0, _ := ret[0].(error)
+	ret0, _ := ret[0].(errors.TracerError)
 	return ret0
 }
 
@@ -50,10 +52,10 @@ func (mr *MockAPIMockRecorder) Begin() *gomock.Call {
 }
 
 // Commit mocks base method.
-func (m *MockAPI) Commit() error {
+func (m *MockAPI) Commit() errors.TracerError {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Commit")
-	ret0, _ := ret[0].(error)
+	ret0, _ := ret[0].(errors.TracerError)
 	return ret0
 }
 
@@ -64,10 +66,10 @@ func (mr *MockAPIMockRecorder) Commit() *gomock.Call {
 }
 
 // CommitOrRollback mocks base method.
-func (m *MockAPI) CommitOrRollback(err error) error {
+func (m *MockAPI) CommitOrRollback(err error) errors.TracerError {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CommitOrRollback", err)
-	ret0, _ := ret[0].(error)
+	ret0, _ := ret[0].(errors.TracerError)
 	return ret0
 }
 
@@ -78,10 +80,10 @@ func (mr *MockAPIMockRecorder) CommitOrRollback(err interface{}) *gomock.Call {
 }
 
 // Create mocks base method.
-func (m *MockAPI) Create(obj Record) error {
+func (m *MockAPI) Create(obj record.Record) errors.TracerError {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Create", obj)
-	ret0, _ := ret[0].(error)
+	ret0, _ := ret[0].(errors.TracerError)
 	return ret0
 }
 
@@ -92,10 +94,10 @@ func (mr *MockAPIMockRecorder) Create(obj interface{}) *gomock.Call {
 }
 
 // Delete mocks base method.
-func (m *MockAPI) Delete(obj Record) error {
+func (m *MockAPI) Delete(obj record.Record) errors.TracerError {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Delete", obj)
-	ret0, _ := ret[0].(error)
+	ret0, _ := ret[0].(errors.TracerError)
 	return ret0
 }
 
@@ -106,10 +108,10 @@ func (mr *MockAPIMockRecorder) Delete(obj interface{}) *gomock.Call {
 }
 
 // DeleteWhere mocks base method.
-func (m *MockAPI) DeleteWhere(obj Record, condition *qb.ConditionExpression) error {
+func (m *MockAPI) DeleteWhere(obj record.Record, condition *qb.ConditionExpression) errors.TracerError {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteWhere", obj, condition)
-	ret0, _ := ret[0].(error)
+	ret0, _ := ret[0].(errors.TracerError)
 	return ret0
 }
 
@@ -119,11 +121,25 @@ func (mr *MockAPIMockRecorder) DeleteWhere(obj, condition interface{}) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteWhere", reflect.TypeOf((*MockAPI)(nil).DeleteWhere), obj, condition)
 }
 
+// GetTransaction mocks base method.
+func (m *MockAPI) GetTransaction() transaction.Transaction {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTransaction")
+	ret0, _ := ret[0].(transaction.Transaction)
+	return ret0
+}
+
+// GetTransaction indicates an expected call of GetTransaction.
+func (mr *MockAPIMockRecorder) GetTransaction() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransaction", reflect.TypeOf((*MockAPI)(nil).GetTransaction))
+}
+
 // ListWhere mocks base method.
-func (m *MockAPI) ListWhere(meta Record, target interface{}, condition *qb.ConditionExpression, options *ListOptions) error {
+func (m *MockAPI) ListWhere(meta record.Record, target interface{}, condition *qb.ConditionExpression, options *record.ListOptions) errors.TracerError {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListWhere", meta, target, condition, options)
-	ret0, _ := ret[0].(error)
+	ret0, _ := ret[0].(errors.TracerError)
 	return ret0
 }
 
@@ -134,10 +150,10 @@ func (mr *MockAPIMockRecorder) ListWhere(meta, target, condition, options interf
 }
 
 // Read mocks base method.
-func (m *MockAPI) Read(obj Record, pk PrimaryKeyValue) error {
+func (m *MockAPI) Read(obj record.Record, pk record.PrimaryKeyValue) errors.TracerError {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Read", obj, pk)
-	ret0, _ := ret[0].(error)
+	ret0, _ := ret[0].(errors.TracerError)
 	return ret0
 }
 
@@ -148,10 +164,10 @@ func (mr *MockAPIMockRecorder) Read(obj, pk interface{}) *gomock.Call {
 }
 
 // ReadOneWhere mocks base method.
-func (m *MockAPI) ReadOneWhere(obj Record, condition *qb.ConditionExpression) error {
+func (m *MockAPI) ReadOneWhere(obj record.Record, condition *qb.ConditionExpression) errors.TracerError {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ReadOneWhere", obj, condition)
-	ret0, _ := ret[0].(error)
+	ret0, _ := ret[0].(errors.TracerError)
 	return ret0
 }
 
@@ -162,10 +178,10 @@ func (mr *MockAPIMockRecorder) ReadOneWhere(obj, condition interface{}) *gomock.
 }
 
 // Rollback mocks base method.
-func (m *MockAPI) Rollback() error {
+func (m *MockAPI) Rollback() errors.TracerError {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Rollback")
-	ret0, _ := ret[0].(error)
+	ret0, _ := ret[0].(errors.TracerError)
 	return ret0
 }
 
@@ -176,10 +192,10 @@ func (mr *MockAPIMockRecorder) Rollback() *gomock.Call {
 }
 
 // Select mocks base method.
-func (m *MockAPI) Select(target interface{}, query *qb.SelectQuery) error {
+func (m *MockAPI) Select(target interface{}, query *qb.SelectQuery) errors.TracerError {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Select", target, query)
-	ret0, _ := ret[0].(error)
+	ret0, _ := ret[0].(errors.TracerError)
 	return ret0
 }
 
@@ -190,10 +206,10 @@ func (mr *MockAPIMockRecorder) Select(target, query interface{}) *gomock.Call {
 }
 
 // SelectList mocks base method.
-func (m *MockAPI) SelectList(target interface{}, query *qb.SelectQuery, options *ListOptions) error {
+func (m *MockAPI) SelectList(target interface{}, query *qb.SelectQuery, options *record.ListOptions) errors.TracerError {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SelectList", target, query, options)
-	ret0, _ := ret[0].(error)
+	ret0, _ := ret[0].(errors.TracerError)
 	return ret0
 }
 
@@ -203,23 +219,11 @@ func (mr *MockAPIMockRecorder) SelectList(target, query, options interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SelectList", reflect.TypeOf((*MockAPI)(nil).SelectList), target, query, options)
 }
 
-// SetSlowQueryDuration mocks base method.
-func (m *MockAPI) SetSlowQueryDuration(threshold time.Duration) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SetSlowQueryDuration", threshold)
-}
-
-// SetSlowQueryDuration indicates an expected call of SetSlowQueryDuration.
-func (mr *MockAPIMockRecorder) SetSlowQueryDuration(threshold interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetSlowQueryDuration", reflect.TypeOf((*MockAPI)(nil).SetSlowQueryDuration), threshold)
-}
-
 // Update mocks base method.
-func (m *MockAPI) Update(obj Record) error {
+func (m *MockAPI) Update(obj record.Record) errors.TracerError {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Update", obj)
-	ret0, _ := ret[0].(error)
+	ret0, _ := ret[0].(errors.TracerError)
 	return ret0
 }
 
@@ -230,7 +234,7 @@ func (mr *MockAPIMockRecorder) Update(obj interface{}) *gomock.Call {
 }
 
 // UpdateWhere mocks base method.
-func (m *MockAPI) UpdateWhere(obj Record, where *qb.ConditionExpression, fields ...qb.FieldValue) (int64, error) {
+func (m *MockAPI) UpdateWhere(obj record.Record, where *qb.ConditionExpression, fields ...qb.FieldValue) (int64, errors.TracerError) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{obj, where}
 	for _, a := range fields {
@@ -238,7 +242,7 @@ func (m *MockAPI) UpdateWhere(obj Record, where *qb.ConditionExpression, fields 
 	}
 	ret := m.ctrl.Call(m, "UpdateWhere", varargs...)
 	ret0, _ := ret[0].(int64)
-	ret1, _ := ret[1].(error)
+	ret1, _ := ret[1].(errors.TracerError)
 	return ret0, ret1
 }
 

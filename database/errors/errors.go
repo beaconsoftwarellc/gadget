@@ -1,4 +1,4 @@
-package database
+package errors
 
 import (
 	"database/sql"
@@ -17,6 +17,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+// SQLQueryType indicates the type of query being executed that caused and error
+type SQLQueryType string
 
 const (
 	// Select indicates a SELECT statement triggered the error
@@ -66,9 +69,6 @@ func (err *ConnectionError) Trace() []string {
 func NewDatabaseConnectionError(err error) errors.TracerError {
 	return &ConnectionError{err: err, trace: errors.GetStackTrace()}
 }
-
-// SQLQueryType indicates the type of query being executed that caused and error
-type SQLQueryType string
 
 // TranslateError converts a mysql or other obtuse errors into discrete explicit errors
 func TranslateError(err error, action SQLQueryType, stmt string, logger log.Logger) errors.TracerError {

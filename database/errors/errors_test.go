@@ -1,4 +1,4 @@
-package database
+package errors
 
 import (
 	"database/sql"

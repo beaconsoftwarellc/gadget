@@ -1,5 +1,7 @@
 package database
 
+import "fmt"
+
 const (
 	// TableExistenceQueryFormat returns a single row and column indicating that the table
 	// exists and when it was created. Takes format vars 'table_schema' and 'table_name'
@@ -19,9 +21,14 @@ type TableNameResult struct {
 	TableName string `db:"table_name"`
 }
 
-// StatusResult is for capturing output from a function call on the database, you must use
-// an 'AS STATUS' clause in your query in order for mapping to work correctly.
-type StatusResult struct {
-	// Status as returned by a function call usually
-	Status int `db:"STATUS"`
+// TableExists for the passed schema and table name on the passed database
+func TableExists(db Client, schema, name string) (bool, error) {
+	var exists bool
+	var err error
+	var target []*TableNameResult
+	err = db.Select(&target, fmt.Sprintf(TableExistenceQueryFormat, schema, name))
+	if len(target) == 1 {
+		exists = true
+	}
+	return exists, err
 }

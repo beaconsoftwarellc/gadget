@@ -16,13 +16,62 @@ func getMocks(t *testing.T) *MockAPI {
 	return dbMock
 }
 
+type testRecord struct {
+	alias      string
+	ID         qb.TableField
+	Name       qb.TableField
+	allColumns qb.TableField
+}
+
+func (t *testRecord) GetName() string {
+	return "test_record"
+}
+
+func (t *testRecord) GetAlias() string {
+	return t.alias
+}
+
+func (t *testRecord) PrimaryKey() qb.TableField {
+	return t.ID
+}
+
+func (t *testRecord) SortBy() (qb.TableField, qb.OrderDirection) {
+	return t.ID, qb.Ascending
+}
+
+func (t *testRecord) AllColumns() qb.TableField {
+	return t.allColumns
+}
+
+func (t *testRecord) ReadColumns() []qb.TableField {
+	return []qb.TableField{
+		t.ID,
+		t.Name,
+	}
+}
+
+func (t *testRecord) WriteColumns() []qb.TableField {
+	return t.ReadColumns()
+}
+
+func (t *testRecord) Alias(alias string) *testRecord {
+	return &testRecord{
+		alias:      alias,
+		ID:         qb.TableField{Name: "id", Table: alias},
+		Name:       qb.TableField{Name: "name", Table: alias},
+		allColumns: qb.TableField{Name: "*", Table: alias},
+	}
+}
+
+var TestRecord = (&testRecord{}).Alias("test_record")
+
 func Test_Count_No_Rows(t *testing.T) {
 	assert := assert1.New(t)
 	mockDB := getMocks(t)
 
 	mockDB.EXPECT().Select(gomock.Any(), gomock.Any()).Return(nil)
 
-	_, actual := Count(mockDB, Action, qb.Select(Action.ID).From(Action))
+	_, actual := Count(mockDB, TestRecord, qb.Select(TestRecord.ID).From(TestRecord))
 	assert.EqualError(actual, "[COM.DB.1] row count query execution failed (no rows)")
 }
 
@@ -33,7 +82,7 @@ func Test_Count_DB_Error(t *testing.T) {
 	mockDB := getMocks(t)
 	mockDB.EXPECT().Select(gomock.Any(), gomock.Any()).Return(expected)
 
-	_, actual := Count(mockDB, Action, qb.Select(Action.ID).From(Action))
+	_, actual := Count(mockDB, TestRecord, qb.Select(TestRecord.ID).From(TestRecord))
 	assert.EqualError(actual, expected.Error())
 }
 
@@ -60,11 +109,11 @@ func Test_Count(t *testing.T) {
 			return nil
 		}).Return(nil)
 
-	q := qb.Select(Action.ID).From(Action)
-	q.InnerJoin(Action).On(Action.ID, qb.Equal, Action.ID)
-	q.Where(Action.Name.Equal(clauseValue))
+	q := qb.Select(TestRecord.ID).From(TestRecord)
+	q.InnerJoin(TestRecord).On(TestRecord.ID, qb.Equal, TestRecord.ID)
+	q.Where(TestRecord.Name.Equal(clauseValue))
 
-	actual, err := Count(mockDB, Action, q)
+	actual, err := Count(mockDB, TestRecord, q)
 	assert.NoError(err)
 	assert.Equal(expected, int(actual))
 }
@@ -75,7 +124,7 @@ func Test_TableCount_No_Rows(t *testing.T) {
 
 	mockDB.EXPECT().Select(gomock.Any(), gomock.Any()).Return(nil)
 
-	_, actual := CountTableRows(mockDB, Action)
+	_, actual := CountTableRows(mockDB, TestRecord)
 	assert.EqualError(actual, "[COM.DB.1] row count query execution failed (no rows)")
 }
 
@@ -87,7 +136,7 @@ func Test_TableCount_DB_Error(t *testing.T) {
 
 	mockDB.EXPECT().Select(gomock.Any(), gomock.Any()).Return(expected)
 
-	_, actual := CountTableRows(mockDB, Action)
+	_, actual := CountTableRows(mockDB, TestRecord)
 	assert.EqualError(actual, expected.Error())
 }
 
@@ -113,7 +162,7 @@ func Test_TableCount(t *testing.T) {
 			return nil
 		}).Return(nil)
 
-	actual, err := CountTableRows(mockDB, Action)
+	actual, err := CountTableRows(mockDB, TestRecord)
 	assert.NoError(err)
 	assert.Equal(expected, int(actual))
 }
@@ -124,7 +173,7 @@ func Test_CountWhere_No_Rows(t *testing.T) {
 
 	mockDB.EXPECT().Select(gomock.Any(), gomock.Any()).Return(nil)
 
-	_, actual := CountWhere(mockDB, Action, Action.Name.Equal("name"))
+	_, actual := CountWhere(mockDB, TestRecord, TestRecord.Name.Equal("name"))
 	assert.EqualError(actual, "[COM.DB.1] row count query execution failed (no rows)")
 }
 
@@ -136,7 +185,7 @@ func Test_CountWhere_DB_Error(t *testing.T) {
 
 	mockDB.EXPECT().Select(gomock.Any(), gomock.Any()).Return(expected)
 
-	_, actual := CountWhere(mockDB, Action, Action.Name.Equal("name"))
+	_, actual := CountWhere(mockDB, TestRecord, TestRecord.Name.Equal("name"))
 	assert.EqualError(actual, expected.Error())
 }
 
@@ -161,7 +210,7 @@ func Test_CountWhere(t *testing.T) {
 			return nil
 		}).Return(nil)
 
-	actual, err := CountWhere(mockDB, Action, Action.Name.Equal("name"))
+	actual, err := CountWhere(mockDB, TestRecord, TestRecord.Name.Equal("name"))
 	assert.NoError(err)
 	assert.Equal(expected, int(actual))
 }
