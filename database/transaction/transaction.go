@@ -10,6 +10,7 @@ import (
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
 	"github.com/beaconsoftwarellc/gadget/v2/generator"
 	"github.com/beaconsoftwarellc/gadget/v2/log"
+	"github.com/samber/lo"
 )
 
 // Transaction is an in-progress database transaction.
@@ -121,7 +122,8 @@ func (tx *transaction) Upsert(obj record.Record) errors.TracerError {
 	updateCols := make([]qb.TableField, len(obj.Meta().WriteColumns()))
 	copy(updateCols, obj.Meta().WriteColumns())
 	createdOn := qb.TableField{Name: "created_on", Table: obj.Meta().GetName()}
-	if contains(obj.Meta().ReadColumns(), createdOn) {
+
+	if lo.Contains(obj.Meta().ReadColumns(), createdOn) {
 		updateCols = appendIfMissing(updateCols, createdOn)
 	}
 	updateOn := qb.TableField{Name: "updated_on", Table: obj.Meta().GetName()}

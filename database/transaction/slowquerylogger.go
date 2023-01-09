@@ -61,7 +61,5 @@ func (tx *slowQueryLoggerTx) logSlow(query string, elapsed time.Duration) {
 		"[%s] query execution time: %s query: %s", tx.id, elapsed, query)
 	if elapsed > tx.slow {
 		_ = tx.log.Error(err)
-	} else {
-		_ = tx.log.Debug(err)
 	}
 }

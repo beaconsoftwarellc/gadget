@@ -43,14 +43,12 @@ func setMultiStatement(connString string) string {
 }
 
 // Execute the passed deltas sequentially if they have not already been applied to the database.
-// WARN: This function will create the table 'delta' which is needs to track changes if it does not
-//
-//	already exist.
+// WARN: This function will create the table 'delta' which it needs to track changes if it does not
+// already exist.
 //
 // NOTE: This function assumes that the database has fully transactional DDL
-//
-//	(not MySQL). Using this function with a non-transactional DDL database
-//	will cause errors to leave the database in an indeterminate state.
+// (not MySQL). Using this function with a non-transactional DDL database
+// will cause errors to leave the database in an indeterminate state.
 func Execute(config database.InstanceConfig, schema string, deltas []*Delta) errors.TracerError {
 	mutex.Lock()
 	defer mutex.Unlock()
@@ -119,8 +117,7 @@ func execute(config database.InstanceConfig, connection database.Connection,
 		}
 	}
 	log.Infof("all deltas processed")
-	terr := errors.Wrap(log.Error(db.Commit()))
-	return terr
+	return errors.Wrap(log.Error(db.Commit()))
 }
 
 // ExecuteDelta checks if the passed delta has already been executed according to the Deltas table, and then executes

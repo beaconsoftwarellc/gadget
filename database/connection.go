@@ -101,7 +101,7 @@ func (c *connection) Database() API {
 
 func (c *connection) Close() error {
 	if !c.connected {
-		panic("Close() called on disconnected connection")
+		return errors.New("Close() called on disconnected connection")
 	}
 	c.connected = false
 	return c.client.Close()
