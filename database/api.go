@@ -46,7 +46,7 @@ type API interface {
 		fields ...qb.FieldValue) (int64, errors.TracerError)
 	// Delete removes a row from the database
 	Delete(obj record.Record) errors.TracerError
-	// DeleteWhereTx removes row(s) from the database based on a supplied where
+	// DeleteWhere removes row(s) from the database based on a supplied where
 	// clause in a transaction
 	DeleteWhere(obj record.Record, condition *qb.ConditionExpression) errors.TracerError
 }

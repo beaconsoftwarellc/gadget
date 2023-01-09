@@ -14,7 +14,7 @@ type Implementation interface {
 	// NamedExec a named query within a transaction.
 	// Any named placeholder parameters are replaced with fields from arg.
 	NamedExec(query string, arg interface{}) (sql.Result, error)
-	// Queryx within a transaction.
+	// QueryRowx within a transaction.
 	// Any placeholder parameters are replaced with supplied args.
 	QueryRowx(query string, args ...interface{}) *sqlx.Row
 	// Select within a transaction.

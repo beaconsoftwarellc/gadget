@@ -30,18 +30,16 @@ type Transaction interface {
 	ReadOneWhere(record.Record, *qb.ConditionExpression) errors.TracerError
 	// List populates obj with a list of Records from the database
 	// TODO: [COR-586] we can expand the Record interface to return an collection
-	// 		 of it's type so we don't have to pass this clumsily
+	// 		 of its type so we don't have to pass this clumsily
 	List(record.Record, any, record.ListOptions) errors.TracerError
 	// ListWhere populates target with a list of Records from the database
 	// TODO: [COR-586] we can expand the Record interface to return a collection
-	// 		 of it's type so we don't have to pass this clumsily
+	// 		 of its type so we don't have to pass this clumsily
 	ListWhere(record.Record, any, *qb.ConditionExpression, record.ListOptions) errors.TracerError
 	// Select executes a given select query and populates the target
 	// TODO: [COR-586] we can expand the Record interface to return a collection
-	// 		 of it's type so we don't have to pass this clumsily
-	Select(target any, query *qb.SelectQuery, limit, offset uint) errors.TracerError
-	// SelectList of Records based upon the passed query
-	SelectList(any, *qb.SelectQuery, record.ListOptions) errors.TracerError
+	// 		 of its type so we don't have to pass this clumsily
+	Select(any, *qb.SelectQuery, record.ListOptions) errors.TracerError
 	// Update replaces an entry in the database for the Record
 	Update(record.Record) errors.TracerError
 	// UpdateWhere updates fields for the Record based on a supplied where clause in a transaction
@@ -127,7 +125,7 @@ func (tx *transaction) Upsert(obj record.Record) errors.TracerError {
 		updateCols = appendIfMissing(updateCols, createdOn)
 	}
 	updateOn := qb.TableField{Name: "updated_on", Table: obj.Meta().GetName()}
-	if contains(obj.Meta().ReadColumns(), updateOn) {
+	if lo.Contains(obj.Meta().ReadColumns(), updateOn) {
 		updateCols = appendIfMissing(updateCols, updateOn)
 	}
 
@@ -196,24 +194,12 @@ func (tx *transaction) buildListWhere(def record.Record, condition *qb.Condition
 }
 
 func (tx *transaction) Select(target interface{}, query *qb.SelectQuery,
-	limit, offset uint) errors.TracerError {
-	stmt, values, err := query.SQL(limit, offset)
-	if err != nil {
-		return errors.Wrap(err)
-	}
-
-	if err = tx.implementation.Select(target, stmt, values...); nil != err {
-		return dberrors.TranslateError(err, dberrors.Select, stmt, tx.logger)
-	}
-	return nil
-}
-
-func (tx *transaction) SelectList(target interface{}, query *qb.SelectQuery,
 	options record.ListOptions) errors.TracerError {
 	stmt, values, err := query.SQL(options.Limit, options.Offset)
 	if err != nil {
 		return errors.Wrap(err)
 	}
+
 	if err = tx.implementation.Select(target, stmt, values...); nil != err {
 		return dberrors.TranslateError(err, dberrors.Select, stmt, tx.logger)
 	}

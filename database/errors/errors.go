@@ -18,7 +18,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// SQLQueryType indicates the type of query being executed that caused and error
+// SQLQueryType indicates the type of query being executed that caused an error
 type SQLQueryType string
 
 const (
