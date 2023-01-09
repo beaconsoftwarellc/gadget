@@ -25,6 +25,11 @@ type API interface {
 	// CommitOrRollback will rollback on an errors.TracerError otherwise commit
 	CommitOrRollback(err error) errors.TracerError
 
+	// Count the number of rows in the passed query
+	Count(qb.Table, *qb.SelectQuery) (int32, error)
+	// CountWhere rows match the passed condition in the specified table. Condition
+	// may be nil in order to just count the table rows.
+	CountWhere(qb.Table, *qb.ConditionExpression) (int32, error)
 	// Create initializes a Record and inserts it into the Database
 	Create(obj record.Record) errors.TracerError
 	// Read populates a Record from the database
@@ -32,10 +37,7 @@ type API interface {
 	// ReadOneWhere populates a Record from a custom where clause
 	ReadOneWhere(obj record.Record, condition *qb.ConditionExpression) errors.TracerError
 	// Select executes a given select query and populates the target
-	Select(target interface{}, query *qb.SelectQuery) errors.TracerError
-	// SelectList of Records into target based upon the passed query
-	SelectList(target interface{}, query *qb.SelectQuery,
-		options *record.ListOptions) errors.TracerError
+	Select(target interface{}, query *qb.SelectQuery, options *record.ListOptions) errors.TracerError
 	// ListWhere populates target with a list of records from the database
 	ListWhere(meta record.Record, target interface{},
 		condition *qb.ConditionExpression, options *record.ListOptions) errors.TracerError
@@ -108,6 +110,31 @@ func (d *api) CommitOrRollback(err error) errors.TracerError {
 	return ErrMissingTransaction
 }
 
+func (db *api) Count(table qb.Table, query *qb.SelectQuery) (int32, error) {
+	var (
+		target []*qb.RowCount
+		err    error
+	)
+	err = db.Select(&target,
+		query.SelectFrom(qb.NewCountExpression(table.GetName())),
+		record.NewListOptions(1, 0),
+	)
+	if err != nil {
+		return 0, err
+	}
+	if len(target) == 0 {
+		return 0, errors.New("[GAD.DB.126] row count query execution failed (no rows)")
+	}
+	return int32(target[0].Count), nil
+}
+
+func (d *api) CountWhere(table qb.Table, where *qb.ConditionExpression) (int32, error) {
+	return d.Count(table,
+		qb.Select(qb.NewCountExpression(table.GetName())).
+			From(table).
+			Where(where))
+}
+
 func (d *api) Create(obj record.Record) errors.TracerError {
 	return d.runInTransaction(func(tx transaction.Transaction) errors.TracerError {
 		return tx.Create(obj)
@@ -126,17 +153,11 @@ func (d *api) ReadOneWhere(obj record.Record, condition *qb.ConditionExpression)
 	})
 }
 
-func (d *api) Select(target interface{}, query *qb.SelectQuery) errors.TracerError {
-	return d.runInTransaction(func(tx transaction.Transaction) errors.TracerError {
-		return tx.Select(target, query, d.configuration.MaxQueryLimit(), 0)
-	})
-}
-
-func (d *api) SelectList(target interface{}, query *qb.SelectQuery,
+func (d *api) Select(target interface{}, query *qb.SelectQuery,
 	options *record.ListOptions) errors.TracerError {
 	options = d.enforceLimits(options)
 	return d.runInTransaction(func(tx transaction.Transaction) errors.TracerError {
-		return tx.SelectList(target, query, *options)
+		return tx.Select(target, query, *options)
 	})
 }
 

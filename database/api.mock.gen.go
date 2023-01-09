@@ -79,6 +79,36 @@ func (mr *MockAPIMockRecorder) CommitOrRollback(err interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommitOrRollback", reflect.TypeOf((*MockAPI)(nil).CommitOrRollback), err)
 }
 
+// Count mocks base method.
+func (m *MockAPI) Count(arg0 qb.Table, arg1 *qb.SelectQuery) (int32, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Count", arg0, arg1)
+	ret0, _ := ret[0].(int32)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Count indicates an expected call of Count.
+func (mr *MockAPIMockRecorder) Count(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Count", reflect.TypeOf((*MockAPI)(nil).Count), arg0, arg1)
+}
+
+// CountWhere mocks base method.
+func (m *MockAPI) CountWhere(arg0 qb.Table, arg1 *qb.ConditionExpression) (int32, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountWhere", arg0, arg1)
+	ret0, _ := ret[0].(int32)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountWhere indicates an expected call of CountWhere.
+func (mr *MockAPIMockRecorder) CountWhere(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountWhere", reflect.TypeOf((*MockAPI)(nil).CountWhere), arg0, arg1)
+}
+
 // Create mocks base method.
 func (m *MockAPI) Create(obj record.Record) errors.TracerError {
 	m.ctrl.T.Helper()
@@ -192,31 +222,17 @@ func (mr *MockAPIMockRecorder) Rollback() *gomock.Call {
 }
 
 // Select mocks base method.
-func (m *MockAPI) Select(target interface{}, query *qb.SelectQuery) errors.TracerError {
+func (m *MockAPI) Select(target interface{}, query *qb.SelectQuery, options *record.ListOptions) errors.TracerError {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Select", target, query)
+	ret := m.ctrl.Call(m, "Select", target, query, options)
 	ret0, _ := ret[0].(errors.TracerError)
 	return ret0
 }
 
 // Select indicates an expected call of Select.
-func (mr *MockAPIMockRecorder) Select(target, query interface{}) *gomock.Call {
+func (mr *MockAPIMockRecorder) Select(target, query, options interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Select", reflect.TypeOf((*MockAPI)(nil).Select), target, query)
-}
-
-// SelectList mocks base method.
-func (m *MockAPI) SelectList(target interface{}, query *qb.SelectQuery, options *record.ListOptions) errors.TracerError {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SelectList", target, query, options)
-	ret0, _ := ret[0].(errors.TracerError)
-	return ret0
-}
-
-// SelectList indicates an expected call of SelectList.
-func (mr *MockAPIMockRecorder) SelectList(target, query, options interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SelectList", reflect.TypeOf((*MockAPI)(nil).SelectList), target, query, options)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Select", reflect.TypeOf((*MockAPI)(nil).Select), target, query, options)
 }
 
 // Update mocks base method.

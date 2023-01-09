@@ -177,31 +177,17 @@ func (mr *MockTransactionMockRecorder) Rollback() *gomock.Call {
 }
 
 // Select mocks base method.
-func (m *MockTransaction) Select(target any, query *qb.SelectQuery, limit, offset uint) errors.TracerError {
+func (m *MockTransaction) Select(arg0 any, arg1 *qb.SelectQuery, arg2 record.ListOptions) errors.TracerError {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Select", target, query, limit, offset)
+	ret := m.ctrl.Call(m, "Select", arg0, arg1, arg2)
 	ret0, _ := ret[0].(errors.TracerError)
 	return ret0
 }
 
 // Select indicates an expected call of Select.
-func (mr *MockTransactionMockRecorder) Select(target, query, limit, offset interface{}) *gomock.Call {
+func (mr *MockTransactionMockRecorder) Select(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Select", reflect.TypeOf((*MockTransaction)(nil).Select), target, query, limit, offset)
-}
-
-// SelectList mocks base method.
-func (m *MockTransaction) SelectList(arg0 any, arg1 *qb.SelectQuery, arg2 record.ListOptions) errors.TracerError {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SelectList", arg0, arg1, arg2)
-	ret0, _ := ret[0].(errors.TracerError)
-	return ret0
-}
-
-// SelectList indicates an expected call of SelectList.
-func (mr *MockTransactionMockRecorder) SelectList(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SelectList", reflect.TypeOf((*MockTransaction)(nil).SelectList), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Select", reflect.TypeOf((*MockTransaction)(nil).Select), arg0, arg1, arg2)
 }
 
 // Update mocks base method.
