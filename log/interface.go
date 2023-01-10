@@ -1,3 +1,5 @@
+//go:generate mockgen -source=$GOFILE -package $GOPACKAGE -destination interface.mock.gen.go
+
 package log
 
 // Logger is the tiered level logging interface

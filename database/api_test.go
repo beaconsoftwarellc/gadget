@@ -1,0 +1,199 @@
+package database
+
+import (
+	"fmt"
+	"testing"
+
+	"github.com/beaconsoftwarellc/gadget/v2/database/qb"
+	"github.com/beaconsoftwarellc/gadget/v2/database/record"
+	"github.com/beaconsoftwarellc/gadget/v2/database/transaction"
+	"github.com/beaconsoftwarellc/gadget/v2/generator"
+	gomock "github.com/golang/mock/gomock"
+	assert1 "github.com/stretchr/testify/assert"
+)
+
+func Test_database_enforceLimits(t *testing.T) {
+	var tests = []struct {
+		name          string
+		maxQueryLimit uint
+		options       *record.ListOptions
+		expected      *record.ListOptions
+	}{
+		{
+			name:          "no limit",
+			maxQueryLimit: 0,
+			options:       &record.ListOptions{Limit: 100, Offset: 0},
+			expected:      &record.ListOptions{Limit: 100, Offset: 0},
+		},
+		{
+			name:          "limit enforced",
+			maxQueryLimit: 10,
+			options:       &record.ListOptions{Limit: 100, Offset: 0},
+			expected:      &record.ListOptions{Limit: 10, Offset: 0},
+		},
+		{
+			name:          "nil gets defaults",
+			maxQueryLimit: 20,
+			options:       nil,
+			expected:      &record.ListOptions{Limit: 20, Offset: 0},
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert := assert1.New(t)
+			conf := &InstanceConfig{}
+			conf.MaxLimit = tc.maxQueryLimit
+			database := &api{configuration: conf}
+			actual := database.enforceLimits(tc.options)
+			assert.Equal(tc.expected, actual)
+		})
+	}
+}
+
+type testRecord struct {
+	alias      string
+	ID         qb.TableField
+	Name       qb.TableField
+	allColumns qb.TableField
+}
+
+func (t *testRecord) GetName() string {
+	return "test_record"
+}
+
+func (t *testRecord) GetAlias() string {
+	return t.alias
+}
+
+func (t *testRecord) PrimaryKey() qb.TableField {
+	return t.ID
+}
+
+func (t *testRecord) SortBy() (qb.TableField, qb.OrderDirection) {
+	return t.ID, qb.Ascending
+}
+
+func (t *testRecord) AllColumns() qb.TableField {
+	return t.allColumns
+}
+
+func (t *testRecord) ReadColumns() []qb.TableField {
+	return []qb.TableField{
+		t.ID,
+		t.Name,
+	}
+}
+
+func (t *testRecord) WriteColumns() []qb.TableField {
+	return t.ReadColumns()
+}
+
+func (t *testRecord) Alias(alias string) *testRecord {
+	return &testRecord{
+		alias:      alias,
+		ID:         qb.TableField{Name: "id", Table: alias},
+		Name:       qb.TableField{Name: "name", Table: alias},
+		allColumns: qb.TableField{Name: "*", Table: alias},
+	}
+}
+
+var TestRecord = (&testRecord{}).Alias("test_record")
+
+type countMatcher struct {
+	count int32
+}
+
+func (matcher *countMatcher) Matches(x interface{}) bool {
+	rows, ok := x.(*[]*qb.RowCount)
+	if !ok {
+		return false
+	}
+	*rows = append(*rows, &qb.RowCount{Count: int(matcher.count)})
+	return true
+}
+
+func (matcher *countMatcher) String() string {
+	return fmt.Sprintf("countMatcher(%d)", matcher.count)
+}
+
+type queryMatcher struct {
+	t   *testing.T
+	sql string
+}
+
+func (matcher *queryMatcher) Matches(x interface{}) bool {
+	query, ok := x.(*qb.SelectQuery)
+	if !ok {
+		// only return false if we got an unexpected type, otherwise let
+		// the assert take care of failure and messaging
+		return false
+	}
+	sql, _, err := query.SQL(0, 0)
+	assert1.NoError(matcher.t, err)
+	assert1.Equal(matcher.t, matcher.sql, sql)
+	return true
+}
+
+func (matcher *queryMatcher) String() string {
+	return "*qb.SelectQuery"
+}
+
+func Test_api_Count(t *testing.T) {
+	assert := assert1.New(t)
+	ctrl := gomock.NewController(t)
+	transaction := transaction.NewMockTransaction(ctrl)
+	api := &api{
+		tx:            transaction,
+		configuration: &InstanceConfig{MaxLimit: 100},
+	}
+	query := qb.Select(TestRecord.ID).From(TestRecord)
+	expected := generator.Int32()
+	transaction.EXPECT().Select(&countMatcher{count: expected},
+		&queryMatcher{t: t, sql: "SELECT COUNT(*) as count FROM `test_record` AS `test_record`"},
+		record.ListOptions{Limit: 1, Offset: 0},
+	).Return(nil)
+	actual, err := api.Count(TestRecord, query)
+	assert.NoError(err)
+	assert.Equal(expected, actual)
+}
+
+func Test_api_CountWhere_nil(t *testing.T) {
+	assert := assert1.New(t)
+	ctrl := gomock.NewController(t)
+	transaction := transaction.NewMockTransaction(ctrl)
+	api := &api{
+		tx:            transaction,
+		configuration: &InstanceConfig{MaxLimit: 100},
+	}
+
+	expected := generator.Int32()
+	transaction.EXPECT().Select(&countMatcher{count: expected},
+		&queryMatcher{t: t, sql: "SELECT COUNT(*) as count FROM `test_record` AS `test_record`"},
+		record.ListOptions{Limit: 1, Offset: 0},
+	).Return(nil)
+	actual, err := api.CountWhere(TestRecord, nil)
+	assert.NoError(err)
+	assert.Equal(expected, actual)
+}
+
+func Test_api_CountWhere(t *testing.T) {
+	assert := assert1.New(t)
+	ctrl := gomock.NewController(t)
+	transaction := transaction.NewMockTransaction(ctrl)
+	api := &api{
+		tx:            transaction,
+		configuration: &InstanceConfig{MaxLimit: 100},
+	}
+
+	expected := generator.Int32()
+	transaction.EXPECT().Select(&countMatcher{count: expected},
+		&queryMatcher{t: t, sql: "SELECT COUNT(*) as count FROM `test_record` AS" +
+			" `test_record` WHERE `test_record`.`name` = ?"},
+		record.ListOptions{Limit: 1, Offset: 0},
+	).Return(nil)
+	actual, err := api.CountWhere(TestRecord, qb.FieldComparison(TestRecord.Name, qb.Equal, ""))
+	assert.NoError(err)
+	assert.Equal(expected, actual)
+}
+
+// TODO: [COR-587] finish tests for API

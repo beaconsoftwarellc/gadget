@@ -1,4 +1,4 @@
-package database
+package errors
 
 import (
 	"database/sql"
@@ -92,7 +92,7 @@ func TestTranslateError(t *testing.T) {
 
 func Test_getLogPrefix(t *testing.T) {
 	assert := assert1.New(t)
-	expected := "[GAD.DAT.96]"
+	expected := "[DAT.ERR.96]"
 	actual := getLogPrefix(1)
 	assert.Equal(expected, actual)
 }
@@ -215,55 +215,55 @@ func TestDatabaseToApiError(t *testing.T) {
 			name:     "not db error",
 			primary:  Action,
 			err:      errors.New("foo"),
-			expected: "rpc error: code = Aborted desc = [GAD.DAT.262] (action) database error encountered: foo",
+			expected: "rpc error: code = Aborted desc = [DAT.ERR.262] (action) database error encountered: foo",
 		},
 		{
 			name:     "data too long error",
 			primary:  Action,
 			err:      &DataTooLongError{},
-			expected: "rpc error: code = InvalidArgument desc = [GAD.DAT.262] action field too long:  ()",
+			expected: "rpc error: code = InvalidArgument desc = [DAT.ERR.262] action field too long:  ()",
 		},
 		{
 			name:     "not found",
 			primary:  Action,
 			err:      NewNotFoundError(),
-			expected: "rpc error: code = NotFound desc = [GAD.DAT.262] action not found",
+			expected: "rpc error: code = NotFound desc = [DAT.ERR.262] action not found",
 		},
 		{
 			name:     "duplicate record",
 			primary:  Action,
 			err:      &DuplicateRecordError{},
-			expected: "rpc error: code = AlreadyExists desc = [GAD.DAT.262] action record already exists:  ()",
+			expected: "rpc error: code = AlreadyExists desc = [DAT.ERR.262] action record already exists:  ()",
 		},
 		{
 			name:     "unique constraint",
 			primary:  Action,
 			err:      &UniqueConstraintError{},
-			expected: "rpc error: code = InvalidArgument desc = [GAD.DAT.262] action unique constraint violation:  ()",
+			expected: "rpc error: code = InvalidArgument desc = [DAT.ERR.262] action unique constraint violation:  ()",
 		},
 		{
 			name:     "validation",
 			primary:  Action,
 			err:      &ValidationError{},
-			expected: "rpc error: code = InvalidArgument desc = [GAD.DAT.262] operation on action had a validation error: ",
+			expected: "rpc error: code = InvalidArgument desc = [DAT.ERR.262] operation on action had a validation error: ",
 		},
 		{
 			name:     "not a pointer",
 			primary:  Action,
 			err:      &NotAPointerError{},
-			expected: "rpc error: code = Internal desc = [GAD.DAT.262] internal system error encountered",
+			expected: "rpc error: code = Internal desc = [DAT.ERR.262] internal system error encountered",
 		},
 		{
 			name:     "connection",
 			primary:  Action,
 			err:      &ConnectionError{},
-			expected: "rpc error: code = Internal desc = [GAD.DAT.262] internal system error encountered",
+			expected: "rpc error: code = Internal desc = [DAT.ERR.262] internal system error encountered",
 		},
 		{
 			name:     "foreign key",
 			primary:  Action,
 			err:      &InvalidForeignKeyError{},
-			expected: "rpc error: code = InvalidArgument desc = [GAD.DAT.262] action foreign key violation:  ()",
+			expected: "rpc error: code = InvalidArgument desc = [DAT.ERR.262] action foreign key violation:  ()",
 		},
 	}
 	for _, tt := range tests {
@@ -308,19 +308,19 @@ func TestEqualLogError(t *testing.T) {
 		},
 		{
 			name:     "line number match",
-			err:      errors.New("[GAD.DAT.123]"),
-			expected: "[GAD.DAT.123]",
+			err:      errors.New("[DAT.ERR.123]"),
+			expected: "[DAT.ERR.123]",
 			equal:    true,
 		},
 		{
 			name:     "line number mismatch",
-			err:      errors.New("[GAD.DAT.123]"),
-			expected: "[GAD.DAT.456]",
+			err:      errors.New("[DAT.ERR.123]"),
+			expected: "[DAT.ERR.456]",
 			equal:    true,
 		},
 		{
 			name:     "file prefix mismatch",
-			err:      errors.New("[GAD.DAT.123]"),
+			err:      errors.New("[DAT.ERR.123]"),
 			expected: "[GAD.QB.123]",
 			equal:    false,
 		},
@@ -332,14 +332,14 @@ func TestEqualLogError(t *testing.T) {
 		},
 		{
 			name:     "error message",
-			err:      errors.New("foo[GAD.DAT.123]bar"),
-			expected: "foo[GAD.DAT.567]bar",
+			err:      errors.New("foo[DAT.ERR.123]bar"),
+			expected: "foo[DAT.ERR.567]bar",
 			equal:    true,
 		},
 		{
 			name:     "error message mismatch",
-			err:      errors.New("foo[GAD.DAT.123]bar"),
-			expected: "foo[GAD.DAT.567]baz",
+			err:      errors.New("foo[DAT.ERR.123]bar"),
+			expected: "foo[DAT.ERR.567]baz",
 			equal:    false,
 		},
 		{
@@ -392,8 +392,8 @@ func TestEqualLogError(t *testing.T) {
 		},
 		{
 			name:     "match with multiple db errors",
-			err:      errors.New("[GAD.DAT.123] failed with dberr_123 message (dberr_456)"),
-			expected: "[GAD.DAT.123] failed with dberr_123456 message (dberr_foobar)",
+			err:      errors.New("[DAT.ERR.123] failed with dberr_123 message (dberr_456)"),
+			expected: "[DAT.ERR.123] failed with dberr_123456 message (dberr_foobar)",
 			equal:    true,
 		},
 	}

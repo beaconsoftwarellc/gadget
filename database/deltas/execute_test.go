@@ -1,238 +1,339 @@
 package deltas
 
 import (
-	"database/sql"
+	"fmt"
 	"testing"
-	"time"
 
 	"github.com/beaconsoftwarellc/gadget/v2/database"
-	"github.com/beaconsoftwarellc/gadget/v2/database/qb"
+	dberrors "github.com/beaconsoftwarellc/gadget/v2/database/errors"
+	"github.com/beaconsoftwarellc/gadget/v2/database/lock"
+	"github.com/beaconsoftwarellc/gadget/v2/database/transaction"
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
 	"github.com/beaconsoftwarellc/gadget/v2/generator"
+	"github.com/golang/mock/gomock"
 	assert1 "github.com/stretchr/testify/assert"
 )
 
-type MockLockingDatabase struct {
-	AcquireNamedLockReturn bool
-	AcquireNamedLockErr    errors.TracerError
-	ReleaseNamedLockErr    errors.TracerError
-	BeginxReturn           lockingDatabaseTx
-	BeginxErr              error
-	CreateTxErr            errors.TracerError
-	CloseErr               error
-	ReadOneWhereTxErr      errors.TracerError
-	TableExistsReturn      bool
-	TableExistsErr         errors.TracerError
+func GetMocks(t *testing.T) (*database.MockConnection, *database.MockClient, *database.MockAPI,
+	*transaction.MockTransaction, *transaction.MockImplementation) {
+	ctrl := gomock.NewController(t)
+	connection := database.NewMockConnection(ctrl)
+	client := database.NewMockClient(ctrl)
+	connection.EXPECT().Client().Return(client).AnyTimes()
+	api := database.NewMockAPI(ctrl)
+	tx := transaction.NewMockTransaction(ctrl)
+	api.EXPECT().GetTransaction().Return(tx).AnyTimes()
+	txImp := transaction.NewMockImplementation(ctrl)
+	tx.EXPECT().Implementation().Return(txImp).AnyTimes()
+	return connection, client, api, tx, txImp
 }
 
-func (mld *MockLockingDatabase) AcquireNamedLock(name string, timeout time.Duration) (bool, errors.TracerError) {
-	return mld.AcquireNamedLockReturn, mld.AcquireNamedLockErr
+func TestExecute_LockError(t *testing.T) {
+	assert := assert1.New(t)
+	connection, client, _, _, _ := GetMocks(t)
+	deltas := []*Delta{
+		{
+			ID:     generator.Int(),
+			Name:   generator.String(10),
+			Script: generator.String(128),
+		},
+	}
+	// lock acquisition
+	expected := generator.String(32)
+	client.EXPECT().Select(gomock.Any(),
+		"SELECT GET_LOCK('delta_exec', 0) AS STATUS").Return(errors.New(expected))
+	connection.EXPECT().Close().Return(nil)
+	actual := execute(database.InstanceConfig{
+		DeltaLockMaxTries:     1,
+		DeltaLockMinimumCycle: 1,
+		DeltaLockMaxCycle:     2,
+	}, connection, "", deltas)
+	assert.EqualError(actual, expected)
 }
 
-func (mld *MockLockingDatabase) ReleaseNamedLock(name string) errors.TracerError {
-	return mld.ReleaseNamedLockErr
+type lockMatcher struct {
 }
 
-func (mld *MockLockingDatabase) Beginx() (lockingDatabaseTx, error) {
-	return mld.BeginxReturn, mld.BeginxErr
+func (lockMatcher) Matches(x interface{}) bool {
+	rows, ok := x.(*[]*lock.StatusResult)
+	if !ok {
+		return false
+	}
+	*rows = []*lock.StatusResult{{Status: 1}}
+	return true
 }
 
-func (mld *MockLockingDatabase) CreateTx(record database.Record) errors.TracerError {
-	return mld.CreateTxErr
+func (lockMatcher) String() string {
+	return "lock matcher"
 }
 
-func (mld *MockLockingDatabase) Close() error {
-	return mld.CloseErr
+func TestExecute_BeginError(t *testing.T) {
+	assert := assert1.New(t)
+	connection, client, api, _, _ := GetMocks(t)
+	deltas := []*Delta{
+		{
+			ID:     generator.Int(),
+			Name:   generator.String(10),
+			Script: generator.String(128),
+		},
+	}
+	// lock acquisition
+	client.EXPECT().Select(&lockMatcher{}, "SELECT GET_LOCK('delta_exec', 0) AS STATUS").Return(nil)
+	// lock release
+	client.EXPECT().Select(gomock.Any(), "SELECT RELEASE_LOCK('delta_exec') AS STATUS").Return(nil)
+	expected := generator.String(32)
+	connection.EXPECT().Database().Return(api)
+	api.EXPECT().Begin().Return(errors.New(expected))
+	connection.EXPECT().Close().Return(nil)
+	actual := execute(database.InstanceConfig{
+		DeltaLockMaxTries:     1,
+		DeltaLockMinimumCycle: 1,
+		DeltaLockMaxCycle:     2,
+	}, connection, "", deltas)
+	assert.EqualError(actual, expected)
 }
 
-func (mld *MockLockingDatabase) ReadOneWhereTx(record database.Record,
-	condition *qb.ConditionExpression) errors.TracerError {
-	return mld.ReadOneWhereTxErr
+type tableExistsMatcher struct {
+	tableExists bool
 }
 
-func (mld *MockLockingDatabase) TableExists(schema, name string) (bool, error) {
-	return mld.TableExistsReturn, mld.TableExistsErr
+func (matcher *tableExistsMatcher) Matches(x interface{}) bool {
+	rows, ok := x.(*[]*database.TableNameResult)
+	if !ok {
+		return false
+	}
+	if matcher.tableExists {
+		*rows = []*database.TableNameResult{{}}
+	}
+	return true
 }
 
-type MockTransaction struct {
-	ExecReturn  sql.Result
-	ExecErr     error
-	RollbackErr error
-	CommitErr   error
+func (matcher *tableExistsMatcher) String() string {
+	return fmt.Sprintf("tableExistsMatcher(%v)", matcher.tableExists)
 }
 
-func (mt *MockTransaction) Exec(query string, args ...interface{}) (sql.Result, error) {
-	return mt.ExecReturn, mt.ExecErr
+func TestExecute_TableExists_Error(t *testing.T) {
+	assert := assert1.New(t)
+	connection, client, api, _, _ := GetMocks(t)
+	deltas := []*Delta{
+		{
+			ID:     generator.Int(),
+			Name:   generator.String(10),
+			Script: generator.String(128),
+		},
+	}
+	schema := generator.String(32)
+	// lock acquisition
+	client.EXPECT().Select(&lockMatcher{}, "SELECT GET_LOCK('delta_exec', 0) AS STATUS").Return(nil)
+	// lock release
+	client.EXPECT().Select(gomock.Any(), "SELECT RELEASE_LOCK('delta_exec') AS STATUS").Return(nil)
+
+	connection.EXPECT().Database().Return(api)
+	api.EXPECT().Begin().Return(nil)
+	tableExistsQuery := fmt.Sprintf(database.TableExistenceQueryFormat, schema, DeltaTableName)
+
+	expected := generator.String(32)
+	client.EXPECT().Select(&tableExistsMatcher{true}, tableExistsQuery).Return(errors.New(expected))
+	connection.EXPECT().Close().Return(nil)
+	actual := execute(database.InstanceConfig{
+		DeltaLockMaxTries:     1,
+		DeltaLockMinimumCycle: 1,
+		DeltaLockMaxCycle:     2,
+	}, connection, schema, deltas)
+	assert.EqualError(actual, expected)
 }
 
-func (mt *MockTransaction) Rollback() error {
-	return mt.RollbackErr
-}
+func TestExecute_TableDoesNotExist(t *testing.T) {
+	assert := assert1.New(t)
+	connection, client, api, _, txImp := GetMocks(t)
+	deltas := []*Delta{
+		{
+			ID:     generator.Int(),
+			Name:   generator.String(10),
+			Script: generator.String(128),
+		},
+	}
+	schema := generator.String(32)
+	// lock acquisition
+	client.EXPECT().Select(&lockMatcher{}, "SELECT GET_LOCK('delta_exec', 0) AS STATUS").Return(nil)
+	// lock release
+	client.EXPECT().Select(gomock.Any(), "SELECT RELEASE_LOCK('delta_exec') AS STATUS").Return(nil)
 
-func (mt *MockTransaction) Commit() error {
-	return mt.CommitErr
+	connection.EXPECT().Database().Return(api)
+	api.EXPECT().Begin().Return(nil)
+	tableExistsQuery := fmt.Sprintf(database.TableExistenceQueryFormat, schema, DeltaTableName)
+
+	client.EXPECT().Select(&tableExistsMatcher{false}, tableExistsQuery).Return(nil)
+
+	txImp.EXPECT().Exec(CreateDeltaTableSQL).Return(nil, nil)
+
+	// ExecuteDelta calls
+	api.EXPECT().ReadOneWhere(gomock.Any(), DeltaMeta.ID.Equal(deltas[0].ID)).
+		Return(dberrors.NewNotFoundError())
+	txImp.EXPECT().Exec(deltas[0].Script).Return(nil, nil)
+	api.EXPECT().Create(&DeltaRecord{ID: deltas[0].ID, Name: deltas[0].Name}).Return(nil)
+	// / ExecuteDelta calls
+
+	api.EXPECT().Commit().Return(nil)
+	connection.EXPECT().Close().Return(nil)
+
+	actual := execute(database.InstanceConfig{
+		DeltaLockMaxTries:     1,
+		DeltaLockMinimumCycle: 1,
+		DeltaLockMaxCycle:     2,
+	}, connection, schema, deltas)
+	assert.NoError(actual)
 }
 
 func TestExecute(t *testing.T) {
 	assert := assert1.New(t)
-	mld := &MockLockingDatabase{
-		AcquireNamedLockReturn: true,
-		TableExistsReturn:      true,
-		BeginxReturn:           &MockTransaction{},
-	}
-
+	connection, client, api, _, txImp := GetMocks(t)
 	deltas := []*Delta{
 		{
-			ID:   1,
-			Name: "test",
+			ID:     generator.Int(),
+			Name:   generator.String(10),
+			Script: generator.String(128),
 		},
 	}
+	schema := generator.String(32)
+	// lock acquisition
+	client.EXPECT().Select(&lockMatcher{}, "SELECT GET_LOCK('delta_exec', 0) AS STATUS").Return(nil)
+	// lock release
+	client.EXPECT().Select(gomock.Any(), "SELECT RELEASE_LOCK('delta_exec') AS STATUS").Return(nil)
 
-	err := execute(database.InstanceConfig{}, "", deltas, mld)
-	assert.NoError(err)
+	connection.EXPECT().Database().Return(api)
+	api.EXPECT().Begin().Return(nil)
+	tableExistsQuery := fmt.Sprintf(database.TableExistenceQueryFormat, schema, DeltaTableName)
+
+	client.EXPECT().Select(&tableExistsMatcher{true}, tableExistsQuery).Return(nil)
+
+	// ExecuteDelta calls
+	api.EXPECT().ReadOneWhere(gomock.Any(), DeltaMeta.ID.Equal(deltas[0].ID)).
+		Return(dberrors.NewNotFoundError())
+	txImp.EXPECT().Exec(deltas[0].Script).Return(nil, nil)
+	api.EXPECT().Create(&DeltaRecord{ID: deltas[0].ID, Name: deltas[0].Name}).Return(nil)
+	// / ExecuteDelta calls
+
+	api.EXPECT().Commit().Return(nil)
+	connection.EXPECT().Close().Return(nil)
+
+	actual := execute(database.InstanceConfig{
+		DeltaLockMaxTries:     1,
+		DeltaLockMinimumCycle: 1,
+		DeltaLockMaxCycle:     2,
+	}, connection, schema, deltas)
+	assert.NoError(actual)
 }
 
-func TestExecute_BeginxError(t *testing.T) {
+func TestExecute_Rollback(t *testing.T) {
 	assert := assert1.New(t)
-	expected := errors.New(generator.String(20))
-	mld := &MockLockingDatabase{
-		AcquireNamedLockReturn: true,
-		BeginxErr:              expected,
-	}
-
-	err := execute(database.InstanceConfig{}, "", nil, mld)
-	assert.EqualError(err, expected.Error())
-}
-
-func TestExecute_TableExistsError(t *testing.T) {
-	assert := assert1.New(t)
-	expected := errors.New(generator.String(20))
-	mld := &MockLockingDatabase{
-		AcquireNamedLockReturn: true,
-		BeginxReturn:           &MockTransaction{},
-		TableExistsErr:         expected,
-	}
-
-	err := execute(database.InstanceConfig{}, "", nil, mld)
-	assert.EqualError(err, expected.Error())
-}
-
-func TestExecute_ExecError(t *testing.T) {
-	assert := assert1.New(t)
-	expected := errors.New(generator.String(20))
-	mld := &MockLockingDatabase{
-		AcquireNamedLockReturn: true,
-		BeginxReturn:           &MockTransaction{ExecErr: expected},
-	}
-
-	err := execute(database.InstanceConfig{}, "", nil, mld)
-	assert.EqualError(err, expected.Error())
-}
-
-func TestExecute_ExecuteDeltaError(t *testing.T) {
-	assert := assert1.New(t)
-	expected := errors.New(generator.String(20))
-	mld := &MockLockingDatabase{
-		AcquireNamedLockReturn: true,
-		BeginxReturn:           &MockTransaction{},
-		ReadOneWhereTxErr:      expected,
-	}
-
+	connection, client, api, _, txImp := GetMocks(t)
 	deltas := []*Delta{
 		{
-			ID:   1,
-			Name: "test",
+			ID:     generator.Int(),
+			Name:   generator.String(10),
+			Script: generator.String(128),
 		},
 	}
+	schema := generator.String(32)
+	// lock acquisition
+	client.EXPECT().Select(&lockMatcher{}, "SELECT GET_LOCK('delta_exec', 0) AS STATUS").Return(nil)
+	// lock release
+	client.EXPECT().Select(gomock.Any(), "SELECT RELEASE_LOCK('delta_exec') AS STATUS").Return(nil)
 
-	err := execute(database.InstanceConfig{}, "", deltas, mld)
-	assert.EqualError(err, expected.Error())
-}
+	connection.EXPECT().Database().Return(api)
+	api.EXPECT().Begin().Return(nil)
+	tableExistsQuery := fmt.Sprintf(database.TableExistenceQueryFormat, schema, DeltaTableName)
 
-func TestExecuteDelta(t *testing.T) {
-	assert := assert1.New(t)
-	mld := &MockLockingDatabase{
-		ReadOneWhereTxErr: database.NewNotFoundError(),
-	}
+	client.EXPECT().Select(&tableExistsMatcher{true}, tableExistsQuery).Return(nil)
 
-	mt := &MockTransaction{}
+	// ExecuteDelta calls
+	api.EXPECT().ReadOneWhere(gomock.Any(), DeltaMeta.ID.Equal(deltas[0].ID)).
+		Return(dberrors.NewNotFoundError())
+	txImp.EXPECT().Exec(deltas[0].Script).Return(nil, nil)
+	expected := generator.String(32)
+	api.EXPECT().Create(&DeltaRecord{ID: deltas[0].ID, Name: deltas[0].Name}).
+		Return(errors.New(expected))
+	// / ExecuteDelta calls
 
-	delta := &Delta{
-		ID:   1,
-		Name: "test",
-	}
+	api.EXPECT().Rollback().Return(nil)
+	connection.EXPECT().Close().Return(nil)
 
-	err := ExecuteDelta(mt, mld, delta)
-	assert.NoError(err)
+	actual := execute(database.InstanceConfig{
+		DeltaLockMaxTries:     1,
+		DeltaLockMinimumCycle: 1,
+		DeltaLockMaxCycle:     2,
+	}, connection, schema, deltas)
+	assert.EqualError(actual, expected)
 }
 
 func TestExecuteDelta_AlreadyExecuted(t *testing.T) {
 	assert := assert1.New(t)
-	mld := &MockLockingDatabase{}
-	mt := &MockTransaction{}
-
+	ctrl := gomock.NewController(t)
+	api := database.NewMockAPI(ctrl)
 	delta := &Delta{
-		ID:   1,
-		Name: "test",
+		ID:   generator.Int(),
+		Name: generator.String(32),
 	}
-
-	err := ExecuteDelta(mt, mld, delta)
+	api.EXPECT().ReadOneWhere(gomock.Any(), DeltaMeta.ID.Equal(delta.ID)).Return(nil)
+	err := ExecuteDelta(api, delta)
 	assert.NoError(err)
 }
 
-func TestExecuteDelta_ReadError(t *testing.T) {
+func TestExecuteDelta_UnexpectedError(t *testing.T) {
 	assert := assert1.New(t)
-	expected := errors.New(generator.String(20))
-	mld := &MockLockingDatabase{
-		ReadOneWhereTxErr: expected,
-	}
-
-	mt := &MockTransaction{}
-
+	ctrl := gomock.NewController(t)
+	api := database.NewMockAPI(ctrl)
 	delta := &Delta{
-		ID:   1,
-		Name: "test",
+		ID:   generator.Int(),
+		Name: generator.String(32),
 	}
-
-	err := ExecuteDelta(mt, mld, delta)
-	assert.EqualError(err, expected.Error())
+	expected := generator.String(32)
+	api.EXPECT().ReadOneWhere(gomock.Any(), DeltaMeta.ID.Equal(delta.ID)).
+		Return(errors.New(expected))
+	actual := ExecuteDelta(api, delta)
+	assert.EqualError(actual, expected)
 }
 
 func TestExecuteDelta_ExecError(t *testing.T) {
 	assert := assert1.New(t)
-	expected := errors.New(generator.String(20))
-	mld := &MockLockingDatabase{
-		ReadOneWhereTxErr: database.NewNotFoundError(),
-	}
-
-	mt := &MockTransaction{
-		ExecErr: expected,
-	}
-
+	ctrl := gomock.NewController(t)
+	api := database.NewMockAPI(ctrl)
+	tx := transaction.NewMockTransaction(ctrl)
+	txImp := transaction.NewMockImplementation(ctrl)
 	delta := &Delta{
-		ID:   1,
-		Name: "test",
+		ID:     generator.Int(),
+		Name:   generator.String(32),
+		Script: generator.String(128),
 	}
-
-	err := ExecuteDelta(mt, mld, delta)
-	assert.EqualError(err, expected.Error())
+	expected := generator.String(32)
+	api.EXPECT().ReadOneWhere(gomock.Any(), DeltaMeta.ID.Equal(delta.ID)).
+		Return(dberrors.NewNotFoundError())
+	api.EXPECT().GetTransaction().Return(tx)
+	tx.EXPECT().Implementation().Return(txImp)
+	txImp.EXPECT().Exec(delta.Script).Return(nil, errors.New(expected))
+	actual := ExecuteDelta(api, delta)
+	assert.EqualError(actual, expected)
 }
 
-func TestExecuteDelta_CreateTxError(t *testing.T) {
+func TestExecuteDelta(t *testing.T) {
 	assert := assert1.New(t)
-	expected := errors.New(generator.String(20))
-	mld := &MockLockingDatabase{
-		ReadOneWhereTxErr: database.NewNotFoundError(),
-		CreateTxErr:       expected,
-	}
-
-	mt := &MockTransaction{}
-
+	ctrl := gomock.NewController(t)
+	api := database.NewMockAPI(ctrl)
+	tx := transaction.NewMockTransaction(ctrl)
+	txImp := transaction.NewMockImplementation(ctrl)
 	delta := &Delta{
-		ID:   1,
-		Name: "test",
+		ID:     generator.Int(),
+		Name:   generator.String(32),
+		Script: generator.String(128),
 	}
-
-	err := ExecuteDelta(mt, mld, delta)
-	assert.EqualError(err, expected.Error())
+	expected := generator.String(32)
+	api.EXPECT().ReadOneWhere(gomock.Any(), DeltaMeta.ID.Equal(delta.ID)).
+		Return(dberrors.NewNotFoundError())
+	api.EXPECT().GetTransaction().Return(tx)
+	tx.EXPECT().Implementation().Return(txImp)
+	txImp.EXPECT().Exec(delta.Script).Return(nil, nil)
+	api.EXPECT().Create(&DeltaRecord{ID: delta.ID, Name: delta.Name}).Return(errors.New(expected))
+	actual := ExecuteDelta(api, delta)
+	assert.EqualError(actual, expected)
 }

@@ -7,12 +7,13 @@
 //   - include stack traces or other info
 //
 // Requirements:
+//
 //   - plain text output to local log file (io.Writer)
+//
 //   - structured json output to CloudWatch (or similar service)
 //
-//  inputs for each level:
-//    error OR printf style
-//
+//     inputs for each level:
+//     error OR printf style
 package log
 
 import (
