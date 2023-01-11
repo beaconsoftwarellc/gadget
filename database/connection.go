@@ -57,7 +57,8 @@ func connect(dialect, url string, logger log.Logger) (*sqlx.DB, errors.TracerErr
 
 func Connect(cfg Configuration) (Connection, error) {
 	obfuscatedConnection := obfuscateConnection(cfg.DatabaseConnection())
-	log.Infof("initializing database connection: %s, %s", cfg.DatabaseDialect(), obfuscatedConnection)
+	log.Infof("initializing database connection: %s, %s", cfg.DatabaseDialect(),
+		obfuscatedConnection)
 	var err errors.TracerError
 	var conn *sqlx.DB
 	for retries := 0; retries < cfg.NumberOfRetries(); retries++ {
@@ -69,10 +70,10 @@ func Connect(cfg Configuration) (Connection, error) {
 		time.Sleep(cfg.WaitBetweenRetries())
 	}
 	if nil != err {
-		panic(err)
+		return nil, err
 	}
 	log.Infof("database connection success: %s, %s", cfg.DatabaseDialect(), obfuscatedConnection)
-	return &connection{client: conn, configuration: cfg}, nil
+	return &connection{client: conn, configuration: cfg, connected: true}, nil
 }
 
 type connection struct {
