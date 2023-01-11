@@ -68,7 +68,6 @@ func New(db Begin, logger log.Logger, slow time.Duration) (Transaction, error) {
 	implementation := &slowQueryLoggerTx{
 		implementation: tx,
 		slow:           slow,
-		log:            logger,
 		id:             generator.ID("TX"),
 	}
 	return &transaction{implementation: implementation}, nil
@@ -76,7 +75,6 @@ func New(db Begin, logger log.Logger, slow time.Duration) (Transaction, error) {
 
 type transaction struct {
 	implementation Implementation
-	logger         log.Logger
 }
 
 func (tx *transaction) Implementation() Implementation {
