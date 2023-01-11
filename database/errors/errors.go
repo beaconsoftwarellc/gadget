@@ -71,7 +71,7 @@ func NewDatabaseConnectionError(err error) errors.TracerError {
 }
 
 // TranslateError converts a mysql or other obtuse errors into discrete explicit errors
-func TranslateError(err error, action SQLQueryType, stmt string, logger log.Logger) errors.TracerError {
+func TranslateError(err error, action SQLQueryType, stmt string) errors.TracerError {
 	if nil == err {
 		return nil
 	}
@@ -80,23 +80,23 @@ func TranslateError(err error, action SQLQueryType, stmt string, logger log.Logg
 	}
 	driverErr, ok := err.(*mysql.MySQLError)
 	if !ok {
-		return NewSystemError(action, stmt, err, logger)
+		return NewSystemError(action, stmt, err)
 	}
 	switch driverErr.Number {
 	// Duplicate primary key
 	case mysqlDuplicateEntry:
 		if strings.Contains(err.Error(), primaryKeyConstraintCheck) {
-			return NewDuplicateRecordError(action, stmt, err, logger)
+			return NewDuplicateRecordError(action, stmt, err)
 		}
-		return NewUniqueConstraintError(action, stmt, err, logger)
+		return NewUniqueConstraintError(action, stmt, err)
 	// Data too long for column
 	case mysqlDataTooLong:
-		return NewDataTooLongError(action, stmt, err, logger)
+		return NewDataTooLongError(action, stmt, err)
 	// Invalid foreign key
 	case mysqlInvalidForeignKey:
-		return NewInvalidForeignKeyError(action, stmt, err, logger)
+		return NewInvalidForeignKeyError(action, stmt, err)
 	default:
-		return NewExecutionError(action, stmt, err, logger)
+		return NewExecutionError(action, stmt, err)
 	}
 }
 
@@ -111,7 +111,7 @@ type SQLExecutionError struct {
 }
 
 // NewExecutionError logs the error and returns an ExecutionError
-func NewExecutionError(action SQLQueryType, stmt string, err error, logger log.Logger) errors.TracerError {
+func NewExecutionError(action SQLQueryType, stmt string, err error) errors.TracerError {
 	e := &SQLExecutionError{
 		ReferenceID: generator.ID(dbErrPrefix),
 		Action:      action,
@@ -120,7 +120,6 @@ func NewExecutionError(action SQLQueryType, stmt string, err error, logger log.L
 		trace:       errors.GetStackTrace(),
 	}
 	e.message = fmt.Sprintf("%s: caused a database error", e.Action)
-	logger.Errorf("%#v", e)
 	return e
 }
 
@@ -186,7 +185,7 @@ type SQLSystemError struct {
 }
 
 // NewSystemError logs the error and returns an ExecutionError
-func NewSystemError(action SQLQueryType, stmt string, err error, logger log.Logger) errors.TracerError {
+func NewSystemError(action SQLQueryType, stmt string, err error) errors.TracerError {
 	e := &SQLSystemError{
 		SQLExecutionError{
 			ErrMsg:      err.Error(),
@@ -197,7 +196,6 @@ func NewSystemError(action SQLQueryType, stmt string, err error, logger log.Logg
 			trace:       errors.GetStackTrace(),
 		},
 	}
-	logger.Errorf("%#v", e)
 	return e
 }
 
@@ -224,8 +222,8 @@ type DuplicateRecordError struct {
 }
 
 // NewDuplicateRecordError is returned when a records is created/updated with a duplicate primary key
-func NewDuplicateRecordError(action SQLQueryType, stmt string, err error, logger log.Logger) errors.TracerError {
-	e := &DuplicateRecordError{
+func NewDuplicateRecordError(action SQLQueryType, stmt string, err error) errors.TracerError {
+	return &DuplicateRecordError{
 		SQLExecutionError{ErrMsg: err.Error(),
 			ReferenceID: generator.ID(dbErrPrefix),
 			Action:      action,
@@ -234,8 +232,6 @@ func NewDuplicateRecordError(action SQLQueryType, stmt string, err error, logger
 			trace:       errors.GetStackTrace(),
 		},
 	}
-	logger.Error(e)
-	return e
 }
 
 // UniqueConstraintError is returned when a mysql error #1062 occurs for a Unique constraint
@@ -244,8 +240,8 @@ type UniqueConstraintError struct {
 }
 
 // NewUniqueConstraintError is returned when a record is created/updated with a duplicate primary key
-func NewUniqueConstraintError(action SQLQueryType, stmt string, err error, logger log.Logger) errors.TracerError {
-	e := &UniqueConstraintError{
+func NewUniqueConstraintError(action SQLQueryType, stmt string, err error) errors.TracerError {
+	return &UniqueConstraintError{
 		SQLExecutionError{ErrMsg: err.Error(),
 			ReferenceID: generator.ID(dbErrPrefix),
 			Action:      action,
@@ -254,8 +250,6 @@ func NewUniqueConstraintError(action SQLQueryType, stmt string, err error, logge
 			trace:       errors.GetStackTrace(),
 		},
 	}
-	logger.Error(e)
-	return e
 }
 
 // DataTooLongError is returned when a mysql error #1406 occurs
@@ -264,8 +258,8 @@ type DataTooLongError struct {
 }
 
 // NewDataTooLongError logs the error and returns an instantiated DataTooLongError
-func NewDataTooLongError(action SQLQueryType, stmt string, err error, logger log.Logger) errors.TracerError {
-	e := &DataTooLongError{
+func NewDataTooLongError(action SQLQueryType, stmt string, err error) errors.TracerError {
+	return &DataTooLongError{
 		SQLExecutionError{ErrMsg: err.Error(),
 			ReferenceID: generator.ID(dbErrPrefix),
 			Action:      action,
@@ -274,8 +268,6 @@ func NewDataTooLongError(action SQLQueryType, stmt string, err error, logger log
 			trace:       errors.GetStackTrace(),
 		},
 	}
-	logger.Error(e)
-	return e
 }
 
 // InvalidForeignKeyError is returned when a mysql error #1452 occurs
@@ -284,7 +276,7 @@ type InvalidForeignKeyError struct {
 }
 
 // NewInvalidForeignKeyError logs the error and returns an instantiated InvalidForeignKeyError
-func NewInvalidForeignKeyError(action SQLQueryType, stmt string, err error, logger log.Logger) errors.TracerError {
+func NewInvalidForeignKeyError(action SQLQueryType, stmt string, err error) errors.TracerError {
 	e := &InvalidForeignKeyError{
 		SQLExecutionError{ErrMsg: err.Error(),
 			ReferenceID: generator.ID(dbErrPrefix),
@@ -294,7 +286,7 @@ func NewInvalidForeignKeyError(action SQLQueryType, stmt string, err error, logg
 			trace:       errors.GetStackTrace(),
 		},
 	}
-	logger.Error(e)
+
 	return e
 }
 
