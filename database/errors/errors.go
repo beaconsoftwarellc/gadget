@@ -110,7 +110,7 @@ type SQLExecutionError struct {
 	trace       []string
 }
 
-// NewExecutionError logs the error and returns an ExecutionError
+// NewExecutionError and returns an ExecutionError
 func NewExecutionError(action SQLQueryType, stmt string, err error) errors.TracerError {
 	e := &SQLExecutionError{
 		ReferenceID: generator.ID(dbErrPrefix),
@@ -125,7 +125,8 @@ func NewExecutionError(action SQLQueryType, stmt string, err error) errors.Trace
 
 // Error prints a ExecutionError
 func (e *SQLExecutionError) Error() string {
-	return fmt.Sprintf("%s (%s)", e.message, e.ReferenceID)
+	return fmt.Sprintf("[Ref:%s] %s: %s when executing '%s'", e.ReferenceID,
+		e.message, e.ErrMsg, e.Stmt)
 }
 
 // Trace returns the stack trace for the error
@@ -184,9 +185,9 @@ type SQLSystemError struct {
 	SQLExecutionError
 }
 
-// NewSystemError logs the error and returns an ExecutionError
+// NewSystemError returns an ExecutionError
 func NewSystemError(action SQLQueryType, stmt string, err error) errors.TracerError {
-	e := &SQLSystemError{
+	return &SQLSystemError{
 		SQLExecutionError{
 			ErrMsg:      err.Error(),
 			ReferenceID: generator.ID(dbErrPrefix),
@@ -196,10 +197,9 @@ func NewSystemError(action SQLQueryType, stmt string, err error) errors.TracerEr
 			trace:       errors.GetStackTrace(),
 		},
 	}
-	return e
 }
 
-// NotAPointerError  indicates that a record object isn't a pointer
+// NotAPointerError indicates that a record object isn't a pointer
 type NotAPointerError struct{ trace []string }
 
 func (err *NotAPointerError) Error() string {
@@ -257,7 +257,7 @@ type DataTooLongError struct {
 	SQLExecutionError
 }
 
-// NewDataTooLongError logs the error and returns an instantiated DataTooLongError
+// NewDataTooLongError and returns an instantiated DataTooLongError
 func NewDataTooLongError(action SQLQueryType, stmt string, err error) errors.TracerError {
 	return &DataTooLongError{
 		SQLExecutionError{ErrMsg: err.Error(),
