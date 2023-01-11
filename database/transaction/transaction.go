@@ -68,6 +68,7 @@ func New(db Begin, logger log.Logger, slow time.Duration) (Transaction, error) {
 	implementation := &slowQueryLoggerTx{
 		implementation: tx,
 		slow:           slow,
+		log:            logger,
 		id:             generator.ID("TX"),
 	}
 	return &transaction{implementation: implementation}, nil
