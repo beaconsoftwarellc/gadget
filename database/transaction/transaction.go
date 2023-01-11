@@ -2,6 +2,7 @@
 package transaction
 
 import (
+	"fmt"
 	"time"
 
 	dberrors "github.com/beaconsoftwarellc/gadget/v2/database/errors"
@@ -152,9 +153,8 @@ func (tx *transaction) ReadOneWhere(obj record.Record, condition *qb.ConditionEx
 	if nil != err {
 		return errors.Wrap(err)
 	}
-	log.Errorf("STATEMENT %s, ARGS: %v", stmt, args)
 	if err = tx.implementation.QueryRowx(stmt, args...).StructScan(obj); nil != err {
-		return dberrors.TranslateError(err, dberrors.Select, stmt)
+		return dberrors.TranslateError(err, dberrors.Select, fmt.Sprintf("%s %% %v", stmt, args))
 	}
 	return nil
 }
