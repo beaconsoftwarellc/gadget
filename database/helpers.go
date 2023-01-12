@@ -44,7 +44,7 @@ func SelectWithTotal[T any](db API, table qb.Table, target T,
 		return target, int(total), err
 	}
 
-	err = db.Select(target, query, record.NewListOptions(limit, offset))
+	err = db.Select(&target, query, record.NewListOptions(limit, offset))
 	if nil != err {
 		return target, 0, err
 	}
