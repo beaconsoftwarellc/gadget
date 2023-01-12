@@ -34,7 +34,7 @@ func obfuscateConnection(connection string) string {
 
 // SelectWithTotal executes the select query populating target and returning the
 // total records possible
-func SelectWithTotal[T any](db API, table qb.Table, target T,
+func SelectWithTotal[T any](db API, table qb.Table, target *T,
 	query *qb.SelectQuery, limit, offset int) (int, error) {
 	var (
 		total int32
@@ -44,7 +44,7 @@ func SelectWithTotal[T any](db API, table qb.Table, target T,
 		return int(total), err
 	}
 
-	err = db.Select(&target, query, record.NewListOptions(limit, offset))
+	err = db.Select(target, query, record.NewListOptions(limit, offset))
 	if nil != err {
 		return 0, err
 	}
