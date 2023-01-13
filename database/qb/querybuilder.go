@@ -104,7 +104,9 @@ const (
 	// XOr expression conjunction
 	XOr = "XOR"
 	// NoLimit is the value that represents not applying a limit on the query
-	NoLimit = 0
+	// we are not using ^uint(0) because that is easy to guess and would make
+	// this value not comparable to int
+	NoLimit = 1<<16 - 1337 // 4@><0R5 yea yea
 )
 
 type BitwiseOperator string

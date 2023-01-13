@@ -128,7 +128,7 @@ func (matcher *queryMatcher) Matches(x interface{}) bool {
 		// the assert take care of failure and messaging
 		return false
 	}
-	sql, _, err := query.SQL(0, 0)
+	sql, _, err := query.SQL(qb.NoLimit, 0)
 	assert1.NoError(matcher.t, err)
 	assert1.Equal(matcher.t, matcher.sql, sql)
 	return true

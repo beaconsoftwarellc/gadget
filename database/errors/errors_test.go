@@ -220,7 +220,7 @@ func TestDatabaseToApiError(t *testing.T) {
 			name:     "data too long error",
 			primary:  Action,
 			err:      &DataTooLongError{},
-			expected: "rpc error: code = InvalidArgument desc = [DAT.ERR.262] action field too long:  ()",
+			expected: "rpc error: code = InvalidArgument desc = [DAT.ERR.262] action field too long: :  [Ref:]",
 		},
 		{
 			name:     "not found",
@@ -232,13 +232,13 @@ func TestDatabaseToApiError(t *testing.T) {
 			name:     "duplicate record",
 			primary:  Action,
 			err:      &DuplicateRecordError{},
-			expected: "rpc error: code = AlreadyExists desc = [DAT.ERR.262] action record already exists:  ()",
+			expected: "rpc error: code = AlreadyExists desc = [DAT.ERR.262] action record already exists: :  [Ref:]",
 		},
 		{
 			name:     "unique constraint",
 			primary:  Action,
 			err:      &UniqueConstraintError{},
-			expected: "rpc error: code = InvalidArgument desc = [DAT.ERR.262] action unique constraint violation:  ()",
+			expected: "rpc error: code = InvalidArgument desc = [DAT.ERR.262] action unique constraint violation: :  [Ref:]",
 		},
 		{
 			name:     "validation",
@@ -262,7 +262,7 @@ func TestDatabaseToApiError(t *testing.T) {
 			name:     "foreign key",
 			primary:  Action,
 			err:      &InvalidForeignKeyError{},
-			expected: "rpc error: code = InvalidArgument desc = [DAT.ERR.262] action foreign key violation:  ()",
+			expected: "rpc error: code = InvalidArgument desc = [DAT.ERR.262] action foreign key violation: :  [Ref:]",
 		},
 	}
 	for _, tt := range tests {
