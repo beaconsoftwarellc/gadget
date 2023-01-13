@@ -110,7 +110,7 @@ type SQLExecutionError struct {
 	trace       []string
 }
 
-// NewExecutionError and returns an ExecutionError
+// NewExecutionError with wrapping the passed error with the passed action and sql statement
 func NewExecutionError(action SQLQueryType, stmt string, err error) errors.TracerError {
 	e := &SQLExecutionError{
 		ReferenceID: generator.ID(dbErrPrefix),
@@ -123,7 +123,8 @@ func NewExecutionError(action SQLQueryType, stmt string, err error) errors.Trace
 	return e
 }
 
-// Error prints a ExecutionError
+// Error logs the reference id and statement for reference and returns a string
+// representation of this error containing the reference ID
 func (e *SQLExecutionError) Error() string {
 	log.Infof("[Ref:%s] ERROR STMT: %s", e.ReferenceID, e.Stmt)
 	return fmt.Sprintf("%s: %s [Ref:%s]",
@@ -258,7 +259,8 @@ type DataTooLongError struct {
 	SQLExecutionError
 }
 
-// NewDataTooLongError and returns an instantiated DataTooLongError
+// NewDataTooLongError wrapping the passer error with references to the passed sql statement
+// and action
 func NewDataTooLongError(action SQLQueryType, stmt string, err error) errors.TracerError {
 	return &DataTooLongError{
 		SQLExecutionError{ErrMsg: err.Error(),
@@ -276,9 +278,10 @@ type InvalidForeignKeyError struct {
 	SQLExecutionError
 }
 
-// NewInvalidForeignKeyError logs the error and returns an instantiated InvalidForeignKeyError
+// NewInvalidForeignKeyError wrapping the passed error with references to the passed
+// sql and action.
 func NewInvalidForeignKeyError(action SQLQueryType, stmt string, err error) errors.TracerError {
-	e := &InvalidForeignKeyError{
+	return &InvalidForeignKeyError{
 		SQLExecutionError{ErrMsg: err.Error(),
 			ReferenceID: generator.ID(dbErrPrefix),
 			Action:      action,
@@ -287,8 +290,6 @@ func NewInvalidForeignKeyError(action SQLQueryType, stmt string, err error) erro
 			trace:       errors.GetStackTrace(),
 		},
 	}
-
-	return e
 }
 
 // DatabaseToApiError handles conversion from a database error to a GRPC friendly
