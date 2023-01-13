@@ -3,6 +3,8 @@ package database
 import (
 	"strings"
 
+	"github.com/beaconsoftwarellc/gadget/v2/database/qb"
+	"github.com/beaconsoftwarellc/gadget/v2/database/record"
 	"github.com/beaconsoftwarellc/gadget/v2/database/transaction"
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
 	"github.com/beaconsoftwarellc/gadget/v2/log"
@@ -28,4 +30,23 @@ func obfuscateConnection(connection string) string {
 			obfuscateIndex, "*")
 	}
 	return obfuscatedConnection
+}
+
+// SelectWithTotal executes the select query populating target and returning the
+// total records possible
+func SelectWithTotal[T any](db API, table qb.Table, target T,
+	query *qb.SelectQuery, limit, offset int) (T, int, error) {
+	var (
+		total int32
+		err   error
+	)
+	if total, err = db.Count(table, query); err != nil || limit == 0 || total == 0 {
+		return target, int(total), err
+	}
+
+	err = db.Select(&target, query, record.NewListOptions(limit, offset))
+	if nil != err {
+		return target, 0, err
+	}
+	return target, int(total), err
 }

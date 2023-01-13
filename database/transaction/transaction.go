@@ -2,6 +2,7 @@
 package transaction
 
 import (
+	"fmt"
 	"time"
 
 	dberrors "github.com/beaconsoftwarellc/gadget/v2/database/errors"
@@ -75,7 +76,6 @@ func New(db Begin, logger log.Logger, slow time.Duration) (Transaction, error) {
 
 type transaction struct {
 	implementation Implementation
-	logger         log.Logger
 }
 
 func (tx *transaction) Implementation() Implementation {
@@ -98,7 +98,7 @@ func (tx *transaction) Create(obj record.Record) errors.TracerError {
 		if nil == err {
 			return tx.Read(obj, obj.PrimaryKey())
 		}
-		tracerErr = dberrors.TranslateError(err, dberrors.Insert, stmt, tx.logger)
+		tracerErr = dberrors.TranslateError(err, dberrors.Insert, stmt)
 		switch tracerErr.(type) {
 		case *dberrors.DuplicateRecordError:
 			previousPK = obj.PrimaryKey()
@@ -138,7 +138,7 @@ func (tx *transaction) Upsert(obj record.Record) errors.TracerError {
 	_, err = tx.implementation.NamedExec(stmt, obj)
 
 	if nil != err {
-		return dberrors.TranslateError(err, dberrors.Insert, stmt, tx.logger)
+		return dberrors.TranslateError(err, dberrors.Insert, stmt)
 	}
 	return tx.Read(obj, obj.PrimaryKey())
 }
@@ -152,9 +152,8 @@ func (tx *transaction) ReadOneWhere(obj record.Record, condition *qb.ConditionEx
 	if nil != err {
 		return errors.Wrap(err)
 	}
-
 	if err = tx.implementation.QueryRowx(stmt, args...).StructScan(obj); nil != err {
-		return dberrors.TranslateError(err, dberrors.Select, stmt, tx.logger)
+		return dberrors.TranslateError(err, dberrors.Select, fmt.Sprintf("%s %% %v", stmt, args))
 	}
 	return nil
 }
@@ -169,7 +168,7 @@ func (tx *transaction) List(def record.Record, obj any,
 		return errors.Wrap(err)
 	}
 	if err = tx.implementation.Select(obj, stmt); nil != err {
-		return dberrors.TranslateError(err, dberrors.Select, stmt, tx.logger)
+		return dberrors.TranslateError(err, dberrors.Select, stmt)
 	}
 	return nil
 }
@@ -181,7 +180,7 @@ func (tx *transaction) ListWhere(meta record.Record, target interface{},
 		return errors.Wrap(err)
 	}
 	if err = tx.implementation.Select(target, stmt, values...); nil != err {
-		return dberrors.TranslateError(err, dberrors.Select, stmt, tx.logger)
+		return dberrors.TranslateError(err, dberrors.Select, stmt)
 	}
 	return nil
 }
@@ -201,7 +200,7 @@ func (tx *transaction) Select(target interface{}, query *qb.SelectQuery,
 	}
 
 	if err = tx.implementation.Select(target, stmt, values...); nil != err {
-		return dberrors.TranslateError(err, dberrors.Select, stmt, tx.logger)
+		return dberrors.TranslateError(err, dberrors.Select, stmt)
 	}
 	return nil
 }
@@ -219,7 +218,7 @@ func (tx *transaction) Update(obj record.Record) errors.TracerError {
 
 	_, err = tx.implementation.NamedExec(stmt, obj)
 	if nil != err {
-		return dberrors.TranslateError(err, dberrors.Update, stmt, tx.logger)
+		return dberrors.TranslateError(err, dberrors.Update, stmt)
 	}
 
 	return tx.Read(obj, obj.PrimaryKey())
@@ -240,7 +239,7 @@ func (tx *transaction) DeleteWhere(obj record.Record,
 	_, err = tx.implementation.Exec(stmt, values...)
 
 	if nil != err {
-		return dberrors.TranslateError(err, dberrors.Delete, stmt, tx.logger)
+		return dberrors.TranslateError(err, dberrors.Delete, stmt)
 	}
 	return nil
 }
@@ -260,7 +259,7 @@ func (tx *transaction) UpdateWhere(obj record.Record,
 
 	result, err := tx.implementation.Exec(stmt, values...)
 	if nil != err {
-		return 0, dberrors.TranslateError(err, dberrors.Update, stmt, tx.logger)
+		return 0, dberrors.TranslateError(err, dberrors.Update, stmt)
 	}
 
 	rowsAffected, err := result.RowsAffected()

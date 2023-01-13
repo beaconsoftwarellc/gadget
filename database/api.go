@@ -123,7 +123,8 @@ func (db *api) Count(table qb.Table, query *qb.SelectQuery) (int32, error) {
 		return 0, err
 	}
 	if len(target) == 0 {
-		return 0, errors.New("[GAD.DB.126] row count query execution failed (no rows)")
+		// this is valid if the query has a group by
+		return 0, nil
 	}
 	return int32(target[0].Count), nil
 }

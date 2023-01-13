@@ -39,13 +39,13 @@ func (tx *slowQueryLoggerTx) NamedExec(query string, arg interface{}) (sql.Resul
 func (tx *slowQueryLoggerTx) QueryRowx(query string, args ...interface{}) *sqlx.Row {
 	start := time.Now()
 	defer func() { tx.logSlow(query, time.Since(start)) }()
-	return tx.implementation.QueryRowx(query, args)
+	return tx.implementation.QueryRowx(query, args...)
 }
 
 func (tx *slowQueryLoggerTx) Select(dest interface{}, query string, args ...interface{}) error {
 	start := time.Now()
 	defer func() { tx.logSlow(query, time.Since(start)) }()
-	return tx.implementation.Select(dest, query, args)
+	return tx.implementation.Select(dest, query, args...)
 }
 
 func (tx *slowQueryLoggerTx) Commit() error {

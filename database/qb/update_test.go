@@ -12,7 +12,7 @@ func TestUpdateQuery(t *testing.T) {
 	assert := assert1.New(t)
 	expectedName := generator.String(20)
 	query := Update(Person).Set(Person.Name, expectedName)
-	sql, values, err := query.SQL(0)
+	sql, values, err := query.SQL(NoLimit)
 	assert.NoError(err)
 	if assert.Equal(1, len(values)) {
 		assert.Equal(expectedName, values[0])
@@ -23,7 +23,7 @@ func TestUpdateQuery(t *testing.T) {
 func TestUpdateQueryParameterized(t *testing.T) {
 	assert := assert1.New(t)
 	query := Update(Person).SetParam(Person.Name).Where(Person.ID.Equal(":" + Person.ID.GetName()))
-	sql, err := query.ParameterizedSQL(0)
+	sql, err := query.ParameterizedSQL(NoLimit)
 	assert.NoError(err)
 	assert.Equal("UPDATE `person` SET  `person`.`name` = :name WHERE `person`.`id` = :id", sql)
 }
@@ -33,7 +33,7 @@ func TestUpdateQueryMulitpleFields(t *testing.T) {
 	expectedName := generator.String(20)
 	expectedAddressID := generator.TestID()
 	query := Update(Person).Set(Person.Name, expectedName).Set(Person.AddressID, expectedAddressID)
-	sql, values, err := query.SQL(0)
+	sql, values, err := query.SQL(NoLimit)
 	assert.NoError(err)
 	if assert.Equal(2, len(values)) {
 		assert.Equal(expectedName, values[0])
@@ -47,7 +47,7 @@ func TestUpdateQueryWhere(t *testing.T) {
 	expectedName := generator.String(20)
 	expectedAddressID := generator.TestID()
 	query := Update(Person).Set(Person.Name, expectedName).Where(Person.AddressID.Equal(expectedAddressID))
-	sql, values, err := query.SQL(0)
+	sql, values, err := query.SQL(NoLimit)
 	assert.NoError(err)
 	if assert.Equal(2, len(values)) {
 		assert.Equal(expectedName, values[0])
@@ -63,7 +63,7 @@ func TestUpdateQueryOrderBy(t *testing.T) {
 	query := Update(Person).Set(Person.Name, expectedName)
 	query.Where(Person.AddressID.Equal(expectedAddressID))
 	query.OrderBy(Person.Name, Descending)
-	sql, values, err := query.SQL(0)
+	sql, values, err := query.SQL(NoLimit)
 	assert.NoError(err)
 	if assert.Equal(2, len(values)) {
 		assert.Equal(expectedName, values[0])

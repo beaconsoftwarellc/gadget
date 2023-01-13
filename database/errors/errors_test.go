@@ -11,14 +11,13 @@ import (
 	"github.com/beaconsoftwarellc/gadget/v2/database/qb"
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
 	"github.com/beaconsoftwarellc/gadget/v2/generator"
-	"github.com/beaconsoftwarellc/gadget/v2/log"
 	"github.com/beaconsoftwarellc/gadget/v2/stringutil"
 )
 
 func TestExecutionError(t *testing.T) {
 	assert := assert1.New(t)
-	err := NewExecutionError(Insert, "bar", errors.New("foo"), log.NewStackLogger()).(*SQLExecutionError)
-	err2 := NewExecutionError(Insert, "bar", errors.New("foo"), log.NewStackLogger()).(*SQLExecutionError)
+	err := NewExecutionError(Insert, "bar", errors.New("foo")).(*SQLExecutionError)
+	err2 := NewExecutionError(Insert, "bar", errors.New("foo")).(*SQLExecutionError)
 	assert.True(strings.HasPrefix(err.ReferenceID, dbErrPrefix))
 	assert.NotEqual(err.ReferenceID, err2.ReferenceID)
 	assert.Contains(err.Error(), err.ReferenceID)
@@ -33,8 +32,8 @@ func TestNewNotFoundError(t *testing.T) {
 
 func TestNewSystemError(t *testing.T) {
 	assert := assert1.New(t)
-	err := NewSystemError(Insert, "bar", errors.New("foo"), log.NewStackLogger()).(*SQLSystemError)
-	err2 := NewSystemError(Insert, "bar", errors.New("foo"), log.NewStackLogger()).(*SQLSystemError)
+	err := NewSystemError(Insert, "bar", errors.New("foo")).(*SQLSystemError)
+	err2 := NewSystemError(Insert, "bar", errors.New("foo")).(*SQLSystemError)
 	assert.True(strings.HasPrefix(err.ReferenceID, dbErrPrefix))
 	assert.NotEqual(err.ReferenceID, err2.ReferenceID)
 	assert.Contains(err.Error(), err.ReferenceID)
@@ -43,8 +42,8 @@ func TestNewSystemError(t *testing.T) {
 
 func TestNewDuplicateRecordError(t *testing.T) {
 	assert := assert1.New(t)
-	err := NewDuplicateRecordError(Insert, "bar", errors.New("foo"), log.NewStackLogger()).(*DuplicateRecordError)
-	err2 := NewDuplicateRecordError(Insert, "bar", errors.New("foo"), log.NewStackLogger()).(*DuplicateRecordError)
+	err := NewDuplicateRecordError(Insert, "bar", errors.New("foo")).(*DuplicateRecordError)
+	err2 := NewDuplicateRecordError(Insert, "bar", errors.New("foo")).(*DuplicateRecordError)
 	assert.True(strings.HasPrefix(err.ReferenceID, dbErrPrefix))
 	assert.NotEqual(err.ReferenceID, err2.ReferenceID)
 	assert.Contains(err.Error(), err.ReferenceID)
@@ -53,8 +52,8 @@ func TestNewDuplicateRecordError(t *testing.T) {
 
 func TestNewDataTooLongError(t *testing.T) {
 	assert := assert1.New(t)
-	err := NewDataTooLongError(Insert, "bar", errors.New("foo"), log.NewStackLogger()).(*DataTooLongError)
-	err2 := NewDataTooLongError(Insert, "bar", errors.New("foo"), log.NewStackLogger()).(*DataTooLongError)
+	err := NewDataTooLongError(Insert, "bar", errors.New("foo")).(*DataTooLongError)
+	err2 := NewDataTooLongError(Insert, "bar", errors.New("foo")).(*DataTooLongError)
 	assert.True(strings.HasPrefix(err.ReferenceID, dbErrPrefix))
 	assert.NotEqual(err.ReferenceID, err2.ReferenceID)
 	assert.Contains(err.Error(), err.ReferenceID)
@@ -63,8 +62,8 @@ func TestNewDataTooLongError(t *testing.T) {
 
 func TestNewInvalidForeignKeyError(t *testing.T) {
 	assert := assert1.New(t)
-	err := NewInvalidForeignKeyError(Insert, "bar", errors.New("foo"), log.NewStackLogger()).(*InvalidForeignKeyError)
-	err2 := NewInvalidForeignKeyError(Insert, "bar", errors.New("foo"), log.NewStackLogger()).(*InvalidForeignKeyError)
+	err := NewInvalidForeignKeyError(Insert, "bar", errors.New("foo")).(*InvalidForeignKeyError)
+	err2 := NewInvalidForeignKeyError(Insert, "bar", errors.New("foo")).(*InvalidForeignKeyError)
 	assert.True(strings.HasPrefix(err.ReferenceID, dbErrPrefix))
 	assert.NotEqual(err.ReferenceID, err2.ReferenceID)
 	assert.Contains(err.Error(), err.ReferenceID)
@@ -86,13 +85,13 @@ func TestTranslateError(t *testing.T) {
 		{err: errors.New("foo"), expected: &SQLSystemError{}},
 	}
 	for _, data := range testData {
-		assert.IsType(data.expected, TranslateError(data.err, Select, generator.String(5), log.NewStackLogger()))
+		assert.IsType(data.expected, TranslateError(data.err, Select, generator.String(5)))
 	}
 }
 
 func Test_getLogPrefix(t *testing.T) {
 	assert := assert1.New(t)
-	expected := "[DAT.ERR.96]"
+	expected := "[DAT.ERR.95]"
 	actual := getLogPrefix(1)
 	assert.Equal(expected, actual)
 }
@@ -221,7 +220,7 @@ func TestDatabaseToApiError(t *testing.T) {
 			name:     "data too long error",
 			primary:  Action,
 			err:      &DataTooLongError{},
-			expected: "rpc error: code = InvalidArgument desc = [DAT.ERR.262] action field too long:  ()",
+			expected: "rpc error: code = InvalidArgument desc = [DAT.ERR.262] action field too long: :  [Ref:]",
 		},
 		{
 			name:     "not found",
@@ -233,13 +232,13 @@ func TestDatabaseToApiError(t *testing.T) {
 			name:     "duplicate record",
 			primary:  Action,
 			err:      &DuplicateRecordError{},
-			expected: "rpc error: code = AlreadyExists desc = [DAT.ERR.262] action record already exists:  ()",
+			expected: "rpc error: code = AlreadyExists desc = [DAT.ERR.262] action record already exists: :  [Ref:]",
 		},
 		{
 			name:     "unique constraint",
 			primary:  Action,
 			err:      &UniqueConstraintError{},
-			expected: "rpc error: code = InvalidArgument desc = [DAT.ERR.262] action unique constraint violation:  ()",
+			expected: "rpc error: code = InvalidArgument desc = [DAT.ERR.262] action unique constraint violation: :  [Ref:]",
 		},
 		{
 			name:     "validation",
@@ -263,7 +262,7 @@ func TestDatabaseToApiError(t *testing.T) {
 			name:     "foreign key",
 			primary:  Action,
 			err:      &InvalidForeignKeyError{},
-			expected: "rpc error: code = InvalidArgument desc = [DAT.ERR.262] action foreign key violation:  ()",
+			expected: "rpc error: code = InvalidArgument desc = [DAT.ERR.262] action foreign key violation: :  [Ref:]",
 		},
 	}
 	for _, tt := range tests {
