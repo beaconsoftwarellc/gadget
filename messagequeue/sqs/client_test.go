@@ -18,20 +18,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_Integration(t *testing.T) {
-	assert := assert.New(t)
-	u, err := url.Parse("http://localhost:9326/queue/import-service-queue")
-	assert.NoError(err)
-	mq := New("us-east-1", u)
-	options := messagequeue.NewPollerOptions()
-	poller := messagequeue.NewPoller(options)
-	handler := func(c context.Context, m *messagequeue.Message) bool {
-		assert.NotNil(m)
-		return true
-	}
-	poller.Poll(handler, mq)
-}
-
 func NewMatcher(assert *assert.Assertions, messages ...*messagequeue.Message) *MessageMatches {
 	return &MessageMatches{assert: assert,
 		messages: messages, smbo: &sqs.SendMessageBatchOutput{
