@@ -34,7 +34,7 @@ func TestEndpointResolverResolveEndpoint_NotFound(t *testing.T) {
 	assert := assert1.New(t)
 	resolver := NewEndpointResolver(generator.String(32), generator.String(23))
 	_, actual := resolver.ResolveEndpoint(
-		generator.String(5), generator.String(5))
+		ServiceName, generator.String(5))
 	expected := (&aws.EndpointNotFoundError{}).Error()
 	assert.EqualError(actual, expected)
 }
