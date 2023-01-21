@@ -32,6 +32,8 @@ const (
 const (
 	// RegionUSEast1 is the AWS Region located in N. Virginia, USA
 	RegionUSEast1 = "us-east-1"
+	// LocalRegion is for testing locally with a docker instance running elasticmq
+	LocalRegion = "local"
 )
 
 // New SQS instance located at the passed URL
@@ -55,9 +57,13 @@ func (mq *sdk) API(context context.Context) (API, error) {
 	var (
 		err error
 	)
-	cfg, err := config.LoadDefaultConfig(context,
-		config.WithRegion(mq.region),
-	)
+	options := []func(*config.LoadOptions) error{config.WithRegion(mq.region)}
+	if mq.region == LocalRegion {
+		er := NewEndpointResolver(LocalRegion, fmt.Sprintf("http://%s",
+			mq.queueUrl.Host))
+		options = append(options, config.WithEndpointResolverWithOptions(er))
+	}
+	cfg, err := config.LoadDefaultConfig(context, options...)
 	if nil == err {
 		mq.api = sqs.NewFromConfig(cfg)
 	}
