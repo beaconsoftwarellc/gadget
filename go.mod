@@ -18,6 +18,7 @@ require (
 	github.com/stretchr/testify v1.7.1
 	golang.org/x/exp v0.0.0-20220518171630-0b5c67f07fdf
 	google.golang.org/grpc v1.46.2
+	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v3 v3.0.0
 )
 
@@ -36,5 +37,4 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013 // indirect
-	google.golang.org/protobuf v1.27.1 // indirect
 )
