@@ -185,6 +185,9 @@ func (mq *sdk) Dequeue(ctx context.Context, count int, wait time.Duration) (
 	if count > maxMessageCount {
 		count = maxMessageCount
 	}
+	rmi.MessageAttributeNames = []string{
+		string(types.QueueAttributeNameAll),
+	}
 	// We should set this here and include the timeout as a deadline on the
 	// message, we can expose 'ExtendVisibilityTimeout' methods so that it
 	// can be extended (up to 12 hours from receipt) as the message is processed.
