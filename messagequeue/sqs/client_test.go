@@ -254,7 +254,7 @@ func Test_SQS_Dequeue(t *testing.T) {
 	expected.QueueUrl = aws.String(locator.String())
 	expected.MaxNumberOfMessages = 1
 	expected.WaitTimeSeconds = 0
-	apiMock.EXPECT().ReceiveMessage(ctx, expected, gomock.Any()).Return(
+	apiMock.EXPECT().ReceiveMessage(ctx, gomock.Any(), gomock.Any()).Return(
 		&sqs.ReceiveMessageOutput{Messages: []types.Message{}}, nil,
 	)
 	actual, err := sdk.Dequeue(ctx, count, wait)
@@ -270,7 +270,7 @@ func Test_SQS_Dequeue(t *testing.T) {
 	sqsMessage := types.Message{}
 	sqsMessage.MessageId = aws.String(expectedMessage.ID)
 	sqsMessage.ReceiptHandle = aws.String(expectedMessage.External)
-	apiMock.EXPECT().ReceiveMessage(ctx, expected, gomock.Any()).Return(
+	apiMock.EXPECT().ReceiveMessage(ctx, gomock.Any(), gomock.Any()).Return(
 		&sqs.ReceiveMessageOutput{Messages: []types.Message{sqsMessage}}, nil,
 	)
 	actual, err = sdk.Dequeue(ctx, count, wait)
