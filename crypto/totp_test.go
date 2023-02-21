@@ -178,26 +178,309 @@ func TestTOTPCompare(t *testing.T) {
 }
 
 func TestTOTPCompareWithVariance(t *testing.T) {
-	assert := assert1.New(t)
+	type test struct {
+		name string
+
+		key       string
+		period    time.Duration
+		length    int
+		variance  uint
+		challenge func(test) string
+		drift     int
+
+		expected    bool
+		expectedErr string
+	}
 	key, _ := NewOTPKey()
-	totp, _ := TOTP(key, 30*time.Second, 0, 6)
-	eq, err := TOTPCompareWithVariance(key, 30*time.Second, 6, 0, totp)
-	assert.NoError(err)
-	assert.True(eq)
+	var tests = []test{
+		{
+			name:     "0 V -2 D",
+			key:      key,
+			period:   30 * time.Second,
+			length:   6,
+			variance: 0,
+			challenge: func(t test) string {
+				challenge, _ := TOTP(t.key, t.period, -2, t.length)
+				return challenge
+			},
+			expected:    false,
+			expectedErr: "",
+		},
+		{
+			name:     "0 V -1 D",
+			key:      key,
+			period:   30 * time.Second,
+			length:   6,
+			variance: 0,
+			challenge: func(t test) string {
+				challenge, _ := TOTP(t.key, t.period, -1, t.length)
+				return challenge
+			},
+			expected:    false,
+			expectedErr: "",
+		},
+		{
+			name:     "0 V 0 D",
+			key:      key,
+			period:   30 * time.Second,
+			length:   6,
+			variance: 0,
+			challenge: func(t test) string {
+				challenge, _ := TOTP(t.key, t.period, 0, t.length)
+				return challenge
+			},
+			expected:    true,
+			expectedErr: "",
+		},
+		{
+			name:     "0 V 1 D",
+			key:      key,
+			period:   30 * time.Second,
+			length:   6,
+			variance: 0,
+			challenge: func(t test) string {
+				challenge, _ := TOTP(t.key, t.period, 1, t.length)
+				return challenge
+			},
+			expected:    false,
+			expectedErr: "",
+		},
+		{
+			name:     "0 V 2 D",
+			key:      key,
+			period:   30 * time.Second,
+			length:   6,
+			variance: 0,
+			challenge: func(t test) string {
+				challenge, _ := TOTP(t.key, t.period, 2, t.length)
+				return challenge
+			},
+			expected:    false,
+			expectedErr: "",
+		},
+		{
+			name:     "1 V -2 D",
+			key:      key,
+			period:   30 * time.Second,
+			length:   6,
+			variance: 1,
+			challenge: func(t test) string {
+				challenge, _ := TOTP(t.key, t.period, -2, t.length)
+				return challenge
+			},
+			expected:    false,
+			expectedErr: "",
+		},
+		{
+			name:     "1 V -1 D",
+			key:      key,
+			period:   30 * time.Second,
+			length:   6,
+			variance: 1,
+			challenge: func(t test) string {
+				challenge, _ := TOTP(t.key, t.period, -1, t.length)
+				return challenge
+			},
+			expected:    true,
+			expectedErr: "",
+		},
+		{
+			name:     "1 V 0 D",
+			key:      key,
+			period:   30 * time.Second,
+			length:   6,
+			variance: 1,
+			challenge: func(t test) string {
+				challenge, _ := TOTP(t.key, t.period, 0, t.length)
+				return challenge
+			},
+			expected:    true,
+			expectedErr: "",
+		},
+		{
+			name:     "1 V 1 D",
+			key:      key,
+			period:   30 * time.Second,
+			length:   6,
+			variance: 1,
+			challenge: func(t test) string {
+				challenge, _ := TOTP(t.key, t.period, 1, t.length)
+				return challenge
+			},
+			expected:    true,
+			expectedErr: "",
+		},
+		{
+			name:     "1 V 2 D",
+			key:      key,
+			period:   30 * time.Second,
+			length:   6,
+			variance: 1,
+			challenge: func(t test) string {
+				challenge, _ := TOTP(t.key, t.period, 2, t.length)
+				return challenge
+			},
+			expected:    false,
+			expectedErr: "",
+		},
+		{
+			name:     "2 V -2 D",
+			key:      key,
+			period:   30 * time.Second,
+			length:   6,
+			variance: 2,
+			challenge: func(t test) string {
+				challenge, _ := TOTP(t.key, t.period, -2, t.length)
+				return challenge
+			},
+			expected:    true,
+			expectedErr: "",
+		},
+		{
+			name:     "2 V -1 D",
+			key:      key,
+			period:   30 * time.Second,
+			length:   6,
+			variance: 2,
+			challenge: func(t test) string {
+				challenge, _ := TOTP(t.key, t.period, -1, t.length)
+				return challenge
+			},
+			expected:    true,
+			expectedErr: "",
+		},
+		{
+			name:     "2 V 0 D",
+			key:      key,
+			period:   30 * time.Second,
+			length:   6,
+			variance: 2,
+			challenge: func(t test) string {
+				challenge, _ := TOTP(t.key, t.period, 0, t.length)
+				return challenge
+			},
+			expected:    true,
+			expectedErr: "",
+		},
+		{
+			name:     "2 V 1 D",
+			key:      key,
+			period:   30 * time.Second,
+			length:   6,
+			variance: 2,
+			challenge: func(t test) string {
+				challenge, _ := TOTP(t.key, t.period, 1, t.length)
+				return challenge
+			},
+			expected:    true,
+			expectedErr: "",
+		},
+		{
+			name:     "2 V 2 D",
+			key:      key,
+			period:   30 * time.Second,
+			length:   6,
+			variance: 2,
+			challenge: func(t test) string {
+				challenge, _ := TOTP(t.key, t.period, 2, t.length)
+				return challenge
+			},
+			expected:    true,
+			expectedErr: "",
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert := assert1.New(t)
+			actual, actualErr := TOTPCompareWithVariance(
+				tc.key, tc.period, tc.length, tc.variance, tc.challenge(tc),
+			)
+			if nil != actualErr {
+				assert.EqualError(actualErr, tc.expectedErr)
+			} else {
+				assert.Equal(tc.expected, actual)
+			}
+		})
+	}
+}
 
-	totp, _ = TOTP(key, 30*time.Second, 2, 6)
-	eq, err = TOTPCompareWithVariance(key, 30*time.Second, 6, 1, totp)
-	assert.NoError(err)
-	assert.False(eq)
+func TestTOTPCompareAndGetDriftWithResynchronization(t *testing.T) {
+	type test struct {
+		name string
 
-	eq, err = TOTPCompareWithVariance(key, 30*time.Second, 6, 2, totp)
-	assert.NoError(err)
-	assert.True(eq)
+		key       string
+		period    time.Duration
+		length    int
+		variance  uint
+		challenge func(test) string
+		drift     int
 
-	totp, _ = TOTP(key, 30*time.Second, -1, 6)
-	eq, err = TOTPCompareWithVariance(key, 30*time.Second, 6, 2, totp)
-	assert.NoError(err)
-	assert.True(eq)
+		expected    bool
+		expected1   int
+		expectedErr string
+	}
+	key, _ := NewOTPKey()
+	var tests = []test{
+		{
+			name:     "no drift",
+			key:      key,
+			period:   30 * time.Second,
+			length:   6,
+			variance: 2,
+			drift:    0,
+			challenge: func(t test) string {
+				challenge, _ := TOTP(t.key, t.period, 0, t.length)
+				return challenge
+			},
+			expected:    true,
+			expected1:   0,
+			expectedErr: "",
+		},
+		{
+			name:     "drift passed center",
+			key:      key,
+			period:   30 * time.Second,
+			length:   6,
+			variance: 2,
+			drift:    4,
+			challenge: func(t test) string {
+				challenge, _ := TOTP(t.key, t.period, 5, t.length)
+				return challenge
+			},
+			expected:    true,
+			expected1:   5,
+			expectedErr: "",
+		},
+		{
+			name:     "resync",
+			key:      key,
+			period:   30 * time.Second,
+			length:   6,
+			variance: 2,
+			drift:    4,
+			challenge: func(t test) string {
+				challenge, _ := TOTP(t.key, t.period, 0, t.length)
+				return challenge
+			},
+			expected:    true,
+			expected1:   0,
+			expectedErr: "",
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert := assert1.New(t)
+			actual, actual1, actualErr := TOTPCompareAndGetDriftWithResynchronization(
+				tc.key, tc.period, tc.length, tc.variance, tc.challenge(tc), tc.drift,
+			)
+			if nil != actualErr {
+				assert.EqualError(actualErr, tc.expectedErr)
+			} else {
+				assert.Equal(tc.expected, actual)
+				assert.Equal(tc.expected1, actual1)
+			}
+		})
+	}
 }
 
 func TestTOTPCompareAndGetDrift(t *testing.T) {
