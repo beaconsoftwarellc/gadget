@@ -15,9 +15,7 @@ import (
 	"time"
 
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
-	"github.com/beaconsoftwarellc/gadget/v2/intutil"
 	"github.com/skip2/go-qrcode"
-	"golang.org/x/exp/slices"
 )
 
 // NewOTPKey for use with HOTP or TOTP as a base32 encoded string
@@ -29,16 +27,17 @@ func NewOTPKey() (string, error) {
 }
 
 // DynamicTruncate as described in RFC4226
-//   "The Truncate function performs Step 2 and Step 3, i.e., the dynamic
-//   truncation and then the reduction modulo 10^Digit.  The purpose of
-//   the dynamic offset truncation technique is to extract a 4-byte
-//   dynamic binary code from a 160-bit (20-byte) HMAC-SHA-1 result.
 //
-//    DT(String) // String = String[0]...String[19]
-//     Let OffsetBits be the low-order 4 bits of String[19]
-//     Offset = StToNum(OffsetBits) // 0 <= OffSet <= 15
-//     Let P = String[OffSet]...String[OffSet+3]
-//     Return the Last 31 bits of P"
+//	"The Truncate function performs Step 2 and Step 3, i.e., the dynamic
+//	truncation and then the reduction modulo 10^Digit.  The purpose of
+//	the dynamic offset truncation technique is to extract a 4-byte
+//	dynamic binary code from a 160-bit (20-byte) HMAC-SHA-1 result.
+//
+//	 DT(String) // String = String[0]...String[19]
+//	  Let OffsetBits be the low-order 4 bits of String[19]
+//	  Offset = StToNum(OffsetBits) // 0 <= OffSet <= 15
+//	  Let P = String[OffSet]...String[OffSet+3]
+//	  Return the Last 31 bits of P"
 func DynamicTruncate(hmacResult []byte, digits int) string {
 	offset := int(hmacResult[len(hmacResult)-1] & 0xF)
 	binCode := []byte{
@@ -82,8 +81,8 @@ func HOTPCompare(key string, counter uint64, length int, challenge string) (bool
 	return subtle.ConstantTimeCompare([]byte(hotp), []byte(challenge)) == 1, nil
 }
 
-// TOTP for the passed key with the specified period (step size) and number of digits, step will be adjusted
-// using the passed 'vary'
+// TOTP for the passed key with the specified period (step size) and number of digits,
+// step will be adjusted using the passed 'vary'
 func TOTP(key string, period time.Duration, vary int, length int) (string, error) {
 	currentStep := uint64(math.Floor(float64(time.Now().Unix()) / period.Seconds()))
 	return HOTP(key, currentStep+uint64(vary), length)
@@ -98,38 +97,74 @@ func TOTPCompare(key string, period time.Duration, adjust int, length int, chall
 	return subtle.ConstantTimeCompare([]byte(totp), []byte(challenge)) == 1, nil
 }
 
-// TOTPCompareWithVariance the expected TOTP calculation with the challenge in constant time. If variance is > 0
-// constant time execution is not guaranteed, allows for totp to fall with the variance range of steps + or -
-func TOTPCompareWithVariance(key string, period time.Duration, length int, variance uint, challenge string) (ok bool, err error) {
+// TOTPCompareWithVariance the expected TOTP calculation with the challenge in constant time.
+// If variance is greater than 0, abs(variance) frames will be compared on either
+// side of the 0 frame.
+// Example:
+//
+//	Given the following values and offsets
+//		TOTP():	|   A   |    B   |   C   |   D   |   E   |
+//		offset:	|  -2   |   -1   |   0   |   1   |   2   |
+//
+// The following arguments would have the specified results:
+//
+//			Variance == ABS(Variance)
+//	     Challenge	Variance 	Return
+//			A			0		False
+//			A			1		False
+//			A			2		True
+//			B			0		False
+//			B			1		True
+//			B			2		True
+//			C			0		True
+//			C			1		True
+//			C			2		True
+//			E			0		False
+//			E			1		False
+//			E			2		True
+func TOTPCompareWithVariance(key string, period time.Duration, length int,
+	variance uint, challenge string) (ok bool, err error) {
 	ok, _, err = TOTPCompareAndGetDrift(key, period, length, variance, challenge, 0)
 	return
 }
 
-// TOTPCompareAndGetDrift the expected TOTP calculation with the challenge in constant time. If variance is > 0
-// constant time execution is not guaranteed, allows for totp to fall with the variance range of steps + or -, variance is returned
-func TOTPCompareAndGetDrift(key string, period time.Duration, length int, variance uint, challenge string, drift int) (bool, int, error) {
-	var eq bool
-	var err error
-
-	frames := make([]int, 2*variance+1)
-	i := drift - int(variance)
-	for j := 0; j < len(frames); j++ {
-		frames[j] = i
-		i++
-	}
-
-	slices.SortFunc(frames, func(a, b int) bool {
-		return intutil.Abs(a) < intutil.Abs(b)
-	})
-
-	for _, v := range frames {
-		eq, err = TOTPCompare(key, period, v, length, challenge)
-		if nil != err || eq {
-			return eq, v, err
+// TOTPCompareAndGetDrift the expected TOTP calculation with the challenge in
+// constant time.
+func TOTPCompareAndGetDrift(key string, period time.Duration, length int,
+	variance uint, challenge string, drift int) (bool, int, error) {
+	matched := false
+	driftActual := 0
+	for i := drift - int(variance); i < drift+int(variance)+1; i++ {
+		eq, err := TOTPCompare(key, period, i, length, challenge)
+		if nil != err {
+			return false, 0, err
+		}
+		if eq {
+			matched = true
+			driftActual = i
 		}
 	}
+	return matched, driftActual, nil
+}
 
-	return false, 0, nil
+// TOTPCompareAndGetDriftWithResynchronization will check the 0 drift case before
+// comparing the passed drift. Executes in constants time in non-error conditions.
+func TOTPCompareAndGetDriftWithResynchronization(key string, period time.Duration, length int,
+	variance uint, challenge string, drift int) (bool, int, error) {
+	resyncEqual, resyncdrift, err := TOTPCompareAndGetDrift(key, period, length,
+		variance, challenge, 0)
+	if nil != err {
+		return false, 0, err
+	}
+	// always do both so we get constant time
+	driftedEqual, driftedDrift, err := TOTPCompareAndGetDrift(key, period, length, variance, challenge, drift)
+	if nil != err {
+		return false, 0, err
+	}
+	if resyncEqual {
+		return resyncEqual, resyncdrift, nil
+	}
+	return driftedEqual, driftedDrift, err
 }
 
 // GenerateTOTPURI for use in a QR code for registration with an authenticator application
