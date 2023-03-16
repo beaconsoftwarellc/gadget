@@ -310,7 +310,7 @@ func DatabaseToApiError(primary qb.Table, dbError error) error {
 		err = status.Error(codes.AlreadyExists, fmt.Sprintf("%s %s record already exists: %s",
 			prefix, primary.GetName(), dbError))
 	case *UniqueConstraintError:
-		err = status.Error(codes.InvalidArgument, fmt.Sprintf("%s %s unique constraint violation: %s",
+		err = status.Error(codes.AlreadyExists, fmt.Sprintf("%s %s unique constraint violation: %s",
 			prefix, primary.GetName(), dbError))
 	case *InvalidForeignKeyError:
 		err = status.Error(codes.InvalidArgument, fmt.Sprintf("%s %s foreign key violation: %s",
