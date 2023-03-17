@@ -238,7 +238,7 @@ func TestDatabaseToApiError(t *testing.T) {
 			name:     "unique constraint",
 			primary:  Action,
 			err:      &UniqueConstraintError{},
-			expected: "rpc error: code = InvalidArgument desc = [DAT.ERR.262] action unique constraint violation: :  [Ref:]",
+			expected: "rpc error: code = AlreadyExists desc = [DAT.ERR.262] action unique constraint violation: :  [Ref:]",
 		},
 		{
 			name:     "validation",
