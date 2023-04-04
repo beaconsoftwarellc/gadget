@@ -42,21 +42,21 @@ var allowedRanges = &unicode.RangeTable{
 
 // NameIsValid for use as an attribute or system attribute name
 func NameIsValid(s string) error {
-	/* TODO: [COR-544] SQS Name Validation is incomplete
-	Name – The message attribute name can contain the following characters:
-		A-Z
-		a-z
-		0-9
-		underscore (_)
-		hyphen (-)
-		period (.)
-	The following restrictions apply:
-		- Can be up to 256 characters long
-		- Can't start with AWS. or Amazon. (or any casing variations)
-		- Is case-sensitive
-		- Must be unique among all attribute names for the message
-		- Must not start or end with a period
-		- Must not have periods in a sequence
+	/*
+		Name – The message attribute name can contain the following characters:
+			A-Z
+			a-z
+			0-9
+			underscore (_)
+			hyphen (-)
+			period (.)
+		The following restrictions apply:
+			- Can be up to 256 characters long
+			- Can't start with AWS. or Amazon. (or any casing variations)
+			- Is case-sensitive
+			- Must be unique among all attribute names for the message
+			- Must not start or end with a period
+			- Must not have periods in a sequence
 	*/
 
 	runeCount := utf8.RuneCountInString(s)
@@ -82,16 +82,16 @@ func NameIsValid(s string) error {
 
 // BodyIsValid for use as a attribute value or a message body
 func BodyIsValid(s string) error {
-	/* TODO: [COR-545] SQS Body Validation is incomplete
-	The minimum size is one character. The maximum size is 256 KB.
+	/*
+		The minimum size is one character. The maximum size is 256 KB.
 
-	A message can include only XML, JSON, and unformatted text. The following
-	Unicode characters are allowed:
+		A message can include only XML, JSON, and unformatted text. The following
+		Unicode characters are allowed:
 
-	#x9 | #xA | #xD | #x20 to #xD7FF | #xE000 to #xFFFD | #x10000 to #x10FFFF
+		#x9 | #xA | #xD | #x20 to #xD7FF | #xE000 to #xFFFD | #x10000 to #x10FFFF
 
-	Any characters not included in this list will be rejected. For more information,
-	see the W3C specification for characters (http://www.w3.org/TR/REC-xml/#charsets).
+		Any characters not included in this list will be rejected. For more information,
+		see the W3C specification for characters (http://www.w3.org/TR/REC-xml/#charsets).
 	*/
 	if utf8.RuneCountInString(s) == 0 {
 		return errors.New(bodyMinimumError)
