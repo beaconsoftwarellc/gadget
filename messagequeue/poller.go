@@ -6,6 +6,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
 )
 
@@ -93,6 +94,11 @@ func (p *poller) poll() {
 		messages, err = p.queue.Dequeue(ctx, p.options.DequeueCount,
 			p.options.WaitForBatch)
 		if nil != err {
+			// noop on deadline exceeded
+			if awsErr, ok := err.(awserr.Error); ok &&
+				errors.Is(awsErr.OrigErr(), context.DeadlineExceeded) {
+				continue
+			}
 			p.options.Logger.Error(err)
 		} else {
 			p.handleMessages(messages)
