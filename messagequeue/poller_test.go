@@ -6,7 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/beaconsoftwarellc/gadget/v2/generator"
+	"github.com/beaconsoftwarellc/gadget/v2/log"
 	"github.com/golang/mock/gomock"
 	assert1 "github.com/stretchr/testify/assert"
 )
@@ -68,7 +70,8 @@ func TestPoller_Poll(t *testing.T) {
 		options.DequeueCount, options.WaitForBatch).Return(nil, nil).
 		After(firstCall).AnyTimes()
 
-	messageQueue.EXPECT().Delete(gomock.Any(), successfulMessage).Return(nil).Do(func(interface{}, interface{}) {
+	messageQueue.EXPECT().Delete(gomock.Any(), successfulMessage).
+		Return(nil).Do(func(interface{}, interface{}) {
 		wg.Done()
 	})
 	poller := NewPoller(options)
@@ -88,5 +91,32 @@ func TestPoller_Stop(t *testing.T) {
 	assert.EqualError(poller.Stop(), "Poller.Stop called on instance not in state running (1)")
 	handler := func(_ context.Context, m *Message) bool { return true }
 	assert.NoError(poller.Poll(handler, messageQueue))
+	assert.NoError(poller.Stop())
+}
+
+func TestPoller_NoLogContextDeadlineExceeded(t *testing.T) {
+	assert := assert1.New(t)
+	controller := gomock.NewController(t)
+	messageQueue := NewMockMessageQueue(controller)
+	options := NewPollerOptions()
+	options.Logger = log.NewMockLogger(controller)
+	poller := NewPoller(options)
+	messageQueue.EXPECT().Dequeue(gomock.Any(),
+		options.DequeueCount, options.WaitForBatch).
+		Return(nil, awserr.New("0", "", context.DeadlineExceeded))
+	messageQueue.EXPECT().Dequeue(gomock.Any(),
+		options.DequeueCount, options.WaitForBatch).
+		Return([]*Message{{ID: generator.String(5)}}, nil)
+	messageQueue.EXPECT().Dequeue(gomock.Any(),
+		options.DequeueCount, options.WaitForBatch).
+		Return(nil, nil).AnyTimes()
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	handler := func(_ context.Context, m *Message) bool {
+		wg.Done()
+		return false
+	}
+	assert.NoError(poller.Poll(handler, messageQueue))
+	wg.Wait()
 	assert.NoError(poller.Stop())
 }
