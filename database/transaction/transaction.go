@@ -70,6 +70,7 @@ func New(db Begin, logger log.Logger, slow time.Duration) (Transaction, error) {
 		slow:           slow,
 		log:            logger,
 		id:             generator.ID("TX"),
+		loggedQueries:  make(map[string]time.Duration),
 	}
 	return &transaction{implementation: implementation}, nil
 }
