@@ -64,7 +64,7 @@ func (tx *slowQueryLoggerTx) logSlow(query string, elapsed time.Duration) {
 
 	// do not log the slow query if it has already been logged with a slower time
 	logged, ok := tx.loggedQueries[query]
-	if ok && logged <= elapsed {
+	if ok && logged >= elapsed {
 		return
 	}
 
