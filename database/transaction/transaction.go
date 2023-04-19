@@ -60,7 +60,7 @@ type Transaction interface {
 
 // New transaction that will log query executions that are slower than the passed
 // duration
-func New(db Begin, logger log.Logger, slow time.Duration) (Transaction, error) {
+func New(db Begin, logger log.Logger, slow time.Duration, loggedQueries map[string]time.Duration) (Transaction, error) {
 	tx, err := db.Begin()
 	if nil != err {
 		return nil, err
@@ -70,7 +70,7 @@ func New(db Begin, logger log.Logger, slow time.Duration) (Transaction, error) {
 		slow:           slow,
 		log:            logger,
 		id:             generator.ID("TX"),
-		loggedQueries:  make(map[string]time.Duration),
+		loggedQueries:  loggedQueries,
 	}
 	return &transaction{implementation: implementation}, nil
 }

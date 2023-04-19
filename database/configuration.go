@@ -31,6 +31,8 @@ type Configuration interface {
 	MaxQueryLimit() uint
 	// SlowQueryThreshold for logging slow queries
 	SlowQueryThreshold() time.Duration
+	// LoggedSlowQueries is a map of queries that have been logged as slow
+	LoggedSlowQueries() map[string]time.Duration
 }
 
 // InstanceConfig is a simple struct that satisfies the Config interface
@@ -54,7 +56,8 @@ type InstanceConfig struct {
 	// SlowQuery duration establishes the defintion of a slow query for logging
 	SlowQuery time.Duration
 	// Log for this instance
-	Log log.Logger
+	Log           log.Logger
+	loggedQueries map[string]time.Duration
 }
 
 // DatabaseDialect indicates the type of SQL this database uses
@@ -128,4 +131,12 @@ func (config *InstanceConfig) Logger() log.Logger {
 			log.FunctionFromEnv())
 	}
 	return config.Log
+}
+
+// LoggedSlowQueries is a map of queries that have been logged as slow
+func (config *InstanceConfig) LoggedSlowQueries() map[string]time.Duration {
+	if config.SlowQuery == 0 {
+		config.loggedQueries = make(map[string]time.Duration)
+	}
+	return config.loggedQueries
 }
