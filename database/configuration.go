@@ -135,7 +135,7 @@ func (config *InstanceConfig) Logger() log.Logger {
 
 // LoggedSlowQueries is a map of queries that have been logged as slow
 func (config *InstanceConfig) LoggedSlowQueries() map[string]time.Duration {
-	if config.SlowQuery == 0 {
+	if config.loggedQueries == nil {
 		config.loggedQueries = make(map[string]time.Duration)
 	}
 	return config.loggedQueries
