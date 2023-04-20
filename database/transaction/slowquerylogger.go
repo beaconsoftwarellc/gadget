@@ -16,6 +16,7 @@ type slowQueryLoggerTx struct {
 	slow           time.Duration
 	log            log.Logger
 	id             string
+	loggedQueries  map[string]time.Duration
 }
 
 func (tx *slowQueryLoggerTx) NamedQuery(query string, arg interface{}) (*sqlx.Rows, error) {
@@ -57,9 +58,18 @@ func (tx *slowQueryLoggerTx) Rollback() error {
 }
 
 func (tx *slowQueryLoggerTx) logSlow(query string, elapsed time.Duration) {
+	if elapsed <= tx.slow {
+		return
+	}
+
+	// do not log the slow query if it has already been logged with a slower time
+	logged, ok := tx.loggedQueries[query]
+	if ok && logged >= elapsed {
+		return
+	}
+
 	err := errors.New(
 		"[%s] query execution time: %s query: %s", tx.id, elapsed, query)
-	if elapsed > tx.slow {
-		_ = tx.log.Error(err)
-	}
+	_ = tx.log.Error(err)
+	tx.loggedQueries[query] = elapsed
 }

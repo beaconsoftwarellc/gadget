@@ -72,6 +72,7 @@ func (d *api) Begin() errors.TracerError {
 		d.db,
 		d.configuration.Logger(),
 		d.configuration.SlowQueryThreshold(),
+		d.configuration.LoggedSlowQueries(),
 	)
 	return errors.Wrap(err)
 }
