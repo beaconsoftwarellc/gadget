@@ -16,6 +16,16 @@ var numbers = []rune("0123456789")
 var characters = []rune("!@#$%`'^&*()_+")
 var base32 = []rune("13456789abcdefghijkmnopqrstuwxyz")
 
+/*
+	 Excludes alphanumerics that are not easily distinguishable in some common fonts:
+		0,O
+		1,l,I
+		2,Z
+		5,S
+		8,B
+*/
+var distinguishables = []rune("34679abcdefghijkmnopqrstuvwxyzACDEFGHJKMNPQRTUVWXY")
+
 // Password generates a random password of a given length
 func Password(length int) string {
 	source := append(letters, characters...)
@@ -115,4 +125,10 @@ func Email() string {
 // Name returns a fake name for testing
 func Name() string {
 	return fmt.Sprintf("%s %s", random(6, letters), random(12, letters))
+}
+
+// Distinguishable returns random alphanumerics of the requested length,
+// excluding similar characters (e.g. 0, O, 1, l, I)
+func Distinguishable(length int) string {
+	return random(length, distinguishables)
 }
