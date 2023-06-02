@@ -103,7 +103,7 @@ func TestPoller_NoLogContextDeadlineExceeded(t *testing.T) {
 	poller := NewPoller(options)
 	messageQueue.EXPECT().Dequeue(gomock.Any(),
 		options.DequeueCount, options.WaitForBatch).
-		Return(nil, awserr.New("0", "", context.DeadlineExceeded))
+		Return(nil, awserr.New("0", "RequestID: , canceled, context deadline exceeded", nil))
 	messageQueue.EXPECT().Dequeue(gomock.Any(),
 		options.DequeueCount, options.WaitForBatch).
 		Return([]*Message{{ID: generator.String(5)}}, nil)
