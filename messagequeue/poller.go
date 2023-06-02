@@ -2,12 +2,16 @@ package messagequeue
 
 import (
 	"context"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
+)
+
+const (
+	contextDeadlineExceeded = "context deadline exceeded"
 )
 
 // HandleMessage returning a boolean indicating if the message was successfully
@@ -95,8 +99,7 @@ func (p *poller) poll() {
 			p.options.WaitForBatch)
 		if nil != err {
 			// noop on deadline exceeded
-			if awsErr, ok := err.(awserr.Error); ok &&
-				errors.Is(awsErr.OrigErr(), context.DeadlineExceeded) {
+			if strings.Contains(err.Error(), contextDeadlineExceeded) {
 				continue
 			}
 			p.options.Logger.Error(err)
