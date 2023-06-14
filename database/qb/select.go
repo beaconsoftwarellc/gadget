@@ -104,6 +104,28 @@ func Coalesce(column TableField, defaultValue string, alias string) SelectExpres
 	return coalesce{field: column, def: defaultValue, name: alias}
 }
 
+// IsNotNull creates a SelectExpression for a boolean field that selects true if the column is not null, false otherwise
+func IsNotNull(column TableField, alias string) SelectExpression {
+	return isNotNull{field: column, name: alias}
+}
+
+type isNotNull struct {
+	field TableField
+	name  string
+}
+
+func (e isNotNull) GetName() string {
+	return e.name
+}
+
+func (e isNotNull) GetTables() []string {
+	return e.field.GetTables()
+}
+
+func (e isNotNull) SQL() string {
+	return fmt.Sprintf("IF(%s IS NOT NULL, 1, 0) AS `%s`", e.field.SQL(), e.name)
+}
+
 // SelectQuery for retrieving data from a database table.
 type SelectQuery struct {
 	distinct   bool
