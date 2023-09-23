@@ -1,13 +1,12 @@
 package deltas
 
 import (
-	"fmt"
-	"strings"
 	"sync"
 
 	"github.com/beaconsoftwarellc/gadget/v2/database"
 	dberrors "github.com/beaconsoftwarellc/gadget/v2/database/errors"
 	"github.com/beaconsoftwarellc/gadget/v2/database/lock"
+	"github.com/beaconsoftwarellc/gadget/v2/database/utility"
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
 	"github.com/beaconsoftwarellc/gadget/v2/log"
 	"github.com/beaconsoftwarellc/gadget/v2/net"
@@ -17,8 +16,8 @@ const (
 	// DeltaTableName for use in queries
 	DeltaTableName = "delta"
 	// LockName for preventing multiple executions of the sql delta's at the same time
-	LockName             = "delta_exec"
-	multiStatementTrueQS = "multiStatements=true"
+	LockName = "delta_exec"
+
 	// CreateDeltaTableSQL creates the delta's table in the database for use by
 	// this package.
 	CreateDeltaTableSQL = `CREATE TABLE ` + "`" + DeltaTableName + "`" + ` (
@@ -32,16 +31,6 @@ const (
 
 var mutex sync.Mutex
 
-func setMultiStatement(connString string) string {
-	split := strings.Split(connString, "?")
-	if len(split) == 1 {
-		connString = fmt.Sprintf("%s?%s", connString, multiStatementTrueQS)
-	} else if !strings.Contains(split[1], multiStatementTrueQS) {
-		connString = fmt.Sprintf("%s&%s", connString, multiStatementTrueQS)
-	}
-	return connString
-}
-
 // Execute the passed deltas sequentially if they have not already been applied to the database.
 // WARN: This function will create the table 'delta' which it needs to track changes if it does not
 // already exist.
@@ -52,7 +41,7 @@ func setMultiStatement(connString string) string {
 func Execute(config database.InstanceConfig, schema string, deltas []*Delta) errors.TracerError {
 	mutex.Lock()
 	defer mutex.Unlock()
-	config.Connection = setMultiStatement(config.Connection)
+	config.Connection = utility.SetMultiStatement(config.Connection)
 	connection, err := database.Connect(&config)
 	if nil != err {
 		return errors.Wrap(err)

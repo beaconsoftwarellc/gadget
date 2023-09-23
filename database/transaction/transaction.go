@@ -8,6 +8,7 @@ import (
 	dberrors "github.com/beaconsoftwarellc/gadget/v2/database/errors"
 	"github.com/beaconsoftwarellc/gadget/v2/database/qb"
 	"github.com/beaconsoftwarellc/gadget/v2/database/record"
+	"github.com/beaconsoftwarellc/gadget/v2/database/utility"
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
 	"github.com/beaconsoftwarellc/gadget/v2/generator"
 	"github.com/beaconsoftwarellc/gadget/v2/log"
@@ -21,6 +22,7 @@ import (
 // After a call to Commit or Rollback, all operations on the
 // transaction fail with ErrTxDone.
 type Transaction interface {
+	utility.CommitRollback
 	// Create initializes a Record and inserts it into the Database
 	Create(record.Record) errors.TracerError
 	// Upsert a new entry into the database for the Record
@@ -49,10 +51,6 @@ type Transaction interface {
 	Delete(record.Record) errors.TracerError
 	// DeleteWhere removes row(s) from the database based on a supplied where clause
 	DeleteWhere(record.Record, *qb.ConditionExpression) errors.TracerError
-	// Commit this transaction
-	Commit() errors.TracerError
-	// Rollback this transaction
-	Rollback() errors.TracerError
 
 	// Implementation that is backing this transaction
 	Implementation() Implementation
@@ -88,7 +86,8 @@ func (tx *transaction) Create(obj record.Record) errors.TracerError {
 	var previousPK record.PrimaryKeyValue
 	obj.Initialize()
 	for i := 0; i < 5; i++ {
-		writeCols := appendIfMissing(obj.Meta().WriteColumns(), obj.Meta().PrimaryKey())
+		writeCols := utility.AppendIfMissing(obj.Meta().WriteColumns(),
+			obj.Meta().PrimaryKey())
 		query := qb.Insert(writeCols...)
 		stmt, err := query.ParameterizedSQL()
 		if nil != err {
@@ -117,17 +116,17 @@ func (tx *transaction) Create(obj record.Record) errors.TracerError {
 }
 
 func (tx *transaction) Upsert(obj record.Record) errors.TracerError {
-	insertCols := appendIfMissing(obj.Meta().ReadColumns(), obj.Meta().PrimaryKey())
+	insertCols := utility.AppendIfMissing(obj.Meta().ReadColumns(), obj.Meta().PrimaryKey())
 	updateCols := make([]qb.TableField, len(obj.Meta().WriteColumns()))
 	copy(updateCols, obj.Meta().WriteColumns())
 	createdOn := qb.TableField{Name: "created_on", Table: obj.Meta().GetName()}
 
 	if lo.Contains(obj.Meta().ReadColumns(), createdOn) {
-		updateCols = appendIfMissing(updateCols, createdOn)
+		updateCols = utility.AppendIfMissing(updateCols, createdOn)
 	}
 	updateOn := qb.TableField{Name: "updated_on", Table: obj.Meta().GetName()}
 	if lo.Contains(obj.Meta().ReadColumns(), updateOn) {
-		updateCols = appendIfMissing(updateCols, updateOn)
+		updateCols = utility.AppendIfMissing(updateCols, updateOn)
 	}
 
 	query := qb.Insert(insertCols...).OnDuplicate(updateCols)

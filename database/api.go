@@ -7,6 +7,7 @@ import (
 	"github.com/beaconsoftwarellc/gadget/v2/database/qb"
 	"github.com/beaconsoftwarellc/gadget/v2/database/record"
 	"github.com/beaconsoftwarellc/gadget/v2/database/transaction"
+	"github.com/beaconsoftwarellc/gadget/v2/database/utility"
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
 )
 
@@ -14,6 +15,7 @@ const defaultSlowQueryThreshold = 100 * time.Millisecond
 
 // API is a database interface
 type API interface {
+	utility.CountSelect
 	// Begin starts a transaction
 	Begin() errors.TracerError
 	// GetTransaction that is currently on this instance, Begin must be called first.
@@ -25,8 +27,6 @@ type API interface {
 	// CommitOrRollback will rollback on an errors.TracerError otherwise commit
 	CommitOrRollback(err error) errors.TracerError
 
-	// Count the number of rows in the passed query
-	Count(qb.Table, *qb.SelectQuery) (int32, error)
 	// CountWhere rows match the passed condition in the specified table. Condition
 	// may be nil in order to just count the table rows.
 	CountWhere(qb.Table, *qb.ConditionExpression) (int32, error)
@@ -36,8 +36,6 @@ type API interface {
 	Read(obj record.Record, pk record.PrimaryKeyValue) errors.TracerError
 	// ReadOneWhere populates a Record from a custom where clause
 	ReadOneWhere(obj record.Record, condition *qb.ConditionExpression) errors.TracerError
-	// Select executes a given select query and populates the target
-	Select(target interface{}, query *qb.SelectQuery, options *record.ListOptions) errors.TracerError
 	// ListWhere populates target with a list of records from the database
 	ListWhere(meta record.Record, target interface{},
 		condition *qb.ConditionExpression, options *record.ListOptions) errors.TracerError
@@ -103,7 +101,7 @@ func (d *api) Commit() errors.TracerError {
 
 func (d *api) CommitOrRollback(err error) errors.TracerError {
 	if d.tx != nil {
-		err = CommitOrRollback(d.tx, err, d.configuration.Logger())
+		err = utility.CommitOrRollback(d.tx, err, d.configuration.Logger())
 		d.tx = nil
 		return errors.Wrap(err)
 	}
