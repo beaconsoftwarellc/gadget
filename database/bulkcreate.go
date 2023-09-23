@@ -14,6 +14,8 @@ import (
 // BulkCreate allows for bulk creation of a single resource within a
 // transaction.
 type BulkCreate[T record.Record] interface {
+	// Reset the pending records and transaction on this instance
+	Reset() errors.TracerError
 	// Create initializes the passed  Records and inserts them into the Database
 	// as a single request.
 	Create(objs ...T)
@@ -30,6 +32,21 @@ type bulkCreate[T record.Record] struct {
 	configuration Configuration
 }
 
+func (api *bulkCreate[T]) Reset() errors.TracerError {
+	if nil != api.tx {
+		return errors.New("transaction should be committed or rolled " +
+			"back prior to calling Reset")
+	}
+	var err error
+	api.pending = make([]T, 0)
+	api.tx, err = transaction.New(api.db,
+		api.configuration.Logger(),
+		api.configuration.SlowQueryThreshold(),
+		api.configuration.LoggedSlowQueries(),
+	)
+	return errors.Wrap(err)
+}
+
 func (api *bulkCreate[T]) Create(objs ...T) {
 	for _, obj := range objs {
 		obj.Initialize()
@@ -38,6 +55,13 @@ func (api *bulkCreate[T]) Create(objs ...T) {
 }
 
 func (api *bulkCreate[T]) Commit() (sql.Result, errors.TracerError) {
+	if nil == api.tx {
+		return nil, errors.New("commit called on nil transaction")
+	}
+	defer func() {
+		api.pending = make([]T, 0)
+		api.tx = nil
+	}()
 	if len(api.pending) == 0 {
 		return nil, api.tx.Commit()
 	}
@@ -60,9 +84,16 @@ func (api *bulkCreate[T]) Commit() (sql.Result, errors.TracerError) {
 		_ = log.Error(api.tx.Rollback())
 		return nil, dberrors.TranslateError(err, dberrors.Insert, stmt)
 	}
-	return result, nil
+	return result, api.tx.Commit()
 }
 
 func (api *bulkCreate[T]) Rollback() errors.TracerError {
+	if nil == api.tx {
+		return errors.New("rollback called on nil transaction")
+	}
+	defer func() {
+		api.pending = make([]T, 0)
+		api.tx = nil
+	}()
 	return api.tx.Rollback()
 }
