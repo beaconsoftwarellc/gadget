@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/beaconsoftwarellc/gadget/v2/database/qb"
-	"github.com/beaconsoftwarellc/gadget/v2/database/record"
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
 	"github.com/beaconsoftwarellc/gadget/v2/log"
 	"github.com/beaconsoftwarellc/gadget/v2/stringutil"
@@ -13,15 +12,6 @@ import (
 )
 
 const multiStatementTrueQS = "multiStatements=true"
-
-// CountSelect exposes a Count and Select method and is a subset of the db.API
-// interface
-type CountSelect interface {
-	// Count the number of rows in the passed query
-	Count(qb.Table, *qb.SelectQuery) (int32, error)
-	// Select executes a given select query and populates the target
-	Select(target interface{}, query *qb.SelectQuery, options *record.ListOptions) errors.TracerError
-}
 
 // SetMultiStatement on the passed connection so that multiple ';' delimited
 // statements can be sent to the database at a time.
@@ -68,25 +58,6 @@ func ObfuscateConnection(connection string) string {
 			obfuscateIndex, "*")
 	}
 	return obfuscatedConnection
-}
-
-// SelectWithTotal executes the select query populating target and returning the
-// total records possible
-func SelectWithTotal[T any](db CountSelect, table qb.Table, target T,
-	query *qb.SelectQuery, limit, offset int) (T, int, error) {
-	var (
-		total int32
-		err   error
-	)
-	if total, err = db.Count(table, query); err != nil || limit == 0 || total == 0 {
-		return target, int(total), err
-	}
-
-	err = db.Select(&target, query, record.NewListOptions(limit, offset))
-	if nil != err {
-		return target, 0, err
-	}
-	return target, int(total), err
 }
 
 // AppendIfMissing field to the list of fields

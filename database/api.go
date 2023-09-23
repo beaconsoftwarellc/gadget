@@ -15,7 +15,6 @@ const defaultSlowQueryThreshold = 100 * time.Millisecond
 
 // API is a database interface
 type API interface {
-	utility.CountSelect
 	// Begin starts a transaction
 	Begin() errors.TracerError
 	// GetTransaction that is currently on this instance, Begin must be called first.
@@ -32,6 +31,10 @@ type API interface {
 	CountWhere(qb.Table, *qb.ConditionExpression) (int32, error)
 	// Create initializes a Record and inserts it into the Database
 	Create(obj record.Record) errors.TracerError
+	// Count the number of rows in the passed query
+	Count(qb.Table, *qb.SelectQuery) (int32, error)
+	// Select executes a given select query and populates the target
+	Select(target interface{}, query *qb.SelectQuery, options *record.ListOptions) errors.TracerError
 	// Read populates a Record from the database
 	Read(obj record.Record, pk record.PrimaryKeyValue) errors.TracerError
 	// ReadOneWhere populates a Record from a custom where clause
@@ -49,6 +52,25 @@ type API interface {
 	// DeleteWhere removes row(s) from the database based on a supplied where
 	// clause in a transaction
 	DeleteWhere(obj record.Record, condition *qb.ConditionExpression) errors.TracerError
+}
+
+// SelectWithTotal executes the select query populating target and returning the
+// total records possible
+func SelectWithTotal[T any](db API, table qb.Table, target T,
+	query *qb.SelectQuery, limit, offset int) (T, int, error) {
+	var (
+		total int32
+		err   error
+	)
+	if total, err = db.Count(table, query); err != nil || limit == 0 || total == 0 {
+		return target, int(total), err
+	}
+
+	err = db.Select(&target, query, record.NewListOptions(limit, offset))
+	if nil != err {
+		return target, 0, err
+	}
+	return target, int(total), err
 }
 
 // ErrMissingTransaction is returned when a call requiring a transaction is made
