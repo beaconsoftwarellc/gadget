@@ -26,19 +26,19 @@ type API interface {
 	// CommitOrRollback will rollback on an errors.TracerError otherwise commit
 	CommitOrRollback(err error) errors.TracerError
 
+	// Count the number of rows in the passed query
+	Count(qb.Table, *qb.SelectQuery) (int32, error)
 	// CountWhere rows match the passed condition in the specified table. Condition
 	// may be nil in order to just count the table rows.
 	CountWhere(qb.Table, *qb.ConditionExpression) (int32, error)
 	// Create initializes a Record and inserts it into the Database
 	Create(obj record.Record) errors.TracerError
-	// Count the number of rows in the passed query
-	Count(qb.Table, *qb.SelectQuery) (int32, error)
-	// Select executes a given select query and populates the target
-	Select(target interface{}, query *qb.SelectQuery, options *record.ListOptions) errors.TracerError
 	// Read populates a Record from the database
 	Read(obj record.Record, pk record.PrimaryKeyValue) errors.TracerError
 	// ReadOneWhere populates a Record from a custom where clause
 	ReadOneWhere(obj record.Record, condition *qb.ConditionExpression) errors.TracerError
+	// Select executes a given select query and populates the target
+	Select(target interface{}, query *qb.SelectQuery, options *record.ListOptions) errors.TracerError
 	// ListWhere populates target with a list of records from the database
 	ListWhere(meta record.Record, target interface{},
 		condition *qb.ConditionExpression, options *record.ListOptions) errors.TracerError
