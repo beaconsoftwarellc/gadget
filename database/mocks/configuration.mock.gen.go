@@ -63,6 +63,20 @@ func (mr *MockConfigurationMockRecorder) DatabaseDialect() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DatabaseDialect", reflect.TypeOf((*MockConfiguration)(nil).DatabaseDialect))
 }
 
+// LoggedSlowQueries mocks base method.
+func (m *MockConfiguration) LoggedSlowQueries() map[string]time.Duration {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "LoggedSlowQueries")
+	ret0, _ := ret[0].(map[string]time.Duration)
+	return ret0
+}
+
+// LoggedSlowQueries indicates an expected call of LoggedSlowQueries.
+func (mr *MockConfigurationMockRecorder) LoggedSlowQueries() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoggedSlowQueries", reflect.TypeOf((*MockConfiguration)(nil).LoggedSlowQueries))
+}
+
 // Logger mocks base method.
 func (m *MockConfiguration) Logger() log.Logger {
 	m.ctrl.T.Helper()

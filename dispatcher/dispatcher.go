@@ -77,9 +77,11 @@ type dispatcher struct {
 	log                        log.Logger
 }
 
-// NewDispatcher to handle asynchronous processing of Tasks with the specified maximum number of workers.
-// In order to use the dispatcher to process work, callers must implement the `Task` interface.
-// Execution for the dispatcher is asynchronous but `Dispatcher.Run` must be called for any tasks to be worked.
+// NewDispatcher to handle asynchronous processing of Tasks with the
+// specified maximum number of workers. In order to use the dispatcher
+// to process work, callers must implement the `Task` interface.
+// Execution for the dispatcher is asynchronous but `Dispatcher.Run`
+// must be called for any tasks to be worked.
 // Example Usage:
 //
 //	     type MyTask struct {}

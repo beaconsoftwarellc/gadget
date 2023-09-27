@@ -7,6 +7,7 @@ import (
 	"github.com/beaconsoftwarellc/gadget/v2/database/qb"
 	"github.com/beaconsoftwarellc/gadget/v2/database/record"
 	"github.com/beaconsoftwarellc/gadget/v2/database/transaction"
+	"github.com/beaconsoftwarellc/gadget/v2/database/utility"
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
 )
 
@@ -51,6 +52,25 @@ type API interface {
 	// DeleteWhere removes row(s) from the database based on a supplied where
 	// clause in a transaction
 	DeleteWhere(obj record.Record, condition *qb.ConditionExpression) errors.TracerError
+}
+
+// SelectWithTotal executes the select query populating target and returning the
+// total records possible
+func SelectWithTotal[T any](db API, table qb.Table, target T,
+	query *qb.SelectQuery, limit, offset int) (T, int, error) {
+	var (
+		total int32
+		err   error
+	)
+	if total, err = db.Count(table, query); err != nil || limit == 0 || total == 0 {
+		return target, int(total), err
+	}
+
+	err = db.Select(&target, query, record.NewListOptions(limit, offset))
+	if nil != err {
+		return target, 0, err
+	}
+	return target, int(total), err
 }
 
 // ErrMissingTransaction is returned when a call requiring a transaction is made
@@ -103,7 +123,7 @@ func (d *api) Commit() errors.TracerError {
 
 func (d *api) CommitOrRollback(err error) errors.TracerError {
 	if d.tx != nil {
-		err = CommitOrRollback(d.tx, err, d.configuration.Logger())
+		err = utility.CommitOrRollback(d.tx, err, d.configuration.Logger())
 		d.tx = nil
 		return errors.Wrap(err)
 	}

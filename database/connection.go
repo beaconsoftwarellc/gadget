@@ -5,7 +5,9 @@ import (
 	"time"
 
 	dberrors "github.com/beaconsoftwarellc/gadget/v2/database/errors"
+	"github.com/beaconsoftwarellc/gadget/v2/database/record"
 	"github.com/beaconsoftwarellc/gadget/v2/database/transaction"
+	"github.com/beaconsoftwarellc/gadget/v2/database/utility"
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
 	"github.com/beaconsoftwarellc/gadget/v2/log"
 	"github.com/jmoiron/sqlx"
@@ -56,11 +58,14 @@ func connect(dialect, url string, logger log.Logger) (*sqlx.DB, errors.TracerErr
 }
 
 func Connect(cfg Configuration) (Connection, error) {
-	obfuscatedConnection := obfuscateConnection(cfg.DatabaseConnection())
+	var (
+		obfuscatedConnection = utility.ObfuscateConnection(cfg.DatabaseConnection())
+		err                  errors.TracerError
+		conn                 *sqlx.DB
+	)
 	log.Infof("initializing database connection: %s, %s", cfg.DatabaseDialect(),
 		obfuscatedConnection)
-	var err errors.TracerError
-	var conn *sqlx.DB
+
 	for retries := 0; retries < cfg.NumberOfRetries(); retries++ {
 		conn, err = connect(cfg.DatabaseDialect(), cfg.DatabaseConnection(), cfg.Logger())
 		if nil == err {
@@ -98,6 +103,26 @@ func (c *connection) Database() API {
 		panic("Database() called on disconnected connection")
 	}
 	return &api{db: &transactable{c.client}, configuration: c.configuration}
+}
+
+// NewBulkCreate API creating multiple records at the same time.
+func NewBulkCreate[T record.Record](cfg Configuration) (BulkCreate[T], error) {
+	// get a new connection with multistatement enabled
+	var (
+		connectionString     = utility.SetMultiStatement(cfg.DatabaseConnection())
+		obfuscatedConnection = utility.ObfuscateConnection(connectionString)
+		err                  error
+		connection           *sqlx.DB
+	)
+	connection, err = connect(cfg.DatabaseDialect(), cfg.DatabaseConnection(), cfg.Logger())
+	if nil != err {
+		cfg.Logger().Errorf("failed to connect to '%s': %s", obfuscatedConnection, err)
+		return nil, err
+	}
+	bc := &bulkCreate[T]{db: &transactable{connection}, configuration: cfg}
+	bc.tx, err = transaction.New(bc.db, cfg.Logger(),
+		cfg.SlowQueryThreshold(), cfg.LoggedSlowQueries())
+	return bc, err
 }
 
 func (c *connection) Close() error {
