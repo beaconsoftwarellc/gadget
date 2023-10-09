@@ -210,7 +210,8 @@ func (tx *transaction) Update(obj record.Record) errors.TracerError {
 	for _, col := range obj.Meta().WriteColumns() {
 		query.SetParam(col)
 	}
-	query.Where(obj.Meta().PrimaryKey().Equal(":" + obj.Meta().PrimaryKey().GetName()))
+	query.Where(obj.Meta().PrimaryKey().
+		Equal(":" + obj.Meta().PrimaryKey().GetName()))
 	stmt, err := query.ParameterizedSQL(1)
 	if nil != err {
 		return errors.Wrap(err)

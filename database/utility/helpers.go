@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/beaconsoftwarellc/gadget/v2/database/qb"
+	"github.com/beaconsoftwarellc/gadget/v2/database/record"
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
 	"github.com/beaconsoftwarellc/gadget/v2/log"
 	"github.com/beaconsoftwarellc/gadget/v2/stringutil"
@@ -12,6 +13,15 @@ import (
 )
 
 const multiStatementTrueQS = "multiStatements=true"
+
+// CountSelect exposes a Count and Select method and is a subset of the db.API
+// interface
+type CountSelect interface {
+	// Count the number of rows in the passed query
+	Count(qb.Table, *qb.SelectQuery) (int32, error)
+	// Select executes a given select query and populates the target
+	Select(target interface{}, query *qb.SelectQuery, options *record.ListOptions) errors.TracerError
+}
 
 // SetMultiStatement on the passed connection so that multiple ';' delimited
 // statements can be sent to the database at a time.
@@ -41,7 +51,7 @@ type CommitRollback interface {
 func CommitOrRollback(tx CommitRollback, err error,
 	logger log.Logger) errors.TracerError {
 	if err != nil {
-		logger.Error(tx.Rollback())
+		_ = logger.Error(tx.Rollback())
 		return errors.Wrap(err)
 	}
 	return errors.Wrap(tx.Commit())

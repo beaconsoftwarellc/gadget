@@ -119,7 +119,34 @@ func NewBulkCreate[T record.Record](cfg Configuration) (BulkCreate[T], error) {
 		cfg.Logger().Errorf("failed to connect to '%s': %s", obfuscatedConnection, err)
 		return nil, err
 	}
-	bc := &bulkCreate[T]{db: &transactable{connection}, configuration: cfg}
+	bc := &bulkCreate[T]{
+		bulkOperation: &bulkOperation[T]{
+			db: &transactable{connection}, configuration: cfg,
+		},
+	}
+	bc.tx, err = transaction.New(bc.db, cfg.Logger(),
+		cfg.SlowQueryThreshold(), cfg.LoggedSlowQueries())
+	return bc, err
+}
+
+func NewBulkUpdate[T record.Record](cfg Configuration) (BulkUpdate[T], error) {
+	// get a new connection with multistatement enabled
+	var (
+		connectionString     = utility.SetMultiStatement(cfg.DatabaseConnection())
+		obfuscatedConnection = utility.ObfuscateConnection(connectionString)
+		err                  error
+		connection           *sqlx.DB
+	)
+	connection, err = connect(cfg.DatabaseDialect(), cfg.DatabaseConnection(), cfg.Logger())
+	if nil != err {
+		cfg.Logger().Errorf("failed to connect to '%s': %s", obfuscatedConnection, err)
+		return nil, err
+	}
+	bc := &bulkUpdate[T]{
+		bulkOperation: &bulkOperation[T]{
+			db: &transactable{connection}, configuration: cfg,
+		},
+	}
 	bc.tx, err = transaction.New(bc.db, cfg.Logger(),
 		cfg.SlowQueryThreshold(), cfg.LoggedSlowQueries())
 	return bc, err
