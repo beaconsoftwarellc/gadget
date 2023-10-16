@@ -37,6 +37,18 @@ func (tx *slowQueryLoggerTx) NamedExec(query string, arg interface{}) (sql.Resul
 	return tx.implementation.NamedExec(query, arg)
 }
 
+func (tx *slowQueryLoggerTx) Preparex(query string) (*sqlx.Stmt, error) {
+	start := time.Now()
+	defer func() { tx.logSlow(query, time.Since(start)) }()
+	return tx.implementation.Preparex(query)
+}
+
+func (tx *slowQueryLoggerTx) PrepareNamed(query string) (*sqlx.NamedStmt, error) {
+	start := time.Now()
+	defer func() { tx.logSlow(query, time.Since(start)) }()
+	return tx.implementation.PrepareNamed(query)
+}
+
 func (tx *slowQueryLoggerTx) QueryRowx(query string, args ...interface{}) *sqlx.Row {
 	start := time.Now()
 	defer func() { tx.logSlow(query, time.Since(start)) }()

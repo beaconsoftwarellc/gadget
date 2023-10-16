@@ -51,14 +51,17 @@ type Transaction interface {
 	Delete(record.Record) errors.TracerError
 	// DeleteWhere removes row(s) from the database based on a supplied where clause
 	DeleteWhere(record.Record, *qb.ConditionExpression) errors.TracerError
-
+	// PrepareNamed returns a NamedStatement that can be used
+	// to execute the prepared statement using named parameters
+	PrepareNamed(query string) (NamedStatement, errors.TracerError)
 	// Implementation that is backing this transaction
 	Implementation() Implementation
 }
 
 // New transaction that will log query executions that are slower than the passed
 // duration
-func New(db Begin, logger log.Logger, slow time.Duration, loggedQueries map[string]time.Duration) (Transaction, error) {
+func New(db Begin, logger log.Logger, slow time.Duration,
+	loggedQueries map[string]time.Duration) (Transaction, error) {
 	tx, err := db.Begin()
 	if nil != err {
 		return nil, err
@@ -277,4 +280,9 @@ func (tx *transaction) Commit() errors.TracerError {
 
 func (tx *transaction) Rollback() errors.TracerError {
 	return errors.Wrap(tx.implementation.Rollback())
+}
+
+func (tx *transaction) PrepareNamed(query string) (NamedStatement, errors.TracerError) {
+	statement, err := tx.implementation.PrepareNamed(query)
+	return statement, errors.Wrap(err)
 }

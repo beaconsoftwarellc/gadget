@@ -17,6 +17,13 @@ type Implementation interface {
 	// QueryRowx within a transaction.
 	// Any placeholder parameters are replaced with supplied args.
 	QueryRowx(query string, args ...interface{}) *sqlx.Row
+	// PrepareNamed returns a sqlx.NamedStatement that can be used
+	// to execute the prepared statement using named parameters
+	PrepareNamed(query string) (*sqlx.NamedStmt, error)
+	// Preparex returns a sqlx.Stmt that can be used to avoid
+	// the overhead of preparing the same statement when executing
+	// many times
+	Preparex(query string) (*sqlx.Stmt, error)
 	// Select within a transaction.
 	// Any placeholder parameters are replaced with supplied args.
 	Select(dest interface{}, query string, args ...interface{}) error

@@ -6,6 +6,7 @@ import (
 	dberrors "github.com/beaconsoftwarellc/gadget/v2/database/errors"
 	"github.com/beaconsoftwarellc/gadget/v2/database/qb"
 	"github.com/beaconsoftwarellc/gadget/v2/database/record"
+	"github.com/beaconsoftwarellc/gadget/v2/database/transaction"
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
 )
 
@@ -20,6 +21,7 @@ type BulkUpdate[T record.Record] interface {
 
 type bulkUpdate[T record.Record] struct {
 	*bulkOperation[T]
+	columns []qb.TableField
 }
 
 func (api *bulkUpdate[T]) Update(objs ...T) {
@@ -44,34 +46,34 @@ func (api *bulkUpdate[T]) Commit() (sql.Result, errors.TracerError) {
 		result sql.Result
 		log    = api.configuration.Logger()
 		// grab a single instance to create the parameterized sql
-		obj   = api.pending[0]
-		query = qb.Update(obj.Meta())
+		obj            = api.pending[0]
+		query          = qb.Update(obj.Meta())
+		namedStatement transaction.NamedStatement
+		err            error
 	)
-	for _, col := range obj.Meta().WriteColumns() {
-		query.SetParam(col)
+	// values are inconsequential because we are using named
+	// and not order based
+	for _, column := range api.columns {
+		query.SetParam(column)
 	}
-	query.Where(obj.Meta().PrimaryKey().
-		Equal(":" + obj.Meta().PrimaryKey().GetName()))
-	stmt, err := query.ParameterizedSQL(qb.NoLimit)
+	query.Where(obj.Meta().PrimaryKey().Equal(":" + obj.Meta().PrimaryKey().Name))
+	sql, err := query.ParameterizedSQL(qb.NoLimit)
 	if nil != err {
 		_ = log.Error(api.tx.Rollback())
 		return nil, errors.Wrap(err)
 	}
-	_, err = api.tx.Implementation().NamedExec(stmt, api.pending)
+	namedStatement, err = api.tx.PrepareNamed(sql)
 	if nil != err {
 		_ = log.Error(api.tx.Rollback())
-		return nil, dberrors.TranslateError(err, dberrors.Update, stmt)
+		return nil, errors.Wrap(err)
 	}
+	for _, obj := range api.pending {
+		_, err = namedStatement.Exec(obj)
+		if nil != err {
+			_ = log.Error(api.tx.Rollback())
+			return nil, dberrors.TranslateError(err, dberrors.Update, sql)
+		}
+	}
+	_ = log.Error(namedStatement.Close())
 	return result, api.tx.Commit()
-}
-
-func (api *bulkUpdate[T]) Rollback() errors.TracerError {
-	if nil == api.tx {
-		return errors.New("rollback called on nil transaction")
-	}
-	defer func() {
-		api.pending = make([]T, 0)
-		api.tx = nil
-	}()
-	return api.tx.Rollback()
 }
