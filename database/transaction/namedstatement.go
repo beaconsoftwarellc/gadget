@@ -12,4 +12,7 @@ type NamedStatement interface {
 	// Exec executes a named statement using the struct passed.
 	// Any named placeholder parameters are replaced with fields from arg.
 	Exec(arg interface{}) (sql.Result, error)
+	// Get using this NamedStmt
+	// Any named placeholder parameters are replaced with fields from arg.
+	Get(dest interface{}, arg interface{}) error
 }

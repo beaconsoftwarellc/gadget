@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"fmt"
 
 	dberrors "github.com/beaconsoftwarellc/gadget/v2/database/errors"
 	"github.com/beaconsoftwarellc/gadget/v2/database/qb"
@@ -63,22 +64,23 @@ func (api *bulkUpdate[T]) Commit() (sql.Result, errors.TracerError) {
 		_ = log.Error(api.tx.Rollback())
 		return nil, errors.Wrap(err)
 	}
+	sql = fmt.Sprintf("%s RETURNING *", sql)
 	namedStatement, err = api.tx.PrepareNamed(sql)
 	if nil != err {
 		_ = log.Error(api.tx.Rollback())
 		return nil, errors.Wrap(err)
 	}
 	for _, obj := range api.pending {
-		sqlResult, err := namedStatement.Exec(obj)
+		err := namedStatement.Get(obj, obj)
 		if nil != err {
 			_ = log.Error(api.tx.Rollback())
 			return nil, dberrors.TranslateError(err, dberrors.Update, sql)
 		}
-		err = result.Consume(sqlResult)
-		if nil != err {
-			_ = log.Error(api.tx.Rollback())
-			return nil, dberrors.TranslateError(err, dberrors.Update, sql)
-		}
+		// err = result.Consume(sqlResult)
+		// if nil != err {
+		// 	_ = log.Error(api.tx.Rollback())
+		// 	return nil, dberrors.TranslateError(err, dberrors.Update, sql)
+		// }
 	}
 	tracerErr = api.tx.Commit()
 	if nil != tracerErr {
