@@ -2,7 +2,6 @@ package database
 
 import (
 	"database/sql"
-	"fmt"
 
 	dberrors "github.com/beaconsoftwarellc/gadget/v2/database/errors"
 	"github.com/beaconsoftwarellc/gadget/v2/database/qb"
@@ -26,10 +25,7 @@ type bulkUpdate[T record.Record] struct {
 }
 
 func (api *bulkUpdate[T]) Update(objs ...T) {
-	for _, obj := range objs {
-		obj.Initialize()
-		api.pending = append(api.pending, obj)
-	}
+	api.pending = append(api.pending, objs...)
 }
 
 func (api *bulkUpdate[T]) Commit() (sql.Result, errors.TracerError) {
@@ -64,23 +60,22 @@ func (api *bulkUpdate[T]) Commit() (sql.Result, errors.TracerError) {
 		_ = log.Error(api.tx.Rollback())
 		return nil, errors.Wrap(err)
 	}
-	sql = fmt.Sprintf("%s RETURNING *", sql)
 	namedStatement, err = api.tx.PrepareNamed(sql)
 	if nil != err {
 		_ = log.Error(api.tx.Rollback())
 		return nil, errors.Wrap(err)
 	}
 	for _, obj := range api.pending {
-		err := namedStatement.Get(obj, obj)
+		sqlResult, err := namedStatement.Exec(obj)
 		if nil != err {
 			_ = log.Error(api.tx.Rollback())
 			return nil, dberrors.TranslateError(err, dberrors.Update, sql)
 		}
-		// err = result.Consume(sqlResult)
-		// if nil != err {
-		// 	_ = log.Error(api.tx.Rollback())
-		// 	return nil, dberrors.TranslateError(err, dberrors.Update, sql)
-		// }
+		err = result.Consume(sqlResult)
+		if nil != err {
+			_ = log.Error(api.tx.Rollback())
+			return nil, dberrors.TranslateError(err, dberrors.Update, sql)
+		}
 	}
 	tracerErr = api.tx.Commit()
 	if nil != tracerErr {
