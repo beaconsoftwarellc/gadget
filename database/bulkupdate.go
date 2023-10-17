@@ -1,6 +1,8 @@
 package database
 
 import (
+	"database/sql"
+
 	dberrors "github.com/beaconsoftwarellc/gadget/v2/database/errors"
 	"github.com/beaconsoftwarellc/gadget/v2/database/qb"
 	"github.com/beaconsoftwarellc/gadget/v2/database/record"
@@ -29,16 +31,16 @@ func (api *bulkUpdate[T]) Update(objs ...T) {
 	}
 }
 
-func (api *bulkUpdate[T]) Commit() errors.TracerError {
+func (api *bulkUpdate[T]) Commit() (sql.Result, errors.TracerError) {
 	if nil == api.tx {
-		return errors.New("commit called on nil transaction")
+		return nil, errors.New("commit called on nil transaction")
 	}
 	defer func() {
 		api.pending = make([]T, 0)
 		api.tx = nil
 	}()
 	if len(api.pending) == 0 {
-		return api.tx.Commit()
+		return nil, api.tx.Commit()
 	}
 	var (
 		log = api.configuration.Logger()
@@ -48,6 +50,7 @@ func (api *bulkUpdate[T]) Commit() errors.TracerError {
 		namedStatement transaction.NamedStatement
 		tracerErr      errors.TracerError
 		err            error
+		result         = &result{}
 	)
 	// values are inconsequential because we are using named
 	// and not order based
@@ -58,24 +61,29 @@ func (api *bulkUpdate[T]) Commit() errors.TracerError {
 	sql, err := query.ParameterizedSQL(qb.NoLimit)
 	if nil != err {
 		_ = log.Error(api.tx.Rollback())
-		return errors.Wrap(err)
+		return nil, errors.Wrap(err)
 	}
 	namedStatement, err = api.tx.PrepareNamed(sql)
 	if nil != err {
 		_ = log.Error(api.tx.Rollback())
-		return errors.Wrap(err)
+		return nil, errors.Wrap(err)
 	}
 	for _, obj := range api.pending {
-		_, err = namedStatement.Exec(obj)
+		sqlResult, err := namedStatement.Exec(obj)
 		if nil != err {
 			_ = log.Error(api.tx.Rollback())
-			return dberrors.TranslateError(err, dberrors.Update, sql)
+			return nil, dberrors.TranslateError(err, dberrors.Update, sql)
+		}
+		err = result.Consume(sqlResult)
+		if nil != err {
+			_ = log.Error(api.tx.Rollback())
+			return nil, dberrors.TranslateError(err, dberrors.Update, sql)
 		}
 	}
 	tracerErr = api.tx.Commit()
 	if nil != tracerErr {
-		return tracerErr
+		return nil, tracerErr
 	}
 	err = namedStatement.Close()
-	return errors.Wrap(err)
+	return result, errors.Wrap(err)
 }
