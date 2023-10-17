@@ -1,8 +1,6 @@
 package database
 
 import (
-	"database/sql"
-
 	dberrors "github.com/beaconsoftwarellc/gadget/v2/database/errors"
 	"github.com/beaconsoftwarellc/gadget/v2/database/qb"
 	"github.com/beaconsoftwarellc/gadget/v2/database/record"
@@ -31,24 +29,24 @@ func (api *bulkUpdate[T]) Update(objs ...T) {
 	}
 }
 
-func (api *bulkUpdate[T]) Commit() (sql.Result, errors.TracerError) {
+func (api *bulkUpdate[T]) Commit() errors.TracerError {
 	if nil == api.tx {
-		return nil, errors.New("commit called on nil transaction")
+		return errors.New("commit called on nil transaction")
 	}
 	defer func() {
 		api.pending = make([]T, 0)
 		api.tx = nil
 	}()
 	if len(api.pending) == 0 {
-		return nil, api.tx.Commit()
+		return api.tx.Commit()
 	}
 	var (
-		result sql.Result
-		log    = api.configuration.Logger()
+		log = api.configuration.Logger()
 		// grab a single instance to create the parameterized sql
 		obj            = api.pending[0]
 		query          = qb.Update(obj.Meta())
 		namedStatement transaction.NamedStatement
+		tracerErr      errors.TracerError
 		err            error
 	)
 	// values are inconsequential because we are using named
@@ -60,20 +58,24 @@ func (api *bulkUpdate[T]) Commit() (sql.Result, errors.TracerError) {
 	sql, err := query.ParameterizedSQL(qb.NoLimit)
 	if nil != err {
 		_ = log.Error(api.tx.Rollback())
-		return nil, errors.Wrap(err)
+		return errors.Wrap(err)
 	}
 	namedStatement, err = api.tx.PrepareNamed(sql)
 	if nil != err {
 		_ = log.Error(api.tx.Rollback())
-		return nil, errors.Wrap(err)
+		return errors.Wrap(err)
 	}
 	for _, obj := range api.pending {
 		_, err = namedStatement.Exec(obj)
 		if nil != err {
 			_ = log.Error(api.tx.Rollback())
-			return nil, dberrors.TranslateError(err, dberrors.Update, sql)
+			return dberrors.TranslateError(err, dberrors.Update, sql)
 		}
 	}
-	_ = log.Error(namedStatement.Close())
-	return result, api.tx.Commit()
+	tracerErr = api.tx.Commit()
+	if nil != tracerErr {
+		return tracerErr
+	}
+	err = namedStatement.Close()
+	return errors.Wrap(err)
 }
