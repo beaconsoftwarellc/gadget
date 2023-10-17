@@ -78,9 +78,9 @@ func (api *bulkUpdate[T]) Commit() (sql.Result, errors.TracerError) {
 		}
 	}
 	tracerErr = api.tx.Commit()
+	_ = log.Error(namedStatement.Close())
 	if nil != tracerErr {
 		return nil, tracerErr
 	}
-	err = namedStatement.Close()
-	return result, errors.Wrap(err)
+	return result, nil
 }
