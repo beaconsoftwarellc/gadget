@@ -24,9 +24,11 @@ func TestBulkCreateReset(t *testing.T) {
 	db := &transactable{db: client}
 
 	bulkCreate := &bulkCreate[*TestRecord]{
-		tx:            transaction,
-		db:            db,
-		configuration: configuration,
+		bulkOperation: &bulkOperation[*TestRecord]{
+			tx:            transaction,
+			db:            db,
+			configuration: configuration,
+		},
 	}
 
 	// transaction is not nil should fail
@@ -62,9 +64,11 @@ func TestBulkCreateCreate(t *testing.T) {
 	db := &transactable{db: client}
 
 	bulkCreate := &bulkCreate[*TestRecord]{
-		tx:            transaction,
-		db:            db,
-		configuration: configuration,
+		bulkOperation: &bulkOperation[*TestRecord]{
+			tx:            transaction,
+			db:            db,
+			configuration: configuration,
+		},
 	}
 
 	testRecord := &TestRecord{Name: generator.String(32)}
@@ -98,9 +102,11 @@ func TestBulkCreateCommit(t *testing.T) {
 	db := &transactable{db: client}
 
 	bulkCreate := &bulkCreate[*TestRecord]{
-		tx:            transaction,
-		db:            db,
-		configuration: configuration,
+		bulkOperation: &bulkOperation[*TestRecord]{
+			tx:            transaction,
+			db:            db,
+			configuration: configuration,
+		},
 	}
 	testRecord := &TestRecord{Name: generator.String(32)}
 	testRecord1 := &TestRecord{Name: generator.String(32)}
@@ -125,9 +131,11 @@ func TestBulkCreateRollback(t *testing.T) {
 	db := &transactable{db: client}
 
 	bulkCreate := &bulkCreate[*TestRecord]{
-		tx:            transaction,
-		db:            db,
-		configuration: configuration,
+		bulkOperation: &bulkOperation[*TestRecord]{
+			tx:            transaction,
+			db:            db,
+			configuration: configuration,
+		},
 	}
 	testRecord := &TestRecord{Name: generator.String(32)}
 	bulkCreate.Create(testRecord)

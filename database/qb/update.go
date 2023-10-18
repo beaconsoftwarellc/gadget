@@ -25,7 +25,8 @@ import (
 */
 
 // UpdateQuery represents a query to update rows in a database
-// Currently only supports single table, to change this the tableReference would have to be built out more.
+// Currently only supports single table, to change this the tableReference
+// would have to be built out more.
 type UpdateQuery struct {
 	tableReference Table
 	assignments    []comparisonExpression
@@ -45,7 +46,8 @@ func (q *UpdateQuery) Set(field TableField, value interface{}) *UpdateQuery {
 	if field.Table != q.tableReference.GetName() {
 		q.err = errors.New("field table does not match table reference on update query")
 	} else {
-		q.assignments = append(q.assignments, binaryExpression{left: field, comparison: Equal, right: newUnion(value)})
+		q.assignments = append(q.assignments, binaryExpression{
+			left: field, comparison: Equal, right: newUnion(value)})
 	}
 	return q
 }

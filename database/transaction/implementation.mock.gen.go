@@ -99,6 +99,36 @@ func (mr *MockImplementationMockRecorder) NamedQuery(query, arg interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NamedQuery", reflect.TypeOf((*MockImplementation)(nil).NamedQuery), query, arg)
 }
 
+// PrepareNamed mocks base method.
+func (m *MockImplementation) PrepareNamed(query string) (*sqlx.NamedStmt, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PrepareNamed", query)
+	ret0, _ := ret[0].(*sqlx.NamedStmt)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PrepareNamed indicates an expected call of PrepareNamed.
+func (mr *MockImplementationMockRecorder) PrepareNamed(query interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PrepareNamed", reflect.TypeOf((*MockImplementation)(nil).PrepareNamed), query)
+}
+
+// Preparex mocks base method.
+func (m *MockImplementation) Preparex(query string) (*sqlx.Stmt, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Preparex", query)
+	ret0, _ := ret[0].(*sqlx.Stmt)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Preparex indicates an expected call of Preparex.
+func (mr *MockImplementationMockRecorder) Preparex(query interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Preparex", reflect.TypeOf((*MockImplementation)(nil).Preparex), query)
+}
+
 // QueryRowx mocks base method.
 func (m *MockImplementation) QueryRowx(query string, args ...interface{}) *sqlx.Row {
 	m.ctrl.T.Helper()

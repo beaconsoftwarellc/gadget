@@ -134,6 +134,21 @@ func (mr *MockTransactionMockRecorder) ListWhere(arg0, arg1, arg2, arg3 interfac
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListWhere", reflect.TypeOf((*MockTransaction)(nil).ListWhere), arg0, arg1, arg2, arg3)
 }
 
+// PrepareNamed mocks base method.
+func (m *MockTransaction) PrepareNamed(query string) (NamedStatement, errors.TracerError) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PrepareNamed", query)
+	ret0, _ := ret[0].(NamedStatement)
+	ret1, _ := ret[1].(errors.TracerError)
+	return ret0, ret1
+}
+
+// PrepareNamed indicates an expected call of PrepareNamed.
+func (mr *MockTransactionMockRecorder) PrepareNamed(query interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PrepareNamed", reflect.TypeOf((*MockTransaction)(nil).PrepareNamed), query)
+}
+
 // Read mocks base method.
 func (m *MockTransaction) Read(arg0 record.Record, arg1 record.PrimaryKeyValue) errors.TracerError {
 	m.ctrl.T.Helper()

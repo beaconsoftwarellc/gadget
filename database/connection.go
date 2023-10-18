@@ -5,6 +5,7 @@ import (
 	"time"
 
 	dberrors "github.com/beaconsoftwarellc/gadget/v2/database/errors"
+	"github.com/beaconsoftwarellc/gadget/v2/database/qb"
 	"github.com/beaconsoftwarellc/gadget/v2/database/record"
 	"github.com/beaconsoftwarellc/gadget/v2/database/transaction"
 	"github.com/beaconsoftwarellc/gadget/v2/database/utility"
@@ -119,10 +120,47 @@ func NewBulkCreate[T record.Record](cfg Configuration) (BulkCreate[T], error) {
 		cfg.Logger().Errorf("failed to connect to '%s': %s", obfuscatedConnection, err)
 		return nil, err
 	}
-	bc := &bulkCreate[T]{db: &transactable{connection}, configuration: cfg}
+	bc := &bulkCreate[T]{
+		bulkOperation: &bulkOperation[T]{
+			db: &transactable{connection}, configuration: cfg,
+		},
+	}
 	bc.tx, err = transaction.New(bc.db, cfg.Logger(),
 		cfg.SlowQueryThreshold(), cfg.LoggedSlowQueries())
 	return bc, err
+}
+
+// NewBulkUpdate of the columns on type T. Only the specified columns
+// will be updated on commit.
+func NewBulkUpdate[T record.Record](
+	cfg Configuration,
+	columns ...qb.TableField,
+) (BulkUpdate[T], error) {
+	if len(columns) == 0 {
+		return nil, errors.New("at least one column is required")
+	}
+	// get a new connection with multistatement enabled
+	var (
+		connectionString     = utility.SetMultiStatement(cfg.DatabaseConnection())
+		obfuscatedConnection = utility.ObfuscateConnection(connectionString)
+		err                  error
+		connection           *sqlx.DB
+	)
+	connection, err = connect(cfg.DatabaseDialect(),
+		cfg.DatabaseConnection(), cfg.Logger())
+	if nil != err {
+		cfg.Logger().Errorf("failed to connect to '%s': %s", obfuscatedConnection, err)
+		return nil, err
+	}
+	bu := &bulkUpdate[T]{
+		bulkOperation: &bulkOperation[T]{
+			db: &transactable{connection}, configuration: cfg,
+		},
+		columns: columns,
+	}
+	bu.tx, err = transaction.New(bu.db, cfg.Logger(),
+		cfg.SlowQueryThreshold(), cfg.LoggedSlowQueries())
+	return bu, err
 }
 
 func (c *connection) Close() error {

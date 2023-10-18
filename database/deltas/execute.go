@@ -79,7 +79,7 @@ func execute(config database.InstanceConfig, connection database.Connection,
 		return errors.Wrap(err)
 	}
 	log.Debugf("db lock acquired")
-	defer lock.Release(connection.Client(), LockName)
+	defer func() { _ = lock.Release(connection.Client(), LockName) }()
 
 	db := connection.Database()
 	if err = db.Begin(); nil != err {
@@ -101,7 +101,7 @@ func execute(config database.InstanceConfig, connection database.Connection,
 		if err := ExecuteDelta(db, delta); nil != err {
 			log.Errorf("rolling back deltas: error encountered executing delta %d %s: %s",
 				i, delta.Name, err)
-			log.Error(db.Rollback())
+			_ = log.Error(db.Rollback())
 			return err
 		}
 	}

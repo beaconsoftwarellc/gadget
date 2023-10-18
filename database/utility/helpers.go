@@ -41,7 +41,7 @@ type CommitRollback interface {
 func CommitOrRollback(tx CommitRollback, err error,
 	logger log.Logger) errors.TracerError {
 	if err != nil {
-		logger.Error(tx.Rollback())
+		_ = logger.Error(tx.Rollback())
 		return errors.Wrap(err)
 	}
 	return errors.Wrap(tx.Commit())

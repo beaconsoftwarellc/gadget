@@ -6,7 +6,6 @@ import (
 	dberrors "github.com/beaconsoftwarellc/gadget/v2/database/errors"
 	"github.com/beaconsoftwarellc/gadget/v2/database/qb"
 	"github.com/beaconsoftwarellc/gadget/v2/database/record"
-	"github.com/beaconsoftwarellc/gadget/v2/database/transaction"
 	"github.com/beaconsoftwarellc/gadget/v2/database/utility"
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
 )
@@ -14,37 +13,14 @@ import (
 // BulkCreate allows for bulk creation of a single resource within a
 // transaction.
 type BulkCreate[T record.Record] interface {
-	// Reset the pending records and transaction on this instance
-	Reset() errors.TracerError
-	// Create initializes the passed  Records and inserts them into the Database
-	// as a single request.
+	CommitRollbackReset
+	// Create initializes the passed Records and buffers them pending
+	// the call to commit
 	Create(objs ...T)
-	// Commit the bulk operation to the database
-	Commit() (sql.Result, errors.TracerError)
-	// Rollback the bulk operation and close the transaction
-	Rollback() errors.TracerError
 }
 
 type bulkCreate[T record.Record] struct {
-	tx            transaction.Transaction
-	pending       []T
-	db            *transactable
-	configuration Configuration
-}
-
-func (api *bulkCreate[T]) Reset() errors.TracerError {
-	if nil != api.tx {
-		return errors.New("transaction should be committed or rolled " +
-			"back prior to calling Reset")
-	}
-	var err error
-	api.pending = make([]T, 0)
-	api.tx, err = transaction.New(api.db,
-		api.configuration.Logger(),
-		api.configuration.SlowQueryThreshold(),
-		api.configuration.LoggedSlowQueries(),
-	)
-	return errors.Wrap(err)
+	*bulkOperation[T]
 }
 
 func (api *bulkCreate[T]) Create(objs ...T) {
@@ -85,15 +61,4 @@ func (api *bulkCreate[T]) Commit() (sql.Result, errors.TracerError) {
 		return nil, dberrors.TranslateError(err, dberrors.Insert, stmt)
 	}
 	return result, api.tx.Commit()
-}
-
-func (api *bulkCreate[T]) Rollback() errors.TracerError {
-	if nil == api.tx {
-		return errors.New("rollback called on nil transaction")
-	}
-	defer func() {
-		api.pending = make([]T, 0)
-		api.tx = nil
-	}()
-	return api.tx.Rollback()
 }

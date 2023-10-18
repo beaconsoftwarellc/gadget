@@ -275,11 +275,6 @@ type whereCondition struct {
 	expression *ConditionExpression
 }
 
-func (wc *whereCondition) setExpression(left TableField, comparator Comparison, right interface{}) *whereCondition {
-	wc.expression = FieldComparison(left, comparator, right)
-	return wc
-}
-
 func (wc *whereCondition) tables() []string {
 	tables := []string{}
 	if nil != wc.expression {
@@ -312,7 +307,6 @@ type Join struct {
 type JoinError struct {
 	conditionTables []string
 	joinTable       string
-	trace           []string
 }
 
 // NewJoin of the specified type and direction.
