@@ -7,8 +7,8 @@ import (
 	"github.com/beaconsoftwarellc/gadget/v2/database/transaction"
 	"github.com/beaconsoftwarellc/gadget/v2/generator"
 	"github.com/beaconsoftwarellc/gadget/v2/log"
-	gomock "github.com/golang/mock/gomock"
 	assert1 "github.com/stretchr/testify/assert"
+	gomock "go.uber.org/mock/gomock"
 )
 
 func TestBulkUpdate(t *testing.T) {

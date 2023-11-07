@@ -14,8 +14,8 @@ import (
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
 	"github.com/beaconsoftwarellc/gadget/v2/generator"
 	"github.com/beaconsoftwarellc/gadget/v2/messagequeue"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 func NewMatcher(assert *assert.Assertions, messages ...*messagequeue.Message) *MessageMatches {

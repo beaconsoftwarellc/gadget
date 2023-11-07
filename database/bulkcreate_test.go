@@ -7,9 +7,9 @@ import (
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
 	"github.com/beaconsoftwarellc/gadget/v2/generator"
 	"github.com/beaconsoftwarellc/gadget/v2/log"
-	"github.com/golang/mock/gomock"
 	"github.com/jmoiron/sqlx"
 	assert1 "github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 func TestBulkCreateReset(t *testing.T) {

@@ -10,8 +10,8 @@ import (
 	"github.com/beaconsoftwarellc/gadget/v2/database/transaction"
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
 	"github.com/beaconsoftwarellc/gadget/v2/generator"
-	"github.com/golang/mock/gomock"
 	assert1 "github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 func GetMocks(t *testing.T) (*database.MockConnection, *database.MockClient, *database.MockAPI,
