@@ -9,7 +9,7 @@ import (
 	reflect "reflect"
 
 	sqs "github.com/aws/aws-sdk-go-v2/service/sqs"
-	gomock "github.com/golang/mock/gomock"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockAPI is a mock of API interface.

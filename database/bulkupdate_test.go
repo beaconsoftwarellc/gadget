@@ -7,9 +7,20 @@ import (
 	"github.com/beaconsoftwarellc/gadget/v2/database/transaction"
 	"github.com/beaconsoftwarellc/gadget/v2/generator"
 	"github.com/beaconsoftwarellc/gadget/v2/log"
-	gomock "github.com/golang/mock/gomock"
 	assert1 "github.com/stretchr/testify/assert"
+	gomock "go.uber.org/mock/gomock"
 )
+
+type sqlResult struct {
+}
+
+func (*sqlResult) LastInsertId() (int64, error) {
+	return 0, nil
+}
+
+func (*sqlResult) RowsAffected() (int64, error) {
+	return 1, nil
+}
 
 func TestBulkUpdate(t *testing.T) {
 	assert := assert1.New(t)
@@ -37,9 +48,10 @@ func TestBulkUpdate(t *testing.T) {
 	tx.EXPECT().PrepareNamed(
 		"UPDATE `test_record` SET  `test_record`.`name` = :name "+
 			"WHERE `test_record`.`id` = :id").Return(statement, nil)
-	statement.EXPECT().Exec(expected)
+	statement.EXPECT().Exec(expected).Return(&sqlResult{}, nil)
 	statement.EXPECT().Close().Return(nil)
 	tx.EXPECT().Commit().Return(nil)
+
 	bulkUpdate.Update(expected)
 	_, err := bulkUpdate.Commit()
 	assert.NoError(err)

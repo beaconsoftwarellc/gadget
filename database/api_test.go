@@ -8,8 +8,8 @@ import (
 	"github.com/beaconsoftwarellc/gadget/v2/database/record"
 	"github.com/beaconsoftwarellc/gadget/v2/database/transaction"
 	"github.com/beaconsoftwarellc/gadget/v2/generator"
-	gomock "github.com/golang/mock/gomock"
 	assert1 "github.com/stretchr/testify/assert"
+	gomock "go.uber.org/mock/gomock"
 )
 
 type TestRecord struct {

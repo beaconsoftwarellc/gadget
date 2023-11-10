@@ -9,8 +9,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/beaconsoftwarellc/gadget/v2/generator"
 	"github.com/beaconsoftwarellc/gadget/v2/log"
-	"github.com/golang/mock/gomock"
 	assert1 "github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 type waitQueue struct {
