@@ -65,6 +65,9 @@ func (api *bulkUpdate[T]) Commit() (sql.Result, errors.TracerError) {
 		_ = log.Error(api.tx.Rollback())
 		return nil, errors.Wrap(err)
 	}
+	defer func() {
+		_ = log.Error(namedStatement.Close())
+	}()
 	for _, obj := range api.pending {
 		sqlResult, err := namedStatement.Exec(obj)
 		if nil != err {
@@ -78,7 +81,6 @@ func (api *bulkUpdate[T]) Commit() (sql.Result, errors.TracerError) {
 		}
 	}
 	tracerErr = api.tx.Commit()
-	_ = log.Error(namedStatement.Close())
 	if nil != tracerErr {
 		return nil, tracerErr
 	}
