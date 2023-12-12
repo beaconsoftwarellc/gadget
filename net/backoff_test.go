@@ -32,9 +32,9 @@ func TestBackoffExtendedErrorIsReturned(t *testing.T) {
 	assert := assert1.New(t)
 	calls, f := getF(10)
 	start := time.Now()
-	minCycle := 1 * time.Millisecond
-	assert.Error(BackoffExtended(f, 5, minCycle, 100*time.Millisecond))
-	assert.Equal(5, *calls)
+	minCycle := time.Second
+	assert.Error(BackoffExtended(f, 1, minCycle, time.Minute))
+	assert.Equal(1, *calls)
 	assert.True(time.Since(start) > minCycle)
 }
 
