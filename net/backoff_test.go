@@ -55,3 +55,16 @@ func TestCalculateBackoff(t *testing.T) {
 	assert.True(result2 > result1, "Expected result2 to be greater than result1, was: %v", result2)
 	assert.True(result3 < 6*time.Hour, "Expected result3 to be less than 6 hours, was: %v", result3)
 }
+
+func TestCalculateBackoff2(t *testing.T) {
+	assert := assert1.New(t)
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	result1 := CalculateBackoff(r, 1, 1*time.Second, 10*time.Minute)
+	assert.GreaterOrEqual(2*time.Second, result1)
+	result2 := CalculateBackoff(r, 2, 1*time.Second, 10*time.Minute)
+	assert.GreaterOrEqual(5*time.Second, result2)
+	result3 := CalculateBackoff(r, 3, 1*time.Second, 10*time.Minute)
+	assert.GreaterOrEqual(10*time.Second, result3)
+	result4 := CalculateBackoff(r, 4, 1*time.Second, 10*time.Minute)
+	assert.GreaterOrEqual(20*time.Second, result4)
+}
