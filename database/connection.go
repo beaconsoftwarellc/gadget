@@ -107,60 +107,34 @@ func (c *connection) Database() API {
 }
 
 // NewBulkCreate API creating multiple records at the same time.
-func NewBulkCreate[T record.Record](cfg Configuration) (BulkCreate[T], error) {
+func NewBulkCreate[T record.Record](c Connection) (BulkCreate[T], error) {
 	// get a new connection with multistatement enabled
-	var (
-		connectionString     = utility.SetMultiStatement(cfg.DatabaseConnection())
-		obfuscatedConnection = utility.ObfuscateConnection(connectionString)
-		err                  error
-		connection           *sqlx.DB
-	)
-	connection, err = connect(cfg.DatabaseDialect(), cfg.DatabaseConnection(), cfg.Logger())
-	if nil != err {
-		cfg.Logger().Errorf("failed to connect to '%s': %s", obfuscatedConnection, err)
-		return nil, err
-	}
 	bc := &bulkCreate[T]{
 		bulkOperation: &bulkOperation[T]{
-			db: &transactable{connection}, configuration: cfg,
+			db:            &transactable{c.Client()},
+			configuration: c.GetConfiguration(),
 		},
 	}
-	bc.tx, err = transaction.New(bc.db, cfg.Logger(),
-		cfg.SlowQueryThreshold(), cfg.LoggedSlowQueries())
-	return bc, err
+	return bc, bc.Reset()
 }
 
 // NewBulkUpdate of the columns on type T. Only the specified columns
 // will be updated on commit.
 func NewBulkUpdate[T record.Record](
-	cfg Configuration,
+	c Connection,
 	columns ...qb.TableField,
 ) (BulkUpdate[T], error) {
 	if len(columns) == 0 {
 		return nil, errors.New("at least one column is required")
 	}
-	// get a new connection with multistatement enabled
-	var (
-		connectionString     = utility.SetMultiStatement(cfg.DatabaseConnection())
-		obfuscatedConnection = utility.ObfuscateConnection(connectionString)
-		err                  error
-		connection           *sqlx.DB
-	)
-	connection, err = connect(cfg.DatabaseDialect(),
-		cfg.DatabaseConnection(), cfg.Logger())
-	if nil != err {
-		cfg.Logger().Errorf("failed to connect to '%s': %s", obfuscatedConnection, err)
-		return nil, err
-	}
 	bu := &bulkUpdate[T]{
 		bulkOperation: &bulkOperation[T]{
-			db: &transactable{connection}, configuration: cfg,
+			db:            &transactable{c.Client()},
+			configuration: c.GetConfiguration(),
 		},
 		columns: columns,
 	}
-	bu.tx, err = transaction.New(bu.db, cfg.Logger(),
-		cfg.SlowQueryThreshold(), cfg.LoggedSlowQueries())
-	return bu, err
+	return bu, bu.Reset()
 }
 
 func (c *connection) Close() error {

@@ -1,5 +1,6 @@
 package database
 
+//go:generate mockgen -source=$GOFILE -package mocks -destination mocks/bulkupdate.mock.gen.go
 import (
 	"database/sql"
 
