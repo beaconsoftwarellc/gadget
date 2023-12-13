@@ -32,9 +32,9 @@ func TestBackoffExtendedErrorIsReturned(t *testing.T) {
 	assert := assert1.New(t)
 	calls, f := getF(10)
 	start := time.Now()
-	minCycle := 1 * time.Millisecond
-	assert.Error(BackoffExtended(f, 5, minCycle, 100*time.Millisecond))
-	assert.Equal(5, *calls)
+	minCycle := time.Second
+	assert.Error(BackoffExtended(f, 1, minCycle, time.Minute))
+	assert.Equal(1, *calls)
 	assert.True(time.Since(start) > minCycle)
 }
 
@@ -48,10 +48,27 @@ func TestBackoffExtendedBadMinimum(t *testing.T) {
 func TestCalculateBackoff(t *testing.T) {
 	assert := assert1.New(t)
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	result1 := CalculateBackoff(r, 5, 10*time.Millisecond, 6*time.Hour)
-	result2 := CalculateBackoff(r, 6, 10*time.Millisecond, 6*time.Hour)
-	result3 := CalculateBackoff(r, 10, 10*time.Millisecond, 6*time.Hour)
-	assert.True(result1 > (10*time.Second), "Expected result to be greater than 10 seconds, was: %v", result1)
-	assert.True(result2 > result1, "Expected result2 to be greater than result1, was: %v", result2)
-	assert.True(result3 < 6*time.Hour, "Expected result3 to be less than 6 hours, was: %v", result3)
+	result := CalculateBackoff(r, 1, time.Minute, time.Hour, time.Minute)
+	assert.GreaterOrEqual(5*time.Minute, result)
+	result = CalculateBackoff(r, 5, time.Minute, time.Hour, time.Minute)
+	assert.GreaterOrEqual(40*time.Minute, result)
+	result = CalculateBackoff(r, 10, time.Minute, time.Hour, time.Minute)
+	assert.GreaterOrEqual(time.Hour, result)
+}
+
+func TestCalculateBackoffSecond(t *testing.T) {
+	assert := assert1.New(t)
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	result1 := CalculateBackoff(r, 1, 1*time.Second, 10*time.Minute,
+		time.Second)
+	assert.GreaterOrEqual(2*time.Second, result1)
+	result2 := CalculateBackoff(r, 2, 1*time.Second, 10*time.Minute,
+		time.Second)
+	assert.GreaterOrEqual(5*time.Second, result2)
+	result3 := CalculateBackoff(r, 3, 1*time.Second, 10*time.Minute,
+		time.Second)
+	assert.GreaterOrEqual(10*time.Second, result3)
+	result4 := CalculateBackoff(r, 4, 1*time.Second, 10*time.Minute,
+		time.Second)
+	assert.GreaterOrEqual(20*time.Second, result4)
 }

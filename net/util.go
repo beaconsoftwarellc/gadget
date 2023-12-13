@@ -31,7 +31,7 @@ func cleanIPv6(s string) (string, int) {
 		portString := stringutil.SafeSubstring(s, index+2, 0)
 		port, err = strconv.Atoi(portString)
 		if nil != err {
-			log.Warn(err)
+			_ = log.Warn(err)
 			return "", -1
 		}
 		if port <= 0 || port > math.MaxUint16 {
