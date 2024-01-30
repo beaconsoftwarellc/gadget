@@ -292,41 +292,47 @@ func NewInvalidForeignKeyError(action SQLQueryType, stmt string, err error) erro
 	}
 }
 
-// DatabaseToApiError handles conversion from a database error to a GRPC friendly
-// error with code.
-func DatabaseToApiError(primary qb.Table, dbError error) error {
+// DatabaseToStatus translates the passed db error into a grpc Status with appropriate
+// status code
+func DatabaseToStatus(primary qb.Table, dbError error) *status.Status {
 	if nil == dbError {
 		return nil
 	}
-	var err error
+	var grpcStatus *status.Status
 	prefix := getLogPrefix(2)
 	switch dbError.(type) {
 	case *NotFoundError:
-		err = status.Error(codes.NotFound, fmt.Sprintf("%s %s not found", prefix, primary.GetName()))
+		grpcStatus = status.Newf(codes.NotFound, fmt.Sprintf("%s %s not found", prefix, primary.GetName()))
 	case *DataTooLongError:
-		err = status.Error(codes.InvalidArgument, fmt.Sprintf("%s %s field too long: %s",
+		grpcStatus = status.Newf(codes.InvalidArgument, fmt.Sprintf("%s %s field too long: %s",
 			prefix, primary.GetName(), dbError))
 	case *DuplicateRecordError:
-		err = status.Error(codes.AlreadyExists, fmt.Sprintf("%s %s record already exists: %s",
+		grpcStatus = status.Newf(codes.AlreadyExists, fmt.Sprintf("%s %s record already exists: %s",
 			prefix, primary.GetName(), dbError))
 	case *UniqueConstraintError:
-		err = status.Error(codes.AlreadyExists, fmt.Sprintf("%s %s unique constraint violation: %s",
+		grpcStatus = status.Newf(codes.AlreadyExists, fmt.Sprintf("%s %s unique constraint violation: %s",
 			prefix, primary.GetName(), dbError))
 	case *InvalidForeignKeyError:
-		err = status.Error(codes.InvalidArgument, fmt.Sprintf("%s %s foreign key violation: %s",
+		grpcStatus = status.Newf(codes.InvalidArgument, fmt.Sprintf("%s %s foreign key violation: %s",
 			prefix, primary.GetName(), dbError))
 	case *ValidationError:
-		err = status.Error(codes.InvalidArgument, fmt.Sprintf("%s operation on %s had a validation error: %s",
+		grpcStatus = status.Newf(codes.InvalidArgument, fmt.Sprintf("%s operation on %s had a validation error: %s",
 			prefix, primary.GetName(), dbError))
 	case *ConnectionError, *NotAPointerError:
 		_ = log.Errorf("[GAD.DAT.321] unexpected run time database error: %s", dbError)
-		err = status.Error(codes.Internal, fmt.Sprintf("%s internal system error encountered", prefix))
+		grpcStatus = status.Newf(codes.Internal, fmt.Sprintf("%s internal system error encountered", prefix))
 	default:
 		_ = log.Errorf("[GAD.DAT.324] unhandled error type %T: %s", dbError, dbError.Error())
-		err = status.Error(codes.Aborted, fmt.Sprintf("%s (%s) database error encountered: %s",
+		grpcStatus = status.Newf(codes.Aborted, fmt.Sprintf("%s (%s) database error encountered: %s",
 			prefix, primary.GetName(), dbError))
 	}
-	return err
+	return grpcStatus
+}
+
+// DatabaseToApiError handles conversion from a database error to a GRPC friendly
+// error with code.
+func DatabaseToApiError(primary qb.Table, dbError error) error {
+	return DatabaseToStatus(primary, dbError).Err()
 }
 
 func getLogPrefix(frameSkip int) string {
