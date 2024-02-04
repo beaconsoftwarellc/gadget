@@ -295,11 +295,17 @@ func NewInvalidForeignKeyError(action SQLQueryType, stmt string, err error) erro
 // DatabaseToStatus translates the passed db error into a grpc Status with appropriate
 // status code
 func DatabaseToStatus(primary qb.Table, dbError error) *status.Status {
+	// we have to call through so we have the same stack offset in both
+	// public functions
+	return databaseToStatus(primary, dbError)
+}
+
+func databaseToStatus(primary qb.Table, dbError error) *status.Status {
 	if nil == dbError {
 		return nil
 	}
 	var grpcStatus *status.Status
-	prefix := getLogPrefix(2)
+	prefix := getLogPrefix(3)
 	switch dbError.(type) {
 	case *NotFoundError:
 		grpcStatus = status.Newf(codes.NotFound, fmt.Sprintf("%s %s not found", prefix, primary.GetName()))
@@ -332,7 +338,7 @@ func DatabaseToStatus(primary qb.Table, dbError error) *status.Status {
 // DatabaseToApiError handles conversion from a database error to a GRPC friendly
 // error with code.
 func DatabaseToApiError(primary qb.Table, dbError error) error {
-	return DatabaseToStatus(primary, dbError).Err()
+	return databaseToStatus(primary, dbError).Err()
 }
 
 func getLogPrefix(frameSkip int) string {
