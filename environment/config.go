@@ -81,9 +81,9 @@ func ProcessMap(config interface{}, envVars map[string]string, logger log.Logger
 			}
 		}
 
-		ssmName, _ := stringutil.ParseTag(typ.Tag.Get("ssm"))
-		if ssmName != "" && !noSSM {
-			ssmEnv := ssm.Get(ssmName, logger)
+		ssmPath, ssmName := stringutil.ParseTag(typ.Tag.Get("ssm"))
+		if ssmPath != "" && !noSSM {
+			ssmEnv := ssm.Get(ssmPath, ssmName[0], logger)
 			if ssmEnv != "" {
 				err := setValueField(valueField, typ, envTag, ssmEnv)
 				if nil != err {
