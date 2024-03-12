@@ -12,8 +12,14 @@ import (
 	"github.com/beaconsoftwarellc/gadget/v2/stringutil"
 )
 
-// NoS3EnvVar is the environment variable to set when you so not want to try and pull from S3.
-const NoS3EnvVar = "NO_S3_ENV_VARS"
+const (
+	// NoS3EnvVar is the environment variable to set when you do not want to try and pull from S3.
+	NoS3EnvVar = "NO_S3_ENV_VARS"
+	// NoSSMEnvVar is the environment variable to set when you do not want to try and pull from SSM.
+	NoSSMEnvVar = "NO_SSM_ENV_VARS"
+	// SSMEnvironmentVar is the environment variable to set the environment for SSM.
+	SSMEnvironmentVar = "SSM_ENVIRONMENT"
+)
 
 // Process takes a Specification that describes the configuration for the application
 // only attributes tagged with `env:""` will be imported from the environment
@@ -41,18 +47,26 @@ func ProcessMap(config interface{}, envVars map[string]string, logger log.Logger
 		return NewInvalidSpecificationError()
 	}
 
+	// s3 configuration
 	bucket := NewBucket()
 	_, noS3 := envVars[NoS3EnvVar]
+
+	// ssm configuration
+	_, noSSM := envVars[NoSSMEnvVar]
+	ssmEnv := envVars[SSMEnvironmentVar]
+	noSSM = noSSM || ssmEnv == ""
+	ssm := NewSSM(ssmEnv)
+
 	for i := 0; i < val.NumField(); i++ {
 		valueField := val.Field(i)
 		typ := val.Type().Field(i)
 		envTag, envOptions := stringutil.ParseTag(typ.Tag.Get("env"))
-		if "" == envTag {
+		if envTag == "" {
 			continue
 		}
 
 		s3Bucket, s3Item := stringutil.ParseTag(typ.Tag.Get("s3"))
-		if "" != s3Bucket && !noS3 {
+		if s3Bucket != "" && !noS3 {
 			s3Env := bucket.Get(s3Bucket, s3Item[0], envTag, logger)
 			if nil != s3Env {
 				switch t := typ.Type.Kind(); t {
@@ -67,32 +81,53 @@ func ProcessMap(config interface{}, envVars map[string]string, logger log.Logger
 			}
 		}
 
+		ssmName, _ := stringutil.ParseTag(typ.Tag.Get("ssm"))
+		if ssmName != "" && !noSSM {
+			ssmEnv := ssm.Get(ssmName, logger)
+			if ssmEnv != "" {
+				err := setValueField(valueField, typ, envTag, ssmEnv)
+				if nil != err {
+					return err
+				}
+				continue
+			}
+		}
+
 		env := envVars[envTag]
-		if "" == env {
+		if env == "" {
 			if !envOptions.Contains("optional") {
 				return MissingEnvironmentVariableError{Tag: envTag, Field: typ.Name}
 			}
 			continue
 		}
 
-		switch valueField.Interface().(type) {
-		case string:
-			valueField.SetString(env)
-		case int:
-			parsed, err := strconv.Atoi(env)
-			if err != nil {
-				return errors.New("%s while converting %s", err.Error(), envTag)
-			}
-			valueField.SetInt(int64(parsed))
-		case time.Duration:
-			parsed, err := time.ParseDuration(env)
-			if err != nil {
-				return errors.New("%s while converting %s", err.Error(), envTag)
-			}
-			valueField.SetInt(int64(parsed))
-		default:
-			return UnsupportedDataTypeError{Type: typ.Type.Kind(), Field: typ.Name}
+		err := setValueField(valueField, typ, envTag, env)
+		if nil != err {
+			return err
 		}
+	}
+	return nil
+}
+
+func setValueField(valueField reflect.Value, structField reflect.StructField,
+	envTag, env string) error {
+	switch valueField.Interface().(type) {
+	case string:
+		valueField.SetString(env)
+	case int:
+		parsed, err := strconv.Atoi(env)
+		if err != nil {
+			return errors.New("%s while converting %s", err.Error(), envTag)
+		}
+		valueField.SetInt(int64(parsed))
+	case time.Duration:
+		parsed, err := time.ParseDuration(env)
+		if err != nil {
+			return errors.New("%s while converting %s", err.Error(), envTag)
+		}
+		valueField.SetInt(int64(parsed))
+	default:
+		return UnsupportedDataTypeError{Type: structField.Type.Kind(), Field: structField.Name}
 	}
 	return nil
 }
@@ -113,7 +148,7 @@ func Push(config interface{}) error {
 		valueField := val.Field(i)
 		typ := val.Type().Field(i)
 		envTag, _ := stringutil.ParseTag(typ.Tag.Get("env"))
-		if "" == envTag {
+		if envTag == "" {
 			continue
 		}
 		var value string
