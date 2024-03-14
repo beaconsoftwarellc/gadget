@@ -15,10 +15,10 @@ import (
 const (
 	// NoS3EnvVar is the environment variable to set when you do not want to try and pull from S3.
 	NoS3EnvVar = "NO_S3_ENV_VARS"
-	// S3BucketEnvironmentVar is the environment variable for the global environment in S3.
-	S3BucketEnvironmentVar = "S3_BUCKET_ENV"
-	// S3ItemEnvironmentVar is the environment variable for the global environment in S3.
-	S3ItemEnvironmentVar = "S3_ITEM_ENV"
+	// S3GlobalEnvironmentBucketVar is the environment variable for the global environment in S3.
+	S3GlobalEnvironmentBucketVar = "S3_GLOBAL_ENV_BUCKET"
+	// S3GlobalEnvironmentKeyVar is the environment variable for the global environment in S3.
+	S3GlobalEnvironmentKeyVar = "S3_GLOBAL_ENV_KEY"
 )
 
 // Process takes a Specification that describes the configuration for the application
@@ -49,8 +49,8 @@ func ProcessMap(config interface{}, envVars map[string]string, logger log.Logger
 
 	bucket := NewBucket()
 	_, noS3 := envVars[NoS3EnvVar]
-	envBucket := envVars[S3BucketEnvironmentVar]
-	envItem := []string{envVars[S3ItemEnvironmentVar]}
+	envBucket := envVars[S3GlobalEnvironmentBucketVar]
+	envItem := []string{envVars[S3GlobalEnvironmentKeyVar]}
 	for i := 0; i < val.NumField(); i++ {
 		valueField := val.Field(i)
 		typ := val.Type().Field(i)
