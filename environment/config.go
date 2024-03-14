@@ -15,9 +15,9 @@ import (
 const (
 	// NoS3EnvVar is the environment variable to set when you do not want to try and pull from S3.
 	NoS3EnvVar = "NO_S3_ENV_VARS"
-	// S3GlobalEnvironmentBucketVar is the environment variable for the global environment in S3.
+	// S3GlobalEnvironmentBucketVar is an environment variable for the global environment in S3.
 	S3GlobalEnvironmentBucketVar = "S3_GLOBAL_ENV_BUCKET"
-	// S3GlobalEnvironmentKeyVar is the environment variable for the global environment in S3.
+	// S3GlobalEnvironmentKeyVar is an environment variable for the global environment in S3.
 	S3GlobalEnvironmentKeyVar = "S3_GLOBAL_ENV_KEY"
 )
 
