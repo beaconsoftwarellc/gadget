@@ -12,8 +12,14 @@ import (
 	"github.com/beaconsoftwarellc/gadget/v2/stringutil"
 )
 
-// NoS3EnvVar is the environment variable to set when you so not want to try and pull from S3.
-const NoS3EnvVar = "NO_S3_ENV_VARS"
+const (
+	// NoS3EnvVar is the environment variable to set when you do not want to try and pull from S3.
+	NoS3EnvVar = "NO_S3_ENV_VARS"
+	// S3BucketEnvironmentVar is the environment variable for the global environment in S3.
+	S3BucketEnvironmentVar = "S3_BUCKET_ENV"
+	// S3ItemEnvironmentVar is the environment variable for the global environment in S3.
+	S3ItemEnvironmentVar = "S3_ITEM_ENV"
+)
 
 // Process takes a Specification that describes the configuration for the application
 // only attributes tagged with `env:""` will be imported from the environment
@@ -43,16 +49,23 @@ func ProcessMap(config interface{}, envVars map[string]string, logger log.Logger
 
 	bucket := NewBucket()
 	_, noS3 := envVars[NoS3EnvVar]
+	envBucket := envVars[S3BucketEnvironmentVar]
+	envItem := []string{envVars[S3ItemEnvironmentVar]}
 	for i := 0; i < val.NumField(); i++ {
 		valueField := val.Field(i)
 		typ := val.Type().Field(i)
 		envTag, envOptions := stringutil.ParseTag(typ.Tag.Get("env"))
-		if "" == envTag {
+		if envTag == "" {
 			continue
 		}
 
 		s3Bucket, s3Item := stringutil.ParseTag(typ.Tag.Get("s3"))
-		if "" != s3Bucket && !noS3 {
+		if s3Bucket == "" {
+			// no s3 configuration for this field, check for it in the global environment
+			s3Bucket = envBucket
+			s3Item = envItem
+		}
+		if s3Bucket != "" && !noS3 {
 			s3Env := bucket.Get(s3Bucket, s3Item[0], envTag, logger)
 			if nil != s3Env {
 				switch t := typ.Type.Kind(); t {
@@ -68,7 +81,7 @@ func ProcessMap(config interface{}, envVars map[string]string, logger log.Logger
 		}
 
 		env := envVars[envTag]
-		if "" == env {
+		if env == "" {
 			if !envOptions.Contains("optional") {
 				return MissingEnvironmentVariableError{Tag: envTag, Field: typ.Name}
 			}
@@ -113,7 +126,7 @@ func Push(config interface{}) error {
 		valueField := val.Field(i)
 		typ := val.Type().Field(i)
 		envTag, _ := stringutil.ParseTag(typ.Tag.Get("env"))
-		if "" == envTag {
+		if envTag == "" {
 			continue
 		}
 		var value string
