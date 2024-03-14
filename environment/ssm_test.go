@@ -15,17 +15,23 @@ import (
 func Test_ssm_Has(t *testing.T) {
 	assert := assert1.New(t)
 
-	ssm := NewSSM("env")
-	path := "%s-foo"
+	ssm := NewSSM("env", "proj")
+	path := "foo"
 	name := "bar"
+	assert.Equal("/env-proj/", ssm.defaultPath)
 
 	value, ok := ssm.Has(path, name)
 	assert.Empty(value)
 	assert.False(ok)
 
 	expected := "baz"
-	ssm.Add("env-foo", map[string]string{name: expected})
+	ssm.Add("foo", map[string]string{name: expected})
 	value, ok = ssm.Has(path, name)
+	assert.Equal(expected, value)
+	assert.True(ok)
+
+	ssm.Add(ssm.defaultPath, map[string]string{name: expected})
+	value, ok = ssm.Has("", name)
 	assert.Equal(expected, value)
 	assert.True(ok)
 }
@@ -36,16 +42,16 @@ func Test_ssm_loadSSMParameters(t *testing.T) {
 	ssmClient := &SSM{
 		cache:       make(map[string]map[string]string),
 		client:      mockClient,
-		environment: "env",
+		defaultPath: "/env-proj/",
 	}
-	path := "%s-foo"
+	path := "foo"
 
 	t.Run("error", func(t *testing.T) {
 		assert := assert1.New(t)
 		expected := generator.ID("err")
 		mockClient.EXPECT().GetParametersByPath(&ssm.GetParametersByPathInput{
 			MaxResults: aws.Int64(10),
-			Path:       aws.String("env-foo"),
+			Path:       aws.String("foo"),
 		}).Return(nil, errors.New(expected))
 
 		err := ssmClient.loadSSMParameters(path)
@@ -56,7 +62,7 @@ func Test_ssm_loadSSMParameters(t *testing.T) {
 		assert := assert1.New(t)
 		mockClient.EXPECT().GetParametersByPath(&ssm.GetParametersByPathInput{
 			MaxResults: aws.Int64(10),
-			Path:       aws.String("env-foo"),
+			Path:       aws.String("foo"),
 		}).Return(&ssm.GetParametersByPathOutput{}, nil)
 
 		err := ssmClient.loadSSMParameters(path)
@@ -68,7 +74,7 @@ func Test_ssm_loadSSMParameters(t *testing.T) {
 		expected := generator.ID("val")
 		mockClient.EXPECT().GetParametersByPath(&ssm.GetParametersByPathInput{
 			MaxResults: aws.Int64(10),
-			Path:       aws.String("env-foo"),
+			Path:       aws.String("foo"),
 		}).Return(&ssm.GetParametersByPathOutput{
 			Parameters: []*ssm.Parameter{
 				{
@@ -90,7 +96,7 @@ func Test_ssm_loadSSMParameters(t *testing.T) {
 		expected := generator.ID("val")
 		mockClient.EXPECT().GetParametersByPath(&ssm.GetParametersByPathInput{
 			MaxResults: aws.Int64(10),
-			Path:       aws.String("env-foo"),
+			Path:       aws.String("foo"),
 		}).Return(&ssm.GetParametersByPathOutput{
 			NextToken: aws.String("next"),
 			Parameters: []*ssm.Parameter{
@@ -103,7 +109,7 @@ func Test_ssm_loadSSMParameters(t *testing.T) {
 		expected1 := generator.ID("val")
 		mockClient.EXPECT().GetParametersByPath(&ssm.GetParametersByPathInput{
 			MaxResults: aws.Int64(10),
-			Path:       aws.String("env-foo"),
+			Path:       aws.String("foo"),
 			NextToken:  aws.String("next"),
 		}).Return(&ssm.GetParametersByPathOutput{
 			Parameters: []*ssm.Parameter{
@@ -123,27 +129,26 @@ func Test_ssm_loadSSMParameters(t *testing.T) {
 		assert.True(ok)
 		assert.Equal(expected1, value)
 	})
-
 }
 
 func Test_ssm_Get(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	mockClient := NewMockssmClient(ctrl)
 	ssmClient := &SSM{
-		cache:       make(map[string]map[string]string),
-		client:      mockClient,
-		environment: "env",
+		cache:  make(map[string]map[string]string),
+		client: mockClient,
 	}
-	path := "%s-foo"
+	path := "foo"
 	logger := log.NewStackLogger()
 
 	t.Run("cached", func(t *testing.T) {
 		assert := assert1.New(t)
 		expected := generator.ID("val")
-		ssmClient.Add("env-foo", map[string]string{"bar": expected})
+		ssmClient.Add(path, map[string]string{"bar": expected})
 
 		value := ssmClient.Get(path, "bar", logger)
 		assert.Equal(expected, value)
+		ssmClient.clearCache()
 	})
 
 	t.Run("load error", func(t *testing.T) {
@@ -152,11 +157,12 @@ func Test_ssm_Get(t *testing.T) {
 		expected := generator.ID("err")
 		mockClient.EXPECT().GetParametersByPath(&ssm.GetParametersByPathInput{
 			MaxResults: aws.Int64(10),
-			Path:       aws.String("env-foo"),
+			Path:       aws.String(path),
 		}).Return(nil, errors.New(expected))
 
 		actual := ssmClient.Get(path, name, logger)
 		assert.Empty(actual)
+		ssmClient.clearCache()
 	})
 
 	t.Run("load success", func(t *testing.T) {
@@ -165,7 +171,7 @@ func Test_ssm_Get(t *testing.T) {
 		expected := generator.ID("val")
 		mockClient.EXPECT().GetParametersByPath(&ssm.GetParametersByPathInput{
 			MaxResults: aws.Int64(10),
-			Path:       aws.String("env-foo"),
+			Path:       aws.String(path),
 		}).Return(&ssm.GetParametersByPathOutput{
 			Parameters: []*ssm.Parameter{
 				{
@@ -177,6 +183,7 @@ func Test_ssm_Get(t *testing.T) {
 
 		actual := ssmClient.Get(path, name, logger)
 		assert.Equal(expected, actual)
+		ssmClient.clearCache()
 	})
 
 	t.Run("dne", func(t *testing.T) {
@@ -184,10 +191,11 @@ func Test_ssm_Get(t *testing.T) {
 		name := generator.ID("name")
 		mockClient.EXPECT().GetParametersByPath(&ssm.GetParametersByPathInput{
 			MaxResults: aws.Int64(10),
-			Path:       aws.String("env-foo"),
+			Path:       aws.String(path),
 		}).Return(&ssm.GetParametersByPathOutput{}, nil)
 
 		actual := ssmClient.Get(path, name, logger)
 		assert.Empty(actual)
+		ssmClient.clearCache()
 	})
 }

@@ -15,10 +15,16 @@ import (
 const (
 	// NoS3EnvVar is the environment variable to set when you do not want to try and pull from S3.
 	NoS3EnvVar = "NO_S3_ENV_VARS"
+	// S3GlobalEnvironmentBucketVar is an environment variable for the global environment in S3.
+	S3GlobalEnvironmentBucketVar = "S3_GLOBAL_ENV_BUCKET"
+	// S3GlobalEnvironmentKeyVar is an environment variable for the global environment in S3.
+	S3GlobalEnvironmentKeyVar = "S3_GLOBAL_ENV_KEY"
 	// NoSSMEnvVar is the environment variable to set when you do not want to try and pull from SSM.
 	NoSSMEnvVar = "NO_SSM_ENV_VARS"
 	// SSMEnvironmentVar is the environment variable to set the environment for SSM.
 	SSMEnvironmentVar = "SSM_ENVIRONMENT"
+	// SSMProjectVar is the environment variable to set the project for SSM.
+	SSMProjectVar = "SSM_PROJECT"
 )
 
 // Process takes a Specification that describes the configuration for the application
@@ -50,23 +56,28 @@ func ProcessMap(config interface{}, envVars map[string]string, logger log.Logger
 	// s3 configuration
 	bucket := NewBucket()
 	_, noS3 := envVars[NoS3EnvVar]
+	envBucket := envVars[S3GlobalEnvironmentBucketVar]
+	envItem := []string{envVars[S3GlobalEnvironmentKeyVar]}
 
 	// ssm configuration
 	_, noSSM := envVars[NoSSMEnvVar]
-	ssmEnv := envVars[SSMEnvironmentVar]
-	noSSM = noSSM || ssmEnv == ""
-	ssm := NewSSM(ssmEnv)
+	ssm := NewSSM(envVars[SSMEnvironmentVar], envVars[SSMProjectVar])
 
 	for i := 0; i < val.NumField(); i++ {
 		valueField := val.Field(i)
 		typ := val.Type().Field(i)
 		envTag, envOptions := stringutil.ParseTag(typ.Tag.Get("env"))
-		if envTag == "" {
+		if stringutil.IsWhiteSpace(envTag) {
 			continue
 		}
 
 		s3Bucket, s3Item := stringutil.ParseTag(typ.Tag.Get("s3"))
-		if s3Bucket != "" && !noS3 {
+		if stringutil.IsWhiteSpace(s3Bucket) {
+			// no s3 configuration for this field, check for it in the global environment
+			s3Bucket = envBucket
+			s3Item = envItem
+		}
+		if !stringutil.IsWhiteSpace(s3Bucket) && !noS3 {
 			s3Env := bucket.Get(s3Bucket, s3Item[0], envTag, logger)
 			if nil != s3Env {
 				switch t := typ.Type.Kind(); t {
@@ -82,9 +93,13 @@ func ProcessMap(config interface{}, envVars map[string]string, logger log.Logger
 		}
 
 		ssmPath, ssmName := stringutil.ParseTag(typ.Tag.Get("ssm"))
-		if ssmPath != "" && !noSSM {
+		if len(ssmName) == 0 {
+			// if custom ssm tag not specified, use the env tag
+			ssmName = []string{envTag}
+		}
+		if len(ssmName) > 0 && !noSSM {
 			ssmEnv := ssm.Get(ssmPath, ssmName[0], logger)
-			if ssmEnv != "" {
+			if !stringutil.IsWhiteSpace(ssmEnv) {
 				err := setValueField(valueField, typ, envTag, ssmEnv)
 				if nil != err {
 					return err
@@ -94,7 +109,7 @@ func ProcessMap(config interface{}, envVars map[string]string, logger log.Logger
 		}
 
 		env := envVars[envTag]
-		if env == "" {
+		if stringutil.IsWhiteSpace(env) {
 			if !envOptions.Contains("optional") {
 				return MissingEnvironmentVariableError{Tag: envTag, Field: typ.Name}
 			}
@@ -148,7 +163,7 @@ func Push(config interface{}) error {
 		valueField := val.Field(i)
 		typ := val.Type().Field(i)
 		envTag, _ := stringutil.ParseTag(typ.Tag.Get("env"))
-		if envTag == "" {
+		if stringutil.IsWhiteSpace(envTag) {
 			continue
 		}
 		var value string
