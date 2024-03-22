@@ -80,13 +80,9 @@ func ProcessMap(config interface{}, envVars map[string]string, logger log.Logger
 		if !stringutil.IsWhiteSpace(s3Bucket) && !noS3 {
 			s3Env := bucket.Get(s3Bucket, s3Item[0], envTag, logger)
 			if nil != s3Env {
-				switch t := typ.Type.Kind(); t {
-				case reflect.String:
-					valueField.SetString(s3Env.(string))
-				case reflect.Int:
-					valueField.SetInt(int64(s3Env.(float64)))
-				default:
-					return UnsupportedDataTypeError{Type: t, Field: typ.Name}
+				err := setValueFieldNotString(valueField, typ, envTag, s3Env)
+				if nil != err {
+					return err
 				}
 				continue
 			}
@@ -120,6 +116,25 @@ func ProcessMap(config interface{}, envVars map[string]string, logger log.Logger
 		if nil != err {
 			return err
 		}
+	}
+	return nil
+}
+
+func setValueFieldNotString(valueField reflect.Value, structField reflect.StructField,
+	envTag string, env interface{}) error {
+	switch valueField.Interface().(type) {
+	case string:
+		valueField.SetString(env.(string))
+	case int:
+		valueField.SetInt(int64(env.(float64)))
+	case time.Duration:
+		parsed, err := time.ParseDuration(env.(string))
+		if err != nil {
+			return errors.New("%s while converting %s", err.Error(), envTag)
+		}
+		valueField.SetInt(int64(parsed))
+	default:
+		return UnsupportedDataTypeError{Type: structField.Type.Kind(), Field: structField.Name}
 	}
 	return nil
 }
