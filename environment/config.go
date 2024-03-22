@@ -93,10 +93,8 @@ func ProcessMap(config interface{}, envVars map[string]string, logger log.Logger
 		}
 
 		ssmPath, ssmName := stringutil.ParseTag(typ.Tag.Get("ssm"))
-		logger.Infof("ssmPath: %s, ssmName: %v", ssmPath, ssmName)
 		if len(ssmName) == 0 {
 			// if custom ssm tag not specified, use the env tag
-			logger.Infof("ssmName is empty, using envTag: %s", envTag)
 			ssmName = []string{envTag}
 		}
 		if len(ssmName) > 0 && !noSSM {

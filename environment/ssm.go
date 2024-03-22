@@ -2,6 +2,7 @@ package environment
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -63,9 +64,7 @@ func (s *SSM) Get(path, name string, logger log.Logger) string {
 	if stringutil.IsWhiteSpace(path) {
 		path = s.defaultPath
 	}
-	logger.Infof("SSM Get: %s, %s", path, name)
 	if value, ok := s.cache[path]; ok {
-		log.Infof("SSM cache: %d, %s", len(value), value[name])
 		return value[name]
 	}
 	err := s.loadSSMParameters(path)
@@ -89,7 +88,7 @@ func (s *SSM) loadSSMParameters(path string) error {
 			return err
 		}
 		for _, p := range resp.Parameters {
-			results[*p.Name] = *p.Value
+			results[strings.TrimPrefix(*p.Name, path)] = *p.Value
 		}
 		if resp.NextToken == nil {
 			break
