@@ -86,12 +86,15 @@ func (s *SSM) loadSSMParameters(path string) error {
 		if err != nil {
 			return err
 		}
+		log.Infof("SSM response: %d", len(resp.Parameters))
 		for _, p := range resp.Parameters {
+			log.Infof("SSM parameter: %s, %s", *p.Name, *p.Value)
 			results[*p.Name] = *p.Value
 		}
 		if resp.NextToken == nil {
 			break
 		}
+		log.Infof("SSM next token: %s", *resp.NextToken)
 		params.NextToken = resp.NextToken
 	}
 	s.Add(path, results)
