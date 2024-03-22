@@ -46,7 +46,9 @@ func (s *SSM) Has(path, name string) (string, bool) {
 }
 
 func (s *SSM) getParameter(path, name string) (string, bool) {
+	log.Infof("SSM getParameter: %s, %s", path, name)
 	if val, ok := s.cache[path]; ok {
+		log.Infof("SSM cache: %d", len(val))
 		value, ok := val[name]
 		return value, ok
 	}
