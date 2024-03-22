@@ -46,9 +46,7 @@ func (s *SSM) Has(path, name string) (string, bool) {
 }
 
 func (s *SSM) getParameter(path, name string) (string, bool) {
-	log.Infof("SSM getParameter: %s, %s", path, name)
 	if val, ok := s.cache[path]; ok {
-		log.Infof("SSM cache: %d", len(val))
 		value, ok := val[name]
 		return value, ok
 	}
@@ -62,12 +60,12 @@ func (s *SSM) Add(path string, data map[string]string) {
 
 // Get a value from the cache, if it is not found it will load from SSM
 func (s *SSM) Get(path, name string, logger log.Logger) string {
-	logger.Infof("SSM Get: %s, %s", path, name)
 	if stringutil.IsWhiteSpace(path) {
 		path = s.defaultPath
-		logger.Infof("SSM Get: %s, %s", path, name)
 	}
+	logger.Infof("SSM Get: %s, %s", path, name)
 	if value, ok := s.cache[path]; ok {
+		log.Infof("SSM cache: %d, %s", len(value), value[name])
 		return value[name]
 	}
 	err := s.loadSSMParameters(path)
