@@ -62,8 +62,10 @@ func (s *SSM) Add(path string, data map[string]string) {
 
 // Get a value from the cache, if it is not found it will load from SSM
 func (s *SSM) Get(path, name string, logger log.Logger) string {
+	logger.Infof("SSM Get: %s, %s", path, name)
 	if stringutil.IsWhiteSpace(path) {
 		path = s.defaultPath
+		logger.Infof("SSM Get: %s, %s", path, name)
 	}
 	if value, ok := s.cache[path]; ok {
 		return value[name]
@@ -88,15 +90,12 @@ func (s *SSM) loadSSMParameters(path string) error {
 		if err != nil {
 			return err
 		}
-		log.Infof("SSM response: %d", len(resp.Parameters))
 		for _, p := range resp.Parameters {
-			log.Infof("SSM parameter: %s, %s", *p.Name, *p.Value)
 			results[*p.Name] = *p.Value
 		}
 		if resp.NextToken == nil {
 			break
 		}
-		log.Infof("SSM next token: %s", *resp.NextToken)
 		params.NextToken = resp.NextToken
 	}
 	s.Add(path, results)
