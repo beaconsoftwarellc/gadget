@@ -80,8 +80,9 @@ func ProcessMap(config interface{}, envVars map[string]string, logger log.Logger
 		if !stringutil.IsWhiteSpace(s3Bucket) && !noS3 {
 			s3Env := bucket.Get(s3Bucket, s3Item[0], envTag, logger)
 			if nil != s3Env {
-				err := setValueField(valueField, typ, envTag, s3Env.(string))
-				if nil != err {
+				if typ.Type.Kind() == reflect.Int {
+					valueField.SetInt(int64(s3Env.(float64)))
+				} else if err := setValueField(valueField, typ, envTag, s3Env.(string)); nil != err {
 					return err
 				}
 				continue
