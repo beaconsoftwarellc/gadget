@@ -10,7 +10,7 @@ import (
 func TestBucketName(t *testing.T) {
 	assert := assert1.New(t)
 
-	bucket := NewBucket("env", "proj")
+	bucket := NewBucket("bucket", "env", "proj")
 	project := "foo"
 	key := "bar"
 

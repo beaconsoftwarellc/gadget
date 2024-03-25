@@ -17,6 +17,8 @@ const (
 	NoS3EnvVar = "NO_S3_ENV_VARS"
 	// NoSSMEnvVar is the environment variable to set when you do not want to try and pull from SSM.
 	NoSSMEnvVar = "NO_SSM_ENV_VARS"
+	// S3GlobalEnvironmentBucketVar is an environment variable for the global environment in S3.
+	S3GlobalEnvironmentBucketVar = "S3_GLOBAL_ENV_BUCKET"
 	// GlobalEnvironmentVar is the environment variable to set the environment for S3 and SSM.
 	GlobalEnvironmentVar = "GLOBAL_ENVIRONMENT"
 	// GlobalProjectVar is the environment variable to set the project for S3 and SSM.
@@ -37,6 +39,8 @@ func Process(config interface{}, logger log.Logger) error {
 	return ProcessMap(config, GetEnvMap(), logger)
 }
 
+// TODO: [GEN-205] refactor and add interfaces for better testing and less code repeat
+
 // ProcessMap is the same as Process except that the environment variable map is supplied instead of retrieved
 func ProcessMap(config interface{}, envVars map[string]string, logger log.Logger) error {
 	val := reflect.ValueOf(config)
@@ -51,7 +55,11 @@ func ProcessMap(config interface{}, envVars map[string]string, logger log.Logger
 
 	// s3 configuration
 	_, noS3 := envVars[NoS3EnvVar]
-	bucket := NewBucket(envVars[GlobalEnvironmentVar], envVars[GlobalProjectVar])
+	bucket := NewBucket(
+		envVars[S3GlobalEnvironmentBucketVar], // bucket name
+		envVars[GlobalEnvironmentVar],         // environment
+		envVars[GlobalProjectVar],             // default project
+	)
 
 	// ssm configuration
 	_, noSSM := envVars[NoSSMEnvVar]
@@ -72,11 +80,10 @@ func ProcessMap(config interface{}, envVars map[string]string, logger log.Logger
 		}
 		if !noS3 {
 			s3Env := bucket.Get(s3Project, s3Name[0], logger)
-			if nil != s3Env {
-				err := setValueField(valueField, typ, envTag, s3Env)
-				if nil != err {
-					return err
-				}
+			err := setValueField(valueField, typ, envTag, s3Env)
+			if nil != err {
+				return err
+			} else if s3Env != nil {
 				continue
 			}
 		}
@@ -115,6 +122,9 @@ func ProcessMap(config interface{}, envVars map[string]string, logger log.Logger
 
 func setValueField(valueField reflect.Value, structField reflect.StructField,
 	envTag string, env interface{}) error {
+	if env == nil {
+		return nil
+	}
 	// separate path for string input so we can parse time durations and other
 	// types that can be represented as strings
 	if str, ok := env.(string); ok {
