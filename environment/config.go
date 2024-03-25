@@ -54,10 +54,10 @@ func ProcessMap(config interface{}, envVars map[string]string, logger log.Logger
 	}
 
 	// s3 configuration
-	bucket := NewBucket()
+	bucket := NewBucket(envVars[SSMEnvironmentVar], envVars[SSMProjectVar])
 	_, noS3 := envVars[NoS3EnvVar]
-	envBucket := envVars[S3GlobalEnvironmentBucketVar]
-	envItem := []string{envVars[S3GlobalEnvironmentKeyVar]}
+	//envBucket := envVars[S3GlobalEnvironmentBucketVar]
+	//envItem := []string{envVars[S3GlobalEnvironmentKeyVar]}
 
 	// ssm configuration
 	_, noSSM := envVars[NoSSMEnvVar]
@@ -71,14 +71,13 @@ func ProcessMap(config interface{}, envVars map[string]string, logger log.Logger
 			continue
 		}
 
-		s3Bucket, s3Item := stringutil.ParseTag(typ.Tag.Get("s3"))
-		if stringutil.IsWhiteSpace(s3Bucket) {
-			// no s3 configuration for this field, check for it in the global environment
-			s3Bucket = envBucket
-			s3Item = envItem
+		s3Project, s3Name := stringutil.ParseTag(typ.Tag.Get("s3"))
+		if len(s3Name) == 0 {
+			// if custom s3 name not specified, use the env tag
+			s3Name = []string{envTag}
 		}
-		if !stringutil.IsWhiteSpace(s3Bucket) && !noS3 {
-			s3Env := bucket.Get(s3Bucket, s3Item[0], envTag, logger)
+		if !noS3 {
+			s3Env := bucket.Get(s3Project, s3Name[0], logger)
 			if nil != s3Env {
 				err := setValueFieldInterface(valueField, typ, envTag, s3Env)
 				if nil != err {
