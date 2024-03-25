@@ -21,9 +21,10 @@ type ssmClient interface {
 
 // SSM wraps the SSM client with an in memory cache
 type SSM struct {
-	cache       map[string]map[string]string
-	client      ssmClient
-	defaultPath string
+	cache          map[string]map[string]string
+	client         ssmClient
+	defaultProject string
+	environment    string
 }
 
 // NewSSM returns a SSM for the environment with a client and an initialized cache
@@ -32,18 +33,23 @@ func NewSSM(environment, project string) *SSM {
 		SharedConfigState: session.SharedConfigEnable,
 	}))
 	return &SSM{
-		cache:       make(map[string]map[string]string),
-		client:      ssm.New(session),
-		defaultPath: fmt.Sprintf(ssmPathFmt, environment, project),
+		cache:          make(map[string]map[string]string),
+		client:         ssm.New(session),
+		defaultProject: project,
+		environment:    environment,
 	}
 }
 
-// Has checks for a given key in the cache
-func (s *SSM) Has(path, name string) (string, bool) {
-	if stringutil.IsWhiteSpace(path) {
-		path = s.defaultPath
+func (s *SSM) getPath(project string) string {
+	if stringutil.IsWhiteSpace(project) {
+		project = s.defaultProject
 	}
-	return s.getParameter(path, name)
+	return fmt.Sprintf(ssmPathFmt, s.environment, project)
+}
+
+// Has checks for a given key in the cache
+func (s *SSM) Has(project, name string) (string, bool) {
+	return s.getParameter(s.getPath(project), name)
 }
 
 func (s *SSM) getParameter(path, name string) (string, bool) {
@@ -60,10 +66,8 @@ func (s *SSM) Add(path string, data map[string]string) {
 }
 
 // Get a value from the cache, if it is not found it will load from SSM
-func (s *SSM) Get(path, name string, logger log.Logger) string {
-	if stringutil.IsWhiteSpace(path) {
-		path = s.defaultPath
-	}
+func (s *SSM) Get(project, name string, logger log.Logger) string {
+	path := s.getPath(project)
 	if value, ok := s.cache[path]; ok {
 		return value[name]
 	}
