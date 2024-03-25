@@ -15,17 +15,14 @@ import (
 const (
 	// NoS3EnvVar is the environment variable to set when you do not want to try and pull from S3.
 	NoS3EnvVar = "NO_S3_ENV_VARS"
-	// S3GlobalEnvironmentBucketVar is an environment variable for the global environment in S3.
-	S3GlobalEnvironmentBucketVar = "S3_GLOBAL_ENV_BUCKET"
-	// S3GlobalEnvironmentKeyVar is an environment variable for the global environment in S3.
-	S3GlobalEnvironmentKeyVar = "S3_GLOBAL_ENV_KEY"
 	// NoSSMEnvVar is the environment variable to set when you do not want to try and pull from SSM.
 	NoSSMEnvVar = "NO_SSM_ENV_VARS"
-	// SSMEnvironmentVar is the environment variable to set the environment for SSM.
-	SSMEnvironmentVar = "SSM_ENVIRONMENT"
-	// SSMProjectVar is the environment variable to set the project for SSM.
-	SSMProjectVar = "SSM_PROJECT"
+	// GlobalEnvironmentVar is the environment variable to set the environment for S3 and SSM.
+	GlobalEnvironmentVar = "GLOBAL_ENVIRONMENT"
+	// GlobalProjectVar is the environment variable to set the project for S3 and SSM.
+	GlobalProjectVar = "GLOBAL_PROJECT"
 )
+const ()
 
 // Process takes a Specification that describes the configuration for the application
 // only attributes tagged with `env:""` will be imported from the environment
@@ -54,14 +51,12 @@ func ProcessMap(config interface{}, envVars map[string]string, logger log.Logger
 	}
 
 	// s3 configuration
-	bucket := NewBucket(envVars[SSMEnvironmentVar], envVars[SSMProjectVar])
 	_, noS3 := envVars[NoS3EnvVar]
-	//envBucket := envVars[S3GlobalEnvironmentBucketVar]
-	//envItem := []string{envVars[S3GlobalEnvironmentKeyVar]}
+	bucket := NewBucket(envVars[GlobalEnvironmentVar], envVars[GlobalProjectVar])
 
 	// ssm configuration
 	_, noSSM := envVars[NoSSMEnvVar]
-	ssm := NewSSM(envVars[SSMEnvironmentVar], envVars[SSMProjectVar])
+	ssm := NewSSM(envVars[GlobalEnvironmentVar], envVars[GlobalProjectVar])
 
 	for i := 0; i < val.NumField(); i++ {
 		valueField := val.Field(i)
@@ -79,7 +74,7 @@ func ProcessMap(config interface{}, envVars map[string]string, logger log.Logger
 		if !noS3 {
 			s3Env := bucket.Get(s3Project, s3Name[0], logger)
 			if nil != s3Env {
-				err := setValueFieldInterface(valueField, typ, envTag, s3Env)
+				err := setValueField(valueField, typ, envTag, s3Env)
 				if nil != err {
 					return err
 				}
@@ -92,7 +87,7 @@ func ProcessMap(config interface{}, envVars map[string]string, logger log.Logger
 			// if custom ssm tag not specified, use the env tag
 			ssmName = []string{envTag}
 		}
-		if len(ssmName) > 0 && !noSSM {
+		if !noSSM {
 			ssmEnv := ssm.Get(ssmProject, ssmName[0], logger)
 			if !stringutil.IsWhiteSpace(ssmEnv) {
 				err := setValueField(valueField, typ, envTag, ssmEnv)
@@ -120,6 +115,23 @@ func ProcessMap(config interface{}, envVars map[string]string, logger log.Logger
 }
 
 func setValueField(valueField reflect.Value, structField reflect.StructField,
+	envTag string, env interface{}) error {
+	// separate path for string fields so we can parse time durations and other
+	// types that can be represented as strings
+	if str, ok := env.(string); ok {
+		return setValueFieldString(valueField, structField, envTag, str)
+	}
+
+	switch t := structField.Type.Kind(); t {
+	case reflect.Int:
+		valueField.SetInt(int64(env.(float64)))
+	default:
+		return UnsupportedDataTypeError{Type: t, Field: structField.Name}
+	}
+	return nil
+}
+
+func setValueFieldString(valueField reflect.Value, structField reflect.StructField,
 	envTag, env string) error {
 	switch valueField.Interface().(type) {
 	case string:
@@ -138,21 +150,6 @@ func setValueField(valueField reflect.Value, structField reflect.StructField,
 		valueField.SetInt(int64(parsed))
 	default:
 		return UnsupportedDataTypeError{Type: structField.Type.Kind(), Field: structField.Name}
-	}
-	return nil
-}
-
-func setValueFieldInterface(valueField reflect.Value, structField reflect.StructField,
-	envTag string, env interface{}) error {
-	if str, ok := env.(string); ok {
-		return setValueField(valueField, structField, envTag, str)
-	}
-
-	switch t := structField.Type.Kind(); t {
-	case reflect.Int:
-		valueField.SetInt(int64(env.(float64)))
-	default:
-		return UnsupportedDataTypeError{Type: t, Field: structField.Name}
 	}
 	return nil
 }

@@ -14,6 +14,7 @@ import (
 )
 
 const (
+	// default bucket is ${Environment}-${Project}-env
 	envBucketFmt = "%s-%s-env"
 	s3Item       = "env.json"
 )
