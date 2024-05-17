@@ -129,64 +129,64 @@ func Test_SelectWithTotal(t *testing.T) {
 	var (
 		ctrl   = gomock.NewController(t)
 		api    = NewMockAPI(ctrl)
-		target  TestRecordCollection
-		limit   = 0
-		offset  = 0
+		target TestRecordCollection
+		limit  = 0
+		offset = 0
 	)
 
 	query := qb.Select(MetaTestRecord.ID).From(MetaTestRecord)
 
 	t.Run("limit equal zero", func(t *testing.T) {
-        require := _require.New(t)
-        api.EXPECT().Count(MetaTestRecord, query).Return(int32(2), nil)
-        _, total, err := SelectWithTotal(api, MetaTestRecord, target, query, limit, offset)
-        require.NoError(err)
-        require.Equal(2, total)
-    })
+		require := _require.New(t)
+		api.EXPECT().Count(MetaTestRecord, query).Return(int32(2), nil)
+		_, total, err := SelectWithTotal(api, MetaTestRecord, target, query, limit, offset)
+		require.NoError(err)
+		require.Equal(2, total)
+	})
 
 	t.Run("total equal zero", func(t *testing.T) {
-        require := _require.New(t)
-        limit = 1 // change limit
-        api.EXPECT().Count(MetaTestRecord, query).Return(int32(0), nil)
-        _, total, err := SelectWithTotal(api, MetaTestRecord, target, query, limit, offset)
-        require.NoError(err)
-        require.Equal(0, total)
-    })
+		require := _require.New(t)
+		limit = 1 // change limit
+		api.EXPECT().Count(MetaTestRecord, query).Return(int32(0), nil)
+		_, total, err := SelectWithTotal(api, MetaTestRecord, target, query, limit, offset)
+		require.NoError(err)
+		require.Equal(0, total)
+	})
 
 	t.Run("total equal 1", func(t *testing.T) {
-        require := _require.New(t)
-        api.EXPECT().Count(MetaTestRecord, query).Return(int32(1), nil)
-        api.EXPECT().Select(&target, query, record.NewListOptions(limit, offset)).Return(nil)
-        _, total, err := SelectWithTotal(api, MetaTestRecord, target, query, limit, offset)
-        require.NoError(err)
-        require.Equal(1, total)
-    })
+		require := _require.New(t)
+		api.EXPECT().Count(MetaTestRecord, query).Return(int32(1), nil)
+		api.EXPECT().Select(&target, query, record.NewListOptions(limit, offset)).Return(nil)
+		_, total, err := SelectWithTotal(api, MetaTestRecord, target, query, limit, offset)
+		require.NoError(err)
+		require.Equal(1, total)
+	})
 
 	t.Run("error case: Count error", func(t *testing.T) {
-        require := _require.New(t)
-        expected := generator.String(20)
-        api.EXPECT().Count(MetaTestRecord, query).Return(int32(0), errors.New(expected))
-        _, total, err := SelectWithTotal(api, MetaTestRecord, target, query, limit, offset)
-        require.Equal(0, total)
-        require.EqualError(err, expected)
-    })
+		require := _require.New(t)
+		expected := generator.String(20)
+		api.EXPECT().Count(MetaTestRecord, query).Return(int32(0), errors.New(expected))
+		_, total, err := SelectWithTotal(api, MetaTestRecord, target, query, limit, offset)
+		require.Equal(0, total)
+		require.EqualError(err, expected)
+	})
 
 	t.Run("error case: Select error", func(t *testing.T) {
-        require := _require.New(t)
-        expected := generator.String(20)
-        api.EXPECT().Count(MetaTestRecord, query).Return(int32(1), nil)
-        api.EXPECT().Select(&target, query, record.NewListOptions(limit, offset)).Return(errors.New(expected))
-        _, total, err := SelectWithTotal(api, MetaTestRecord, target, query, limit, offset)
-        require.EqualError(err, expected)
-        require.Equal(0, total)
-    })
+		require := _require.New(t)
+		expected := generator.String(20)
+		api.EXPECT().Count(MetaTestRecord, query).Return(int32(1), nil)
+		api.EXPECT().Select(&target, query, record.NewListOptions(limit, offset)).Return(errors.New(expected))
+		_, total, err := SelectWithTotal(api, MetaTestRecord, target, query, limit, offset)
+		require.EqualError(err, expected)
+		require.Equal(0, total)
+	})
 }
 
-func Test_Begin(t *testing.T){
+func Test_Begin(t *testing.T) {
 	require := _require.New(t)
 	ctrl := gomock.NewController(t)
 	transaction := transaction.NewMockTransaction(ctrl)
-	var err error 
+	var err error
 	api := &api{
 		tx:            transaction,
 		configuration: &InstanceConfig{MaxLimit: 100},
@@ -195,12 +195,11 @@ func Test_Begin(t *testing.T){
 	require.NoError(err)
 }
 
-
-func Test_Rollback(t *testing.T){
+func Test_Rollback(t *testing.T) {
 	require := _require.New(t)
 	ctrl := gomock.NewController(t)
 	transaction := transaction.NewMockTransaction(ctrl)
-	var err error 
+	var err error
 	api := &api{
 		tx:            transaction,
 		configuration: &InstanceConfig{MaxLimit: 100},
@@ -213,7 +212,7 @@ func Test_Rollback(t *testing.T){
 	require.NoError(err)
 }
 
-func Test_Rollback_transactionIsNil(t *testing.T){
+func Test_Rollback_transactionIsNil(t *testing.T) {
 	require := _require.New(t)
 
 	api := &api{
@@ -225,12 +224,12 @@ func Test_Rollback_transactionIsNil(t *testing.T){
 	require.EqualError(err, ErrMissingTransaction.Error())
 }
 
-func Test_Commit(t *testing.T){
+func Test_Commit(t *testing.T) {
 	require := _require.New(t)
 	ctrl := gomock.NewController(t)
 	transaction := transaction.NewMockTransaction(ctrl)
 
-	var err error 
+	var err error
 
 	api := &api{
 		tx:            transaction,
@@ -244,7 +243,7 @@ func Test_Commit(t *testing.T){
 	require.NoError(err)
 }
 
-func Test_Commit_transactionIsNil(t *testing.T){
+func Test_Commit_transactionIsNil(t *testing.T) {
 	require := _require.New(t)
 
 	api := &api{
@@ -272,67 +271,67 @@ func Test_ApiMethods(t *testing.T) {
 
 	t.Run("Create", func(t *testing.T) {
 		require := _require.New(t)
-        transaction.EXPECT().Create(target).Return(nil)
-        err := api.Create(target)
+		transaction.EXPECT().Create(target).Return(nil)
+		err := api.Create(target)
 		require.NoError(err)
-    })
+	})
 
-    t.Run("Read", func(t *testing.T) {
+	t.Run("Read", func(t *testing.T) {
 		require := _require.New(t)
-        transaction.EXPECT().Read(target, target.PrimaryKey()).Return(nil)
-        err := api.Read(target, target.PrimaryKey())
+		transaction.EXPECT().Read(target, target.PrimaryKey()).Return(nil)
+		err := api.Read(target, target.PrimaryKey())
 		require.NoError(err)
-    })
+	})
 
-    t.Run("ReadOneWhere", func(t *testing.T) {
+	t.Run("ReadOneWhere", func(t *testing.T) {
 		require := _require.New(t)
-        transaction.EXPECT().ReadOneWhere(target, conditionalExpression).Return(nil)
-        err := api.ReadOneWhere(target, conditionalExpression)
+		transaction.EXPECT().ReadOneWhere(target, conditionalExpression).Return(nil)
+		err := api.ReadOneWhere(target, conditionalExpression)
 		require.NoError(err)
-    })
+	})
 
-    t.Run("Select", func(t *testing.T) {
+	t.Run("Select", func(t *testing.T) {
 		require := _require.New(t)
-        transaction.EXPECT().Select(target, query, *listOptions).Return(nil)
-        err := api.Select(target, query, listOptions)
+		transaction.EXPECT().Select(target, query, *listOptions).Return(nil)
+		err := api.Select(target, query, listOptions)
 		require.NoError(err)
-    })
+	})
 
-    t.Run("ListWhere", func(t *testing.T) {
+	t.Run("ListWhere", func(t *testing.T) {
 		require := _require.New(t)
-        transaction.EXPECT().ListWhere(target, target, conditionalExpression, *listOptions).Return(nil)
-        err := api.ListWhere(target, target, conditionalExpression, listOptions)
+		transaction.EXPECT().ListWhere(target, target, conditionalExpression, *listOptions).Return(nil)
+		err := api.ListWhere(target, target, conditionalExpression, listOptions)
 		require.NoError(err)
-    })
+	})
 
-    t.Run("Update", func(t *testing.T) {
+	t.Run("Update", func(t *testing.T) {
 		require := _require.New(t)
-        transaction.EXPECT().Update(target).Return(nil)
-        err := api.Update(target)
+		transaction.EXPECT().Update(target).Return(nil)
+		err := api.Update(target)
 		require.NoError(err)
-    })
+	})
 
-    t.Run("Delete", func(t *testing.T) {
+	t.Run("Delete", func(t *testing.T) {
 		require := _require.New(t)
-        transaction.EXPECT().Delete(target).Return(nil)
-        err := api.Delete(target)
+		transaction.EXPECT().Delete(target).Return(nil)
+		err := api.Delete(target)
 		require.NoError(err)
-    })
+	})
 
-    t.Run("DeleteWhere", func(t *testing.T) {
+	t.Run("DeleteWhere", func(t *testing.T) {
 		require := _require.New(t)
-        transaction.EXPECT().DeleteWhere(target, conditionalExpression).Return(nil)
-        err := api.DeleteWhere(target, conditionalExpression)
+		transaction.EXPECT().DeleteWhere(target, conditionalExpression).Return(nil)
+		err := api.DeleteWhere(target, conditionalExpression)
 		require.NoError(err)
-    })
+	})
 
 	t.Run("UpdateWhere", func(t *testing.T) {
 		require := _require.New(t)
-        transaction.EXPECT().UpdateWhere(target, conditionalExpression, qb.FieldValue{Field: MetaTestRecord.ID, Value: 2}).Return(int64(0), nil)
-        total, err := api.UpdateWhere(target, conditionalExpression, qb.FieldValue{Field: MetaTestRecord.ID, Value: 2})
-        require.NoError(err)
-        require.Equal(int64(0), total)
-    })	
+		transaction.EXPECT().UpdateWhere(target, conditionalExpression, qb.FieldValue{Field: MetaTestRecord.ID, Value: 2}).Return(int64(0), nil)
+		total, err := api.UpdateWhere(target, conditionalExpression, qb.FieldValue{Field: MetaTestRecord.ID, Value: 2})
+		require.NoError(err)
+		require.Equal(int64(0), total)
+	})
 }
 
 func Test_database_enforceLimits(t *testing.T) {
