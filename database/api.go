@@ -78,6 +78,7 @@ func SelectWithTotal[T any](db API, table qb.Table, target T,
 var ErrMissingTransaction = errors.New("missing transaction")
 
 type api struct {
+	txInit        transaction.TransactionInitializer
 	tx            transaction.Transaction
 	db            *transactable
 	configuration Configuration
@@ -87,8 +88,11 @@ func (d *api) Begin() errors.TracerError {
 	if d.tx != nil {
 		return nil
 	}
+	if d.txInit == nil {
+		d.txInit = transaction.New
+	}
 	var err error
-	d.tx, err = transaction.New(
+	d.tx, err = d.txInit(
 		d.db,
 		d.configuration.Logger(),
 		d.configuration.SlowQueryThreshold(),

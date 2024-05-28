@@ -3,11 +3,13 @@ package database
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/beaconsoftwarellc/gadget/v2/database/qb"
 	"github.com/beaconsoftwarellc/gadget/v2/database/record"
 	"github.com/beaconsoftwarellc/gadget/v2/database/transaction"
 	"github.com/beaconsoftwarellc/gadget/v2/generator"
+	"github.com/beaconsoftwarellc/gadget/v2/log"
 	assert1 "github.com/stretchr/testify/assert"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -179,12 +181,20 @@ func Test_api_Count(t *testing.T) {
 	assert.Equal(expected, actual)
 }
 
+func NewMockTXInitializer(tx transaction.Transaction, err error) transaction.TransactionInitializer {
+	return func(db transaction.Begin, logger log.Logger, slow time.Duration,
+		loggedQueries map[string]time.Duration) (transaction.Transaction, error) {
+		return tx, err
+	}
+}
+
 func Test_api_CountWhere_nil(t *testing.T) {
 	assert := assert1.New(t)
 	ctrl := gomock.NewController(t)
 	transaction := transaction.NewMockTransaction(ctrl)
 	api := &api{
-		tx:            transaction,
+		//tx:            transaction,
+		txInit:        NewMockTXInitializer(transaction, nil),
 		configuration: &InstanceConfig{MaxLimit: 100},
 	}
 
@@ -194,9 +204,22 @@ func Test_api_CountWhere_nil(t *testing.T) {
 			"`test_record` AS `test_record`"},
 		record.ListOptions{Limit: 1, Offset: 0},
 	).Return(nil)
+	transaction.EXPECT().Commit().Return(nil)
 	actual, err := api.CountWhere(MetaTestRecord, nil)
 	assert.NoError(err)
 	assert.Equal(expected, actual)
+}
+
+func Test_api_CountWhere_BeginErrorl(t *testing.T) {
+	assert := assert1.New(t)
+	api := &api{
+		//tx:            transaction,
+		txInit:        NewMockTXInitializer(nil, fmt.Errorf("error")),
+		configuration: &InstanceConfig{MaxLimit: 100},
+	}
+
+	_, err := api.CountWhere(MetaTestRecord, nil)
+	assert.EqualError(err, "error")
 }
 
 func Test_api_CountWhere(t *testing.T) {

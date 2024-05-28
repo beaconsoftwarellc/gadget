@@ -15,6 +15,9 @@ import (
 	"github.com/samber/lo"
 )
 
+type TransactionInitializer = func(db Begin, logger log.Logger, slow time.Duration,
+	loggedQueries map[string]time.Duration) (Transaction, error)
+
 // Transaction is an in-progress database transaction.
 //
 // A transaction must end with a call to Commit or Rollback.

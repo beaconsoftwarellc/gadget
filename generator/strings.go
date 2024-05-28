@@ -82,6 +82,11 @@ func Secret() string {
 	return Password(secretLength)
 }
 
+// NumericCode returns random numbers of the requested length
+func NumericCode(length int) string {
+	return random(length, numbers)
+}
+
 // Code returns random letters & numbers of the requested length
 func Code(length int) string {
 	return random(length, append(letters, numbers...))
