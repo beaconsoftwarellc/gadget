@@ -1,6 +1,6 @@
 module github.com/beaconsoftwarellc/gadget/v2
 
-go 1.22.3
+go 1.22.4
 
 require (
 	github.com/aws/aws-sdk-go v1.47.5
