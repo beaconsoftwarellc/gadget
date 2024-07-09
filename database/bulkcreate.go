@@ -22,6 +22,7 @@ type BulkCreate[T record.Record] interface {
 
 type bulkCreate[T record.Record] struct {
 	*bulkOperation[T]
+	upsert bool
 }
 
 func (api *bulkCreate[T]) Create(objs ...T) {
@@ -49,9 +50,12 @@ func (api *bulkCreate[T]) Commit() (sql.Result, errors.TracerError) {
 			api.pending[0].Meta().WriteColumns(),
 			api.pending[0].Meta().PrimaryKey(),
 		)
-		query     = qb.Insert(writeCols...)
-		stmt, err = query.ParameterizedSQL()
+		query = qb.Insert(writeCols...)
 	)
+	if api.upsert {
+		query.OnDuplicate(api.pending[0].Meta().WriteColumns())
+	}
+	stmt, err := query.ParameterizedSQL()
 	if nil != err {
 		_ = log.Error(api.tx.Rollback())
 		return nil, errors.Wrap(err)
