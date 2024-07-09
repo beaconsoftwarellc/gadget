@@ -60,19 +60,19 @@ func (q *InsertQuery) getSQL(parameterized bool) (string, error) {
 		return "", errors.New("no columns specified for insert")
 	}
 	colExp := make([]string, len(q.columns))
-	qms := make([]string, len(q.columns))
+	valuePlaces := make([]string, len(q.columns))
 	for i, col := range q.columns {
 		colExp[i] = col.SQL()
 		if col.Table != q.columns[0].Table {
 			return "", errors.New("insert columns must be from the same table")
 		}
 		if parameterized {
-			qms[i] = ":" + col.GetName()
+			valuePlaces[i] = ":" + col.GetName()
 		} else {
-			qms[i] = "?"
+			valuePlaces[i] = "?"
 		}
 	}
-	valExp := fmt.Sprintf("(%s)", strings.Join(qms, ", "))
+	valExp := fmt.Sprintf("(%s)", strings.Join(valuePlaces, ", "))
 	if !parameterized {
 		valExps := make([]string, len(q.values))
 		for i := range q.values {

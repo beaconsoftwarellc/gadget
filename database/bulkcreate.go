@@ -45,6 +45,8 @@ func (api *bulkCreate[T]) Commit() (sql.Result, errors.TracerError) {
 	}
 	var (
 		result    sql.Result
+		stmt      string
+		err       error
 		log       = api.configuration.Logger()
 		writeCols = utility.AppendIfMissing(
 			api.pending[0].Meta().WriteColumns(),
@@ -55,7 +57,7 @@ func (api *bulkCreate[T]) Commit() (sql.Result, errors.TracerError) {
 	if api.upsert {
 		query.OnDuplicate(api.pending[0].Meta().WriteColumns())
 	}
-	stmt, err := query.ParameterizedSQL()
+	stmt, err = query.ParameterizedSQL()
 	if nil != err {
 		_ = log.Error(api.tx.Rollback())
 		return nil, errors.Wrap(err)
