@@ -1,6 +1,6 @@
 module github.com/beaconsoftwarellc/gadget/v2
 
-go 1.22.4
+go 1.22.3
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.30.1
@@ -11,16 +11,16 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.52.1
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/go-stack/stack v1.8.1
-	github.com/golang/protobuf v1.5.4
-	github.com/google/uuid v1.6.0
-	github.com/jmoiron/sqlx v1.4.0
-	github.com/samber/lo v1.39.0
+	github.com/golang/protobuf v1.5.3
+	github.com/google/uuid v1.4.0
+	github.com/jmoiron/sqlx v1.3.5
+	github.com/samber/lo v1.38.1
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
-	github.com/stretchr/testify v1.9.0
-	go.uber.org/mock v0.4.0
-	golang.org/x/exp v0.0.0-20240613232115-7f521ea00fb8
-	google.golang.org/grpc v1.64.0
-	google.golang.org/protobuf v1.34.2
+	github.com/stretchr/testify v1.8.4
+	go.uber.org/mock v0.3.0
+	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
+	google.golang.org/grpc v1.59.0
+	google.golang.org/protobuf v1.31.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -43,10 +43,10 @@ require (
 	github.com/aws/smithy-go v1.20.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
-	github.com/kr/pretty v0.3.1 // indirect
+	github.com/kr/pretty v0.3.0 // indirect
+	github.com/mattn/go-sqlite3 v1.14.15 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/rogpeppe/go-internal v1.12.0 // indirect
-	golang.org/x/sys v0.18.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240624140628-dc46fd24d27d // indirect
+	github.com/rogpeppe/go-internal v1.9.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20231106174013-bbf56f31fb17 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )
