@@ -74,36 +74,63 @@ func TestInsertDifferentTablesError(t *testing.T) {
 	assert.EqualError(err, "insert columns must be from the same table")
 }
 
+func TestInsertDifferentDuplicateTablesError(t *testing.T) {
+	assert := assert1.New(t)
+	query := Insert(Person.ID).OnDuplicate(Address.WriteColumns())
+	_, _, err := query.SQL()
+	assert.EqualError(err, "duplicate columns must be from the same table")
+}
+
 func TestInsertQueryOnDuplicate(t *testing.T) {
 	assert := assert1.New(t)
 	pID := generator.TestID()
 	name := generator.String(5)
 	aID := generator.TestID()
-	query := Insert(Person.ID, Person.Name, Person.AddressID).Values(pID, name, aID).OnDuplicate(Person.WriteColumns(), pID, name, aID)
+	query := Insert(Person.ID, Person.Name, Person.AddressID).Values(pID, name, aID).OnDuplicate(Person.WriteColumns())
 	sql, values, err := query.SQL()
 	assert.NoError(err)
-	if assert.Equal(6, len(values)) {
+	if assert.Equal(3, len(values)) {
 		values[0] = pID
 		values[1] = name
 		values[2] = aID
-		values[3] = pID
-		values[4] = name
-		values[5] = aID
 	}
-	assert.Equal("INSERT INTO `person` (`person`.`id`, `person`.`name`, `person`.`address_id`) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE `person`.`id` = ?, `person`.`name` = ?, `person`.`address_id` = ?", sql)
+	assert.Equal("INSERT INTO `person` (`person`.`id`, `person`.`name`, `person`.`address_id`) VALUES "+
+		"(?, ?, ?) "+
+		"ON DUPLICATE KEY UPDATE "+
+		"`person`.`id` = VALUES(`person`.`id`), "+
+		"`person`.`name` = VALUES(`person`.`name`), "+
+		"`person`.`address_id` = VALUES(`person`.`address_id`)", sql)
 }
 
 func TestInsertQueryMultiOnDuplicate(t *testing.T) {
 	assert := assert1.New(t)
-	query := Insert(Person.ID, Person.Name, Person.AddressID).OnDuplicate(Person.WriteColumns(), 1, generator.String(3), 3)
+	query := Insert(Person.ID, Person.Name, Person.AddressID).OnDuplicate(Person.WriteColumns())
 	for i := 0; i < 10; i++ {
 		query.Values(i, i, i)
 	}
-	sql, values, err := query.SQL()
-	assert.EqualError(err, "cannot use on duplicate with multi-insert")
-	assert.Nil(values)
-	assert.Equal("", sql)
+	sql, _, err := query.SQL()
+	assert.NoError(err)
+	assert.Equal("INSERT INTO `person` (`person`.`id`, `person`.`name`, `person`.`address_id`) VALUES "+
+		"(?, ?, ?), "+
+		"(?, ?, ?), "+
+		"(?, ?, ?), "+
+		"(?, ?, ?), "+
+		"(?, ?, ?), "+
+		"(?, ?, ?), "+
+		"(?, ?, ?), "+
+		"(?, ?, ?), "+
+		"(?, ?, ?), "+
+		"(?, ?, ?) "+
+		"ON DUPLICATE KEY UPDATE "+
+		"`person`.`id` = VALUES(`person`.`id`), "+
+		"`person`.`name` = VALUES(`person`.`name`), "+
+		"`person`.`address_id` = VALUES(`person`.`address_id`)", sql)
 	sql, err = query.ParameterizedSQL()
-	assert.EqualError(err, "cannot use on duplicate with multi-insert")
-	assert.Equal("", sql)
+	assert.NoError(err)
+	assert.Equal("INSERT INTO `person` (`person`.`id`, `person`.`name`, `person`.`address_id`) VALUES "+
+		"(:id, :name, :address_id) "+
+		"ON DUPLICATE KEY UPDATE "+
+		"`person`.`id` = VALUES(`person`.`id`), "+
+		"`person`.`name` = VALUES(`person`.`name`), "+
+		"`person`.`address_id` = VALUES(`person`.`address_id`)", sql)
 }

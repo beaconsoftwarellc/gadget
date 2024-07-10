@@ -114,6 +114,20 @@ func NewBulkCreate[T record.Record](c Connection) (BulkCreate[T], error) {
 			db:            &transactable{c.Client()},
 			configuration: c.GetConfiguration(),
 		},
+		upsert: false,
+	}
+	return bc, bc.Reset()
+}
+
+// NewBulkInsert API of BulkCreate with an option to upsert the records.
+func NewBulkInsert[T record.Record](c Connection, upsert bool) (BulkCreate[T], error) {
+	// get a new connection with multistatement enabled
+	bc := &bulkCreate[T]{
+		bulkOperation: &bulkOperation[T]{
+			db:            &transactable{c.Client()},
+			configuration: c.GetConfiguration(),
+		},
+		upsert: upsert,
 	}
 	return bc, bc.Reset()
 }
