@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/beaconsoftwarellc/gadget/v2/errors"
 	"github.com/beaconsoftwarellc/gadget/v2/generator"
 	"github.com/beaconsoftwarellc/gadget/v2/log"
 	assert1 "github.com/stretchr/testify/assert"
@@ -103,7 +103,7 @@ func TestPoller_NoLogContextDeadlineExceeded(t *testing.T) {
 	poller := NewPoller(options)
 	messageQueue.EXPECT().Dequeue(gomock.Any(),
 		options.DequeueCount, options.WaitForBatch).
-		Return(nil, awserr.New("0", "RequestID: , canceled, context deadline exceeded", nil))
+		Return(nil, errors.New(generator.String(32)))
 	messageQueue.EXPECT().Dequeue(gomock.Any(),
 		options.DequeueCount, options.WaitForBatch).
 		Return([]*Message{{ID: generator.String(5)}}, nil)

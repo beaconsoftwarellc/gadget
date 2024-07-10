@@ -9,9 +9,10 @@
 package environment
 
 import (
+	context "context"
 	reflect "reflect"
 
-	ssm "github.com/aws/aws-sdk-go/service/ssm"
+	ssm "github.com/aws/aws-sdk-go-v2/service/ssm"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -39,16 +40,21 @@ func (m *MockssmClient) EXPECT() *MockssmClientMockRecorder {
 }
 
 // GetParametersByPath mocks base method.
-func (m *MockssmClient) GetParametersByPath(arg0 *ssm.GetParametersByPathInput) (*ssm.GetParametersByPathOutput, error) {
+func (m *MockssmClient) GetParametersByPath(arg0 context.Context, arg1 *ssm.GetParametersByPathInput, arg2 ...func(*ssm.Options)) (*ssm.GetParametersByPathOutput, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetParametersByPath", arg0)
+	varargs := []any{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetParametersByPath", varargs...)
 	ret0, _ := ret[0].(*ssm.GetParametersByPathOutput)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetParametersByPath indicates an expected call of GetParametersByPath.
-func (mr *MockssmClientMockRecorder) GetParametersByPath(arg0 any) *gomock.Call {
+func (mr *MockssmClientMockRecorder) GetParametersByPath(arg0, arg1 any, arg2 ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetParametersByPath", reflect.TypeOf((*MockssmClient)(nil).GetParametersByPath), arg0)
+	varargs := append([]any{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetParametersByPath", reflect.TypeOf((*MockssmClient)(nil).GetParametersByPath), varargs...)
 }

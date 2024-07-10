@@ -1,6 +1,7 @@
 package environment
 
 import (
+	"context"
 	"os"
 	"reflect"
 	"strconv"
@@ -13,6 +14,8 @@ import (
 )
 
 const (
+	defaultRegion   = "us-east-1"
+	AWSRegionEnvVar = "AWS_REGION"
 	// NoS3EnvVar is the environment variable to set when you do not want to try and pull from S3.
 	NoS3EnvVar = "NO_S3_ENV_VARS"
 	// NoSSMEnvVar is the environment variable to set when you do not want to try and pull from SSM.
@@ -43,7 +46,10 @@ func Process(config interface{}, logger log.Logger) error {
 
 // ProcessMap is the same as Process except that the environment variable map is supplied instead of retrieved
 func ProcessMap(config interface{}, envVars map[string]string, logger log.Logger) error {
+	ctx := context.Background()
 	val := reflect.ValueOf(config)
+	bucket := NewNoopAddGet()
+	ssm := NewNoopAddGet()
 
 	if val.Kind() != reflect.Ptr {
 		return NewInvalidSpecificationError()
@@ -52,18 +58,27 @@ func ProcessMap(config interface{}, envVars map[string]string, logger log.Logger
 	if val.Kind() != reflect.Struct {
 		return NewInvalidSpecificationError()
 	}
+	region, ok := envVars[AWSRegionEnvVar]
+	if !ok {
+		region = defaultRegion
+	}
 
 	// s3 configuration
-	_, noS3 := envVars[NoS3EnvVar]
-	bucket := NewBucket(
-		envVars[S3GlobalEnvironmentBucketVar], // bucket name
-		envVars[GlobalEnvironmentVar],         // environment
-		envVars[GlobalProjectVar],             // default project
-	)
+	if _, noS3 := envVars[NoS3EnvVar]; !noS3 {
+		bucket = NewBucket(
+			ctx,
+			region,
+			envVars[S3GlobalEnvironmentBucketVar], // bucket name
+			envVars[GlobalEnvironmentVar],         // environment
+			envVars[GlobalProjectVar],             // default project
+			logger)
+	}
 
 	// ssm configuration
-	_, noSSM := envVars[NoSSMEnvVar]
-	ssm := NewSSM(envVars[GlobalEnvironmentVar], envVars[GlobalProjectVar])
+	if _, noSSM := envVars[NoSSMEnvVar]; !noSSM {
+		ssm = NewSSM(ctx, region, envVars[GlobalEnvironmentVar],
+			envVars[GlobalProjectVar], logger)
+	}
 
 	for i := 0; i < val.NumField(); i++ {
 		valueField := val.Field(i)
@@ -78,14 +93,14 @@ func ProcessMap(config interface{}, envVars map[string]string, logger log.Logger
 			// if custom s3 name not specified, use the env tag
 			s3Name = []string{envTag}
 		}
-		if !noS3 {
-			s3Env := bucket.Get(s3Project, s3Name[0], logger)
+
+		s3Env, ok := bucket.Get(s3Project, s3Name[0])
+		if ok {
 			err := setValueField(valueField, typ, envTag, s3Env)
-			if nil != err {
+			if err != nil {
 				return err
-			} else if s3Env != nil {
-				continue
 			}
+			continue
 		}
 
 		ssmProject, ssmName := stringutil.ParseTag(typ.Tag.Get("ssm"))
@@ -93,15 +108,14 @@ func ProcessMap(config interface{}, envVars map[string]string, logger log.Logger
 			// if custom ssm tag not specified, use the env tag
 			ssmName = []string{envTag}
 		}
-		if !noSSM {
-			ssmEnv := ssm.Get(ssmProject, ssmName[0], logger)
-			if !stringutil.IsWhiteSpace(ssmEnv) {
-				err := setValueField(valueField, typ, envTag, ssmEnv)
-				if nil != err {
-					return err
-				}
-				continue
+
+		ssmEnv, ok := ssm.Get(ssmProject, ssmName[0])
+		if ok {
+			err := setValueField(valueField, typ, envTag, ssmEnv)
+			if err != nil {
+				return err
 			}
+			continue
 		}
 
 		env := envVars[envTag]

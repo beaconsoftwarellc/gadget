@@ -1,12 +1,14 @@
 package environment
 
 import (
+	"context"
 	"fmt"
+
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ssm"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	"github.com/beaconsoftwarellc/gadget/v2/log"
 	"github.com/beaconsoftwarellc/gadget/v2/stringutil"
 )
@@ -16,31 +18,38 @@ const ssmPathFmt = "/%s-%s/"
 
 //go:generate mockgen -source=$GOFILE -package environment -destination ssmclient_mock.gen.go
 type ssmClient interface {
-	GetParametersByPath(*ssm.GetParametersByPathInput) (*ssm.GetParametersByPathOutput, error)
+	GetParametersByPath(context.Context, *ssm.GetParametersByPathInput,
+		...func(*ssm.Options)) (*ssm.GetParametersByPathOutput, error)
 }
 
-// SSM wraps the SSM client with an in memory cache
-type SSM struct {
-	cache          map[string]map[string]string
+// ssmAddGet wraps the ssmAddGet client with an in memory cache
+type ssmAddGet struct {
+	cache          map[string]map[string]interface{}
 	client         ssmClient
 	defaultProject string
 	environment    string
+	context        context.Context
+	logger         log.Logger
 }
 
 // NewSSM returns a SSM for the environment with a client and an initialized cache
-func NewSSM(environment, project string) *SSM {
-	session := session.Must(session.NewSessionWithOptions(session.Options{
-		SharedConfigState: session.SharedConfigEnable,
-	}))
-	return &SSM{
-		cache:          make(map[string]map[string]string),
-		client:         ssm.New(session),
+func NewSSM(ctx context.Context, region, environment, project string,
+	logger log.Logger) AddGet {
+	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(region))
+	if err != nil {
+		panic(log.Fatalf("[ENV.SSM.42] failed to load default config: %s", err))
+	}
+	return &ssmAddGet{
+		cache:          make(map[string]map[string]interface{}),
+		client:         ssm.NewFromConfig(cfg),
 		defaultProject: project,
 		environment:    environment,
+		context:        ctx,
+		logger:         logger,
 	}
 }
 
-func (s *SSM) getPath(project string) string {
+func (s *ssmAddGet) getPath(project string) string {
 	if stringutil.IsWhiteSpace(project) {
 		project = s.defaultProject
 	}
@@ -48,46 +57,54 @@ func (s *SSM) getPath(project string) string {
 }
 
 // Has checks for a given key in the cache
-func (s *SSM) Has(project, name string) (string, bool) {
+func (s *ssmAddGet) Has(project, name string) (interface{}, bool) {
 	return s.getParameter(s.getPath(project), name)
 }
 
-func (s *SSM) getParameter(path, name string) (string, bool) {
-	if val, ok := s.cache[path]; ok {
-		value, ok := val[name]
-		return value, ok
-	}
-	return "", false
+// Add a map of data from SSM to the cache
+func (s *ssmAddGet) Add(project string, data map[string]interface{}) {
+	path := s.getPath(project)
+	s.add(path, data)
 }
 
-// Add a map of data from SSM to the cache
-func (s *SSM) Add(path string, data map[string]string) {
+func (s *ssmAddGet) add(path string, data map[string]interface{}) {
 	s.cache[path] = data
 }
 
+func (s *ssmAddGet) getParameter(path, name string) (interface{}, bool) {
+	var (
+		val   map[string]interface{}
+		value interface{}
+		ok    bool
+	)
+	if val, ok = s.cache[path]; ok {
+		value, ok = val[name]
+	}
+	return value, ok
+}
+
 // Get a value from the cache, if it is not found it will load from SSM
-func (s *SSM) Get(project, name string, logger log.Logger) string {
+func (s *ssmAddGet) Get(project, name string) (interface{}, bool) {
 	path := s.getPath(project)
-	if value, ok := s.cache[path]; ok {
-		return value[name]
+	if value, ok := s.getParameter(path, name); ok {
+		return value, ok
 	}
 	err := s.loadSSMParameters(path)
 	if err != nil {
-		logger.Errorf("Issue loading from SSM, %s (%s)", path, err)
-		return ""
+		s.logger.Errorf("Issue loading from SSM, %s (%s)", path, err)
+		return nil, false
 	}
-	value, _ := s.getParameter(path, name)
-	return value
+	return s.getParameter(path, name)
 }
 
-func (s *SSM) loadSSMParameters(path string) error {
-	results := make(map[string]string)
+func (s *ssmAddGet) loadSSMParameters(path string) error {
+	results := make(map[string]interface{})
 	params := &ssm.GetParametersByPathInput{
 		Path:       &path,
-		MaxResults: aws.Int64(10),
+		MaxResults: aws.Int32(10),
 	}
 	for {
-		resp, err := s.client.GetParametersByPath(params)
+		resp, err := s.client.GetParametersByPath(s.context, params)
 		if err != nil {
 			return err
 		}
@@ -99,10 +116,6 @@ func (s *SSM) loadSSMParameters(path string) error {
 		}
 		params.NextToken = resp.NextToken
 	}
-	s.Add(path, results)
+	s.add(path, results)
 	return nil
-}
-
-func (s *SSM) clearCache() {
-	s.cache = make(map[string]map[string]string)
 }
