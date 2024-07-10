@@ -119,6 +119,40 @@ func TestBulkCreateCommit(t *testing.T) {
 	assert.NoError(actualErr)
 }
 
+func TestBulkCreateCommitUpsert(t *testing.T) {
+	assert := assert1.New(t)
+	ctrl := gomock.NewController(t)
+
+	configuration := &InstanceConfig{
+		Log: log.Global(),
+	}
+	implementation := transaction.NewMockImplementation(ctrl)
+	transaction := transaction.NewMockTransaction(ctrl)
+	transaction.EXPECT().Implementation().Return(implementation).AnyTimes()
+	client := NewMockClient(ctrl)
+	db := &transactable{db: client}
+
+	bulkCreate := &bulkCreate[*TestRecord]{
+		bulkOperation: &bulkOperation[*TestRecord]{
+			tx:            transaction,
+			db:            db,
+			configuration: configuration,
+		},
+		upsert: true,
+	}
+	testRecord := &TestRecord{Name: generator.String(32)}
+	testRecord1 := &TestRecord{Name: generator.String(32)}
+	bulkCreate.Create(testRecord, testRecord1)
+	implementation.EXPECT().NamedExec("INSERT INTO `test_record` "+
+		"(`test_record`.`id`, `test_record`.`name`) VALUES (:id, :name) "+
+		"ON DUPLICATE KEY UPDATE `test_record`.`id` = VALUES(`test_record`.`id`), "+
+		"`test_record`.`name` = VALUES(`test_record`.`name`)",
+		bulkCreate.pending).Return(nil, nil)
+	transaction.EXPECT().Commit().Return(nil)
+	_, actualErr := bulkCreate.Commit()
+	assert.NoError(actualErr)
+}
+
 func TestBulkCreateRollback(t *testing.T) {
 	assert := assert1.New(t)
 	ctrl := gomock.NewController(t)
