@@ -55,19 +55,17 @@ func (mq *sdk) API(context context.Context) (API, error) {
 		return mq.api, nil
 	}
 	var (
-		client *sqs.Client
-
-		err error
+		options []func(*sqs.Options)
+		err     error
 	)
 	cfg, err := config.LoadDefaultConfig(context, config.WithRegion(mq.region))
 	if err != nil {
 		return nil, err
 	}
 	if mq.region == LocalRegion {
-		cfg.BaseEndpoint = aws.String(fmt.Sprintf("http://%s", mq.queueUrl.Host))
+		options = append(options, StaticEndpointResolverOption(mq.queueUrl.Host))
 	}
-	client = sqs.NewFromConfig(cfg)
-	mq.api = client
+	mq.api = sqs.NewFromConfig(cfg, options...)
 	return mq.api, err
 }
 
