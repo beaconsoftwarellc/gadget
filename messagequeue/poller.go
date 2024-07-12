@@ -97,12 +97,15 @@ func (p *poller) poll() {
 		defer p.cancel()
 		messages, err = p.queue.Dequeue(ctx, p.options.DequeueCount,
 			p.options.WaitForBatch)
-		if nil != err {
+		if err != nil {
 			// noop on deadline exceeded
 			if strings.Contains(err.Error(), contextDeadlineExceeded) {
 				continue
 			}
-			p.options.Logger.Error(err)
+			// wait the operation timeout so we don't just spin if there
+			// is a network partition
+			time.Sleep(p.options.QueueOperationTimeout)
+			_ = p.options.Logger.Error(err)
 		} else {
 			p.handleMessages(messages)
 		}

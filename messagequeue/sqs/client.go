@@ -55,18 +55,17 @@ func (mq *sdk) API(context context.Context) (API, error) {
 		return mq.api, nil
 	}
 	var (
-		err error
+		options []func(*sqs.Options)
+		err     error
 	)
-	options := []func(*config.LoadOptions) error{config.WithRegion(mq.region)}
+	cfg, err := config.LoadDefaultConfig(context, config.WithRegion(mq.region))
+	if err != nil {
+		return nil, err
+	}
 	if mq.region == LocalRegion {
-		er := NewEndpointResolver(LocalRegion, fmt.Sprintf("http://%s",
-			mq.queueUrl.Host))
-		options = append(options, config.WithEndpointResolverWithOptions(er))
+		options = append(options, StaticEndpointResolverOption(mq.queueUrl.Host))
 	}
-	cfg, err := config.LoadDefaultConfig(context, options...)
-	if nil == err {
-		mq.api = sqs.NewFromConfig(cfg)
-	}
+	mq.api = sqs.NewFromConfig(cfg, options...)
 	return mq.api, err
 }
 

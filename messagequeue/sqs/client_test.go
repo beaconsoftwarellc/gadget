@@ -18,7 +18,8 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-func NewMatcher(assert *assert.Assertions, messages ...*messagequeue.Message) *MessageMatches {
+func NewMatcher(assert *assert.Assertions,
+	messages ...*messagequeue.Message) *MessageMatches {
 	return &MessageMatches{assert: assert,
 		messages: messages, smbo: &sqs.SendMessageBatchOutput{
 			Successful: make([]types.SendMessageBatchResultEntry, len(messages)),
@@ -53,7 +54,9 @@ func getAttributeValue(m map[string]types.MessageAttributeValue, name string) st
 	return ""
 }
 
-func getSystemAttributeValue(m map[string]types.MessageSystemAttributeValue, name string) string {
+func getSystemAttributeValue(
+	m map[string]types.MessageSystemAttributeValue,
+	name string) string {
 	if nil == m {
 		return ""
 	}
@@ -245,15 +248,12 @@ func Test_SQS_EnqueueBatch_OverMax(t *testing.T) {
 func Test_SQS_Dequeue(t *testing.T) {
 	ctx, assert, apiMock, sdk := initialize(t)
 	var (
-		wait     time.Duration = 0
-		count    int           = 0
-		expected               = &sqs.ReceiveMessageInput{}
+		wait  time.Duration = 0
+		count int           = 0
 	)
-	locator, _ := url.Parse(fmt.Sprintf("http://%s.com", strings.ToLower(generator.String(20))))
+	locator, _ := url.Parse(fmt.Sprintf("http://%s.com",
+		strings.ToLower(generator.String(20))))
 	sdk.queueUrl = locator
-	expected.QueueUrl = aws.String(locator.String())
-	expected.MaxNumberOfMessages = 1
-	expected.WaitTimeSeconds = 0
 	apiMock.EXPECT().ReceiveMessage(ctx, gomock.Any(), gomock.Any()).Return(
 		&sqs.ReceiveMessageOutput{Messages: []types.Message{}}, nil,
 	)
