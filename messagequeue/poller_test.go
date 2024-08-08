@@ -20,7 +20,8 @@ func (wq *waitQueue) EnqueueBatch(context.Context, []*Message) ([]*EnqueueMessag
 	return nil, nil
 }
 
-func (wq *waitQueue) Dequeue(ctx context.Context, count int, wait time.Duration) ([]*Message, error) {
+func (wq *waitQueue) Dequeue(ctx context.Context, count int, wait,
+	visibilityTimeout time.Duration) ([]*Message, error) {
 	<-ctx.Done()
 	return nil, nil
 }
@@ -63,11 +64,12 @@ func TestPoller_Poll(t *testing.T) {
 	options := NewPollerOptions()
 	// we want the first call to match
 	firstCall := messageQueue.EXPECT().Dequeue(gomock.Any(),
-		options.DequeueCount, options.WaitForBatch).Return(
-		[]*Message{successfulMessage, unsuccessfulMessage}, nil)
+		options.DequeueCount, options.WaitForBatch, options.VisibilityTimeout).
+		Return([]*Message{successfulMessage, unsuccessfulMessage}, nil)
 
 	messageQueue.EXPECT().Dequeue(gomock.Any(),
-		options.DequeueCount, options.WaitForBatch).Return(nil, nil).
+		options.DequeueCount, options.WaitForBatch, options.VisibilityTimeout).
+		Return(nil, nil).
 		After(firstCall).AnyTimes()
 
 	messageQueue.EXPECT().Delete(gomock.Any(), successfulMessage).
@@ -86,7 +88,8 @@ func TestPoller_Stop(t *testing.T) {
 	controller := gomock.NewController(t)
 	messageQueue := NewMockMessageQueue(controller)
 	messageQueue.EXPECT().Dequeue(gomock.Any(),
-		options.DequeueCount, options.WaitForBatch).Return(nil, nil).AnyTimes()
+		options.DequeueCount, options.WaitForBatch, options.VisibilityTimeout).
+		Return(nil, nil).AnyTimes()
 	poller := NewPoller(options)
 	assert.EqualError(poller.Stop(), "Poller.Stop called on instance not in state running (1)")
 	handler := func(_ context.Context, m *Message) bool { return true }
@@ -102,13 +105,13 @@ func TestPoller_NoLogContextDeadlineExceeded(t *testing.T) {
 	options.Logger = log.NewMockLogger(controller)
 	poller := NewPoller(options)
 	messageQueue.EXPECT().Dequeue(gomock.Any(),
-		options.DequeueCount, options.WaitForBatch).
-		Return(nil, errors.New(generator.String(32)))
+		options.DequeueCount, options.WaitForBatch, options.VisibilityTimeout).
+		Return(nil, errors.New(contextDeadlineExceeded))
 	messageQueue.EXPECT().Dequeue(gomock.Any(),
-		options.DequeueCount, options.WaitForBatch).
+		options.DequeueCount, options.WaitForBatch, options.VisibilityTimeout).
 		Return([]*Message{{ID: generator.String(5)}}, nil)
 	messageQueue.EXPECT().Dequeue(gomock.Any(),
-		options.DequeueCount, options.WaitForBatch).
+		options.DequeueCount, options.WaitForBatch, options.VisibilityTimeout).
 		Return(nil, nil).AnyTimes()
 	wg := sync.WaitGroup{}
 	wg.Add(1)
