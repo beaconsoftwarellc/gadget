@@ -248,8 +248,9 @@ func Test_SQS_EnqueueBatch_OverMax(t *testing.T) {
 func Test_SQS_Dequeue(t *testing.T) {
 	ctx, assert, apiMock, sdk := initialize(t)
 	var (
-		wait  time.Duration = 0
-		count int           = 0
+		wait              time.Duration = 0
+		visibilityTimeout time.Duration = 0
+		count             int           = 0
 	)
 	locator, _ := url.Parse(fmt.Sprintf("http://%s.com",
 		strings.ToLower(generator.String(20))))
@@ -257,7 +258,7 @@ func Test_SQS_Dequeue(t *testing.T) {
 	apiMock.EXPECT().ReceiveMessage(ctx, gomock.Any(), gomock.Any()).Return(
 		&sqs.ReceiveMessageOutput{Messages: []types.Message{}}, nil,
 	)
-	actual, err := sdk.Dequeue(ctx, count, wait)
+	actual, err := sdk.Dequeue(ctx, count, wait, visibilityTimeout)
 	assert.NoError(err)
 	assert.Equal(0, len(actual))
 
@@ -273,10 +274,13 @@ func Test_SQS_Dequeue(t *testing.T) {
 	apiMock.EXPECT().ReceiveMessage(ctx, gomock.Any(), gomock.Any()).Return(
 		&sqs.ReceiveMessageOutput{Messages: []types.Message{sqsMessage}}, nil,
 	)
-	actual, err = sdk.Dequeue(ctx, count, wait)
+	actual, err = sdk.Dequeue(ctx, count, wait, visibilityTimeout)
 	assert.NoError(err)
 	assert.Equal(1, len(actual))
-	assert.Equal(expectedMessage, actual[0])
+	assert.Equal(expectedMessage.ID, actual[0].ID)
+	assert.Equal(expectedMessage.External, actual[0].External)
+	assert.Equal(expectedMessage.Service, actual[0].Service)
+	assert.Equal(expectedMessage.Method, actual[0].Method)
 }
 
 func Test_SQS_Delete(t *testing.T) {

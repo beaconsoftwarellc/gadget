@@ -2,6 +2,7 @@ package sqs
 
 import (
 	"testing"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
 	"github.com/beaconsoftwarellc/gadget/v2/generator"
@@ -17,6 +18,7 @@ func Test_convert(t *testing.T) {
 		body     string
 		service  string = missing
 		method   string = missing
+		deadline        = time.Now().Add(time.Second)
 	)
 	message := &types.Message{
 		MessageAttributes: make(map[string]types.MessageAttributeValue),
@@ -27,8 +29,9 @@ func Test_convert(t *testing.T) {
 		assert.Equal(external, actual.External)
 		assert.Equal(service, actual.Service)
 		assert.Equal(method, actual.Method)
+		assert.Equal(deadline, actual.Deadline)
 	}
-	actual := convert(message)
+	actual := convert(message, deadline)
 	assertAll(actual)
 
 	id = generator.String(2)
@@ -45,6 +48,6 @@ func Test_convert(t *testing.T) {
 	message.MessageAttributes[methodAttributeName] = types.MessageAttributeValue{
 		StringValue: &method,
 	}
-	actual = convert(message)
+	actual = convert(message, deadline)
 	assertAll(actual)
 }

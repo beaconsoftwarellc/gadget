@@ -19,6 +19,9 @@ const (
 	minimumQueueOperationTimeout     = time.Second
 	maximumQueueOperationTimeout     = time.Hour
 	defaultQueueOperationTimeout     = 5 * time.Second
+	minimumVisibilityTimeout         = 0 * time.Second
+	maximumVisibilityTimeout         = 12 * time.Hour
+	defaultVisibilityTimeout         = 30 * time.Second
 )
 
 type PollerOptions struct {
@@ -34,6 +37,9 @@ type PollerOptions struct {
 	DequeueCount int
 	// QueueOperationTimeout
 	QueueOperationTimeout time.Duration
+	// VisibilityTimeout is the amount of time a message is hidden from other
+	// consumers after it has been received by a message queue client.
+	VisibilityTimeout time.Duration
 }
 
 // NewPollerOptions with valid values that can be used to initialize a new Poller
@@ -44,6 +50,7 @@ func NewPollerOptions() *PollerOptions {
 		WaitForBatch:              defaultWaitForBatch,
 		QueueOperationTimeout:     defaultQueueOperationTimeout,
 		DequeueCount:              defaultDequeueCount,
+		VisibilityTimeout:         defaultVisibilityTimeout,
 	}
 }
 
@@ -70,6 +77,10 @@ func (po *PollerOptions) Validate() error {
 	if po.DequeueCount < minimumDequeueCount || po.DequeueCount > maximumDequeueCount {
 		return errors.New("PollerOptions.DequeueCount(%d) was out of bounds [%d, %d]",
 			po.DequeueCount, minimumDequeueCount, maximumDequeueCount)
+	}
+	if po.VisibilityTimeout < minimumVisibilityTimeout || po.VisibilityTimeout > maximumVisibilityTimeout {
+		return errors.New("PollerOptions.VisibilityTimeout(%s) was out of bounds [%s, %s]",
+			po.VisibilityTimeout, minimumVisibilityTimeout, maximumVisibilityTimeout)
 	}
 	return nil
 }
