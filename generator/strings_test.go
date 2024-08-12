@@ -32,7 +32,7 @@ func TestIDFunc(t *testing.T) {
 		expected = append(expected, actual)
 	}
 
-	assert.Panics(func() { ID(IDPrefix(random(MaxPrefix+1, letters))) })
+	assert.Panics(func() { ID(IDPrefix(random(MaxPrefix+1, AlphaRunes))) })
 }
 func TestBase32IDFunc(t *testing.T) {
 	assert := assert1.New(t)
@@ -59,7 +59,7 @@ func TestBase32IDFunc(t *testing.T) {
 		expected = append(expected, actual)
 	}
 
-	assert.Panics(func() { ID(IDPrefix(random(MaxPrefix+1, letters))) })
+	assert.Panics(func() { ID(IDPrefix(random(MaxPrefix+1, AlphaRunes))) })
 }
 
 func TestEmail(t *testing.T) {
