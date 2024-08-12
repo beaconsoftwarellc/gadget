@@ -191,7 +191,7 @@ func (mq *sdk) Dequeue(ctx context.Context, count int, wait, visibilityTimeout t
 	// The parameter is applied to the messages that Amazon SQS returns in the
 	// response. If you don't include the parameter, the overall visibility
 	// timeout for the queue is used for the returned messages.
-	// Ee can expose 'ExtendVisibilityTimeout' methods so that it
+	// We can expose 'ExtendVisibilityTimeout' methods so that it
 	// can be extended (up to 12 hours from receipt) as the message is processed.
 	rmi.VisibilityTimeout = int32(visibilityTimeout.Seconds())
 	rmi.QueueUrl = aws.String(mq.queueUrl.String())
