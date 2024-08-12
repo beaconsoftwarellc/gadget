@@ -96,7 +96,7 @@ func (p *poller) poll() {
 			p.options.QueueOperationTimeout+p.options.WaitForBatch)
 		defer p.cancel()
 		messages, err = p.queue.Dequeue(ctx, p.options.DequeueCount,
-			p.options.WaitForBatch)
+			p.options.WaitForBatch, p.options.VisibilityTimeout)
 		if err != nil {
 			// noop on deadline exceeded
 			if strings.Contains(err.Error(), contextDeadlineExceeded) {
@@ -142,7 +142,7 @@ func (p *poller) delete(message *Message) {
 	ctx, cancel := context.WithTimeout(context.Background(),
 		p.options.QueueOperationTimeout)
 	defer cancel()
-	p.queue.Delete(ctx, message)
+	_ = p.options.Logger.Error(p.queue.Delete(ctx, message))
 }
 
 func (p *poller) drain() {

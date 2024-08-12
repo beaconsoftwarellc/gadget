@@ -159,7 +159,7 @@ func (mq *sdk) EnqueueBatch(ctx context.Context, messages []*messagequeue.Messag
 	return output, nil
 }
 
-func (mq *sdk) Dequeue(ctx context.Context, count int, wait time.Duration) (
+func (mq *sdk) Dequeue(ctx context.Context, count int, wait, visibilityTimeout time.Duration) (
 	[]*messagequeue.Message, error) {
 	var (
 		api      API
@@ -187,14 +187,13 @@ func (mq *sdk) Dequeue(ctx context.Context, count int, wait time.Duration) (
 	rmi.MessageAttributeNames = []string{
 		string(types.QueueAttributeNameAll),
 	}
-	// We should set this here and include the timeout as a deadline on the
-	// message, we can expose 'ExtendVisibilityTimeout' methods so that it
-	// can be extended (up to 12 hours from receipt) as the message is processed.
 	// You can provide the VisibilityTimeout parameter in your request.
 	// The parameter is applied to the messages that Amazon SQS returns in the
 	// response. If you don't include the parameter, the overall visibility
 	// timeout for the queue is used for the returned messages.
-	// rmi.SetVisibilityTimeout()
+	// We can expose 'ExtendVisibilityTimeout' methods so that it
+	// can be extended (up to 12 hours from receipt) as the message is processed.
+	rmi.VisibilityTimeout = int32(visibilityTimeout.Seconds())
 	rmi.QueueUrl = aws.String(mq.queueUrl.String())
 	rmi.MaxNumberOfMessages = int32(count)
 	rmi.WaitTimeSeconds = int32(wait.Seconds())
@@ -202,8 +201,9 @@ func (mq *sdk) Dequeue(ctx context.Context, count int, wait time.Duration) (
 	if nil != err {
 		return nil, err
 	}
+	deadline := time.Now().Add(visibilityTimeout)
 	for _, m := range rmo.Messages {
-		messages = append(messages, convert(&m))
+		messages = append(messages, convert(&m, deadline))
 	}
 	return messages, nil
 }
