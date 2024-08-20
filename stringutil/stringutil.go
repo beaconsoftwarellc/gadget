@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/beaconsoftwarellc/gadget/v2/intutil"
 )

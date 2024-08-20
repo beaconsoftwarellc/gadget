@@ -16,13 +16,13 @@ var (
 	// HexRunes are those digits and characters that can occur as part of
 	// a hexadecimal number representation (0-9, A-F)
 	HexRunes = []rune("0123456789ABCDEF")
-	// Digits are the 10 digits [0-9]
-	Digits = []rune("0123456789")
-	// Symbols are the special characters [!@#$%`'^&*()_+]
-	Symbols = []rune("!@#$%`'^&*()_+")
-	// UnreservedSymbols are the symbols that are not reserved in URLs
-	UnreservedSymbols = ("-._~")
-	base32            = []rune("13456789abcdefghijkmnopqrstuwxyz")
+	// DigitRunes are the 10 digits [0-9]
+	DigitRunes = []rune("0123456789")
+	// SymbolRunes are the special characters [!@#$%`'^&*()_+]
+	SymbolRunes = []rune("!@#$%`'^&*()_+")
+	// UnreservedSymbolRunes are the symbols that are not reserved in URLs
+	UnreservedSymbolRunes = ("-._~")
+	base32Runes           = []rune("13456789abcdefghijkmnopqrstuwxyz")
 )
 
 /*
@@ -37,8 +37,8 @@ var distinguishables = []rune("34679abcdefghijkmnopqrstuvwxyzACDEFGHJKMNPQRTUVWX
 
 // Password generates a random password of a given length
 func Password(length int) string {
-	source := append(AlphaRunes, Symbols...)
-	source = append(source, Digits...)
+	source := append(AlphaRunes, SymbolRunes...)
+	source = append(source, DigitRunes...)
 	return random(length, source)
 }
 
@@ -81,7 +81,7 @@ func Base32ID(prefix IDPrefix) string {
 		panic(fmt.Sprintf("%s is too long of a prefix ID", prefix))
 	}
 	n := Base32IDSizeBytes - len(prefix) - 1
-	return fmt.Sprintf("%s_%s", prefix, random(n, base32))
+	return fmt.Sprintf("%s_%s", prefix, random(n, base32Runes))
 }
 
 const secretLength = 32
@@ -93,7 +93,7 @@ func Secret() string {
 
 // Code returns random letters & numbers of the requested length
 func Code(length int) string {
-	return random(length, append(AlphaRunes, Digits...))
+	return random(length, append(AlphaRunes, DigitRunes...))
 }
 
 // Hex returns a hex string of the requested length
