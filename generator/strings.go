@@ -10,11 +10,20 @@ import (
 	"github.com/google/uuid"
 )
 
-var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-var hex = []rune("0123456789ABCDEF")
-var numbers = []rune("0123456789")
-var characters = []rune("!@#$%`'^&*()_+")
-var base32 = []rune("13456789abcdefghijkmnopqrstuwxyz")
+var (
+	// AlphaRunes is the runes [a-zA-Z]
+	AlphaRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	// HexRunes are those digits and characters that can occur as part of
+	// a hexadecimal number representation (0-9, A-F)
+	HexRunes = []rune("0123456789ABCDEF")
+	// DigitRunes are the 10 digits [0-9]
+	DigitRunes = []rune("0123456789")
+	// SymbolRunes are the special characters [!@#$%`'^&*()_+]
+	SymbolRunes = []rune("!@#$%`'^&*()_+")
+	// UnreservedSymbolRunes are the symbols that are not reserved in URLs
+	UnreservedSymbolRunes = ("-._~")
+	base32Runes           = []rune("13456789abcdefghijkmnopqrstuwxyz")
+)
 
 /*
 	 Excludes alphanumerics that are not easily distinguishable in some common fonts:
@@ -28,8 +37,8 @@ var distinguishables = []rune("34679abcdefghijkmnopqrstuvwxyzACDEFGHJKMNPQRTUVWX
 
 // Password generates a random password of a given length
 func Password(length int) string {
-	source := append(letters, characters...)
-	source = append(source, numbers...)
+	source := append(AlphaRunes, SymbolRunes...)
+	source = append(source, DigitRunes...)
 	return random(length, source)
 }
 
@@ -72,7 +81,7 @@ func Base32ID(prefix IDPrefix) string {
 		panic(fmt.Sprintf("%s is too long of a prefix ID", prefix))
 	}
 	n := Base32IDSizeBytes - len(prefix) - 1
-	return fmt.Sprintf("%s_%s", prefix, random(n, base32))
+	return fmt.Sprintf("%s_%s", prefix, random(n, base32Runes))
 }
 
 const secretLength = 32
@@ -84,12 +93,12 @@ func Secret() string {
 
 // Code returns random letters & numbers of the requested length
 func Code(length int) string {
-	return random(length, append(letters, numbers...))
+	return random(length, append(AlphaRunes, DigitRunes...))
 }
 
 // Hex returns a hex string of the requested length
 func Hex(length int) string {
-	return random(length, hex)
+	return random(length, HexRunes)
 }
 
 /*
@@ -103,12 +112,12 @@ func TestID() string {
 
 // String returns random letters of the requested length
 func String(length int) string {
-	return random(length, letters)
+	return random(length, AlphaRunes)
 }
 
 // HexColor returns a 7 length string from #000000 - #FFFFFF
 func HexColor() string {
-	return "#" + random(6, hex)
+	return "#" + random(6, HexRunes)
 }
 
 // Year returns random year between 1976 and 2017
@@ -119,12 +128,12 @@ func Year() int32 {
 
 // Email returns a fake email address for testing
 func Email() string {
-	return fmt.Sprintf("fake+%s@gadget.com", random(10, letters))
+	return fmt.Sprintf("fake+%s@gadget.com", random(10, AlphaRunes))
 }
 
 // Name returns a fake name for testing
 func Name() string {
-	return fmt.Sprintf("%s %s", random(6, letters), random(12, letters))
+	return fmt.Sprintf("%s %s", random(6, AlphaRunes), random(12, AlphaRunes))
 }
 
 // Distinguishable returns random alphanumerics of the requested length,
