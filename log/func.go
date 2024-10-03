@@ -52,7 +52,8 @@ func JSONOutput(m Message) {
 // ExitOnError will exit if an error is returned
 func ExitOnError(err error) {
 	if nil != err {
-		Error(err)
+		// log the error
+		_ = Error(err)
 		os.Exit(1)
 	}
 }

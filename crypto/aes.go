@@ -64,7 +64,10 @@ func (a *AESEncryption) GetKey() []byte {
 
 // RotateKey generates a new AES256 key and sets for use on this instance and returns it.
 func (a *AESEncryption) RotateKey() []byte {
-	a.SetKey(a.GenerateKey())
+	err := a.SetKey(a.GenerateKey())
+	if nil != err {
+		panic(err)
+	}
 	return a.key
 }
 

@@ -5,6 +5,7 @@ import (
 
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
 	"github.com/beaconsoftwarellc/gadget/v2/generator"
+	"github.com/beaconsoftwarellc/gadget/v2/log"
 )
 
 // Task is the unit of work to be executed by a worker in the pool.
@@ -20,17 +21,24 @@ type retryTask struct {
 	period  time.Duration
 }
 
-// NewRetryTask for the passed task that will retry execution up to the amount of retries specified
-// whenever the passed retry function returns true.
+// NewRetryTask for the passed task that will retry execution up to the
+// amount of retries specified whenever the passed retry function returns true.
 func NewRetryTask(task Task, retry func() bool, retries int, period time.Duration) Task {
 	return &retryTask{base: task, retry: retry, retries: retries, period: period}
 }
 
 func (rt *retryTask) Execute() error {
-	retry := true
+	var (
+		retry = true
+		err   error
+	)
+
 	for i := 0; i < rt.retries && retry; i++ {
 		time.Sleep(rt.period * time.Duration(i*5))
-		rt.base.Execute()
+		if err = rt.base.Execute(); err != nil {
+			break
+		}
+		_ = log.Error(err)
 		retry = rt.retry()
 	}
 	return nil

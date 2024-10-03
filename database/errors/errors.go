@@ -308,29 +308,29 @@ func databaseToStatus(primary qb.Table, dbError error) *status.Status {
 	prefix := getLogPrefix(3)
 	switch dbError.(type) {
 	case *NotFoundError:
-		grpcStatus = status.Newf(codes.NotFound, fmt.Sprintf("%s %s not found", prefix, primary.GetName()))
+		grpcStatus = status.Newf(codes.NotFound, "%s %s not found", prefix, primary.GetName())
 	case *DataTooLongError:
-		grpcStatus = status.Newf(codes.InvalidArgument, fmt.Sprintf("%s %s field too long: %s",
-			prefix, primary.GetName(), dbError))
+		grpcStatus = status.Newf(codes.InvalidArgument, "%s %s field too long: %s",
+			prefix, primary.GetName(), dbError)
 	case *DuplicateRecordError:
-		grpcStatus = status.Newf(codes.AlreadyExists, fmt.Sprintf("%s %s record already exists: %s",
-			prefix, primary.GetName(), dbError))
+		grpcStatus = status.Newf(codes.AlreadyExists, "%s %s record already exists: %s",
+			prefix, primary.GetName(), dbError)
 	case *UniqueConstraintError:
-		grpcStatus = status.Newf(codes.AlreadyExists, fmt.Sprintf("%s %s unique constraint violation: %s",
-			prefix, primary.GetName(), dbError))
+		grpcStatus = status.Newf(codes.AlreadyExists, "%s %s unique constraint violation: %s",
+			prefix, primary.GetName(), dbError)
 	case *InvalidForeignKeyError:
-		grpcStatus = status.Newf(codes.InvalidArgument, fmt.Sprintf("%s %s foreign key violation: %s",
-			prefix, primary.GetName(), dbError))
+		grpcStatus = status.Newf(codes.InvalidArgument, "%s %s foreign key violation: %s",
+			prefix, primary.GetName(), dbError)
 	case *ValidationError:
-		grpcStatus = status.Newf(codes.InvalidArgument, fmt.Sprintf("%s operation on %s had a validation error: %s",
-			prefix, primary.GetName(), dbError))
+		grpcStatus = status.Newf(codes.InvalidArgument, "%s operation on %s had a validation error: %s",
+			prefix, primary.GetName(), dbError)
 	case *ConnectionError, *NotAPointerError:
 		_ = log.Errorf("[GAD.DAT.321] unexpected run time database error: %s", dbError)
-		grpcStatus = status.Newf(codes.Internal, fmt.Sprintf("%s internal system error encountered", prefix))
+		grpcStatus = status.Newf(codes.Internal, "%s internal system error encountered", prefix)
 	default:
 		_ = log.Errorf("[GAD.DAT.324] unhandled error type %T: %s", dbError, dbError.Error())
-		grpcStatus = status.Newf(codes.Aborted, fmt.Sprintf("%s (%s) database error encountered: %s",
-			prefix, primary.GetName(), dbError))
+		grpcStatus = status.Newf(codes.Aborted, "%s (%s) database error encountered: %s",
+			prefix, primary.GetName(), dbError)
 	}
 	return grpcStatus
 }
@@ -384,10 +384,10 @@ func EqualLogError(assert assertion, theError error, errString string, msgAndArg
 	if nil != theError {
 		// remove log prefix line numbers
 		normErrorStr = logPrefixRegex.ReplaceAllString(errString, "${1}${3}")
-		normError = errors.New(logPrefixRegex.ReplaceAllString(theError.Error(), "${1}${3}"))
+		normError = errors.New("%s", logPrefixRegex.ReplaceAllString(theError.Error(), "${1}${3}"))
 		// remove db error string
 		normErrorStr = dbErrRegex.ReplaceAllString(normErrorStr, "")
-		normError = errors.New(dbErrRegex.ReplaceAllString(normError.Error(), ""))
+		normError = errors.New("%s", dbErrRegex.ReplaceAllString(normError.Error(), ""))
 	}
 	return assert.EqualError(normError, normErrorStr, msgAndArgs...)
 }

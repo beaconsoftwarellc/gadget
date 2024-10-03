@@ -1,6 +1,9 @@
 package binutil
 
-import "fmt"
+import (
+	"fmt"
+	"math"
+)
 
 const size = 8
 
@@ -115,7 +118,8 @@ func (bv *BitVector) PrintHex() {
 
 // PrintN prints the size number bits in the passed uint from MSb to LSb
 func PrintN(n, size uint) {
-	for i := size - 1; i >= 0 && i < size; i-- {
+	// if size == math.MaxUint this will fail
+	for i := size - 1; i < size && i != math.MaxUint; i-- {
 		v := n & (1 << i)
 		if v > 0 {
 			fmt.Print(1)

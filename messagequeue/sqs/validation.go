@@ -71,11 +71,11 @@ func NameIsValid(s string) error {
 
 	if strings.HasPrefix(s, period) || strings.HasSuffix(s, period) ||
 		strings.Contains(s, period+period) {
-		return errors.New(dotError)
+		return errors.New("%s", dotError)
 	}
 	low := strings.ToLower(s)
 	if strings.HasPrefix(low, prohibitedAmazon) || strings.HasPrefix(low, prohibitedAWS) {
-		return errors.New(prohibitedPrefixError)
+		return errors.New("%s", prohibitedPrefixError)
 	}
 	return nil
 }
@@ -94,7 +94,7 @@ func BodyIsValid(s string) error {
 		see the W3C specification for characters (http://www.w3.org/TR/REC-xml/#charsets).
 	*/
 	if utf8.RuneCountInString(s) == 0 {
-		return errors.New(bodyMinimumError)
+		return errors.New("%s", bodyMinimumError)
 	}
 
 	if len(s) > maxBodyKibibytes*1024 {

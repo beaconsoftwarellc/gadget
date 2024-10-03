@@ -41,7 +41,8 @@ func TestExecute_LockError(t *testing.T) {
 	// lock acquisition
 	expected := generator.String(32)
 	client.EXPECT().Select(gomock.Any(),
-		"SELECT GET_LOCK('delta_exec', 0) AS STATUS").Return(errors.New(expected))
+		"SELECT GET_LOCK('delta_exec', 0) AS STATUS").Return(
+		errors.New("%s", expected))
 	connection.EXPECT().Close().Return(nil)
 	actual := execute(database.InstanceConfig{
 		DeltaLockMaxTries:     1,
@@ -83,7 +84,7 @@ func TestExecute_BeginError(t *testing.T) {
 	client.EXPECT().Select(gomock.Any(), "SELECT RELEASE_LOCK('delta_exec') AS STATUS").Return(nil)
 	expected := generator.String(32)
 	connection.EXPECT().Database().Return(api)
-	api.EXPECT().Begin().Return(errors.New(expected))
+	api.EXPECT().Begin().Return(errors.New("%s", expected))
 	connection.EXPECT().Close().Return(nil)
 	actual := execute(database.InstanceConfig{
 		DeltaLockMaxTries:     1,
@@ -133,7 +134,8 @@ func TestExecute_TableExists_Error(t *testing.T) {
 	tableExistsQuery := fmt.Sprintf(database.TableExistenceQueryFormat, schema, DeltaTableName)
 
 	expected := generator.String(32)
-	client.EXPECT().Select(&tableExistsMatcher{true}, tableExistsQuery).Return(errors.New(expected))
+	client.EXPECT().Select(&tableExistsMatcher{true}, tableExistsQuery).
+		Return(errors.New("%s", expected))
 	connection.EXPECT().Close().Return(nil)
 	actual := execute(database.InstanceConfig{
 		DeltaLockMaxTries:     1,
@@ -253,7 +255,7 @@ func TestExecute_Rollback(t *testing.T) {
 	txImp.EXPECT().Exec(deltas[0].Script).Return(nil, nil)
 	expected := generator.String(32)
 	api.EXPECT().Create(&DeltaRecord{ID: deltas[0].ID, Name: deltas[0].Name}).
-		Return(errors.New(expected))
+		Return(errors.New("%s", expected))
 	// / ExecuteDelta calls
 
 	api.EXPECT().Rollback().Return(nil)
@@ -290,7 +292,7 @@ func TestExecuteDelta_UnexpectedError(t *testing.T) {
 	}
 	expected := generator.String(32)
 	api.EXPECT().ReadOneWhere(gomock.Any(), DeltaMeta.ID.Equal(delta.ID)).
-		Return(errors.New(expected))
+		Return(errors.New("%s", expected))
 	actual := ExecuteDelta(api, delta)
 	assert.EqualError(actual, expected)
 }
@@ -311,7 +313,7 @@ func TestExecuteDelta_ExecError(t *testing.T) {
 		Return(dberrors.NewNotFoundError())
 	api.EXPECT().GetTransaction().Return(tx)
 	tx.EXPECT().Implementation().Return(txImp)
-	txImp.EXPECT().Exec(delta.Script).Return(nil, errors.New(expected))
+	txImp.EXPECT().Exec(delta.Script).Return(nil, errors.New("%s", expected))
 	actual := ExecuteDelta(api, delta)
 	assert.EqualError(actual, expected)
 }
@@ -333,7 +335,8 @@ func TestExecuteDelta(t *testing.T) {
 	api.EXPECT().GetTransaction().Return(tx)
 	tx.EXPECT().Implementation().Return(txImp)
 	txImp.EXPECT().Exec(delta.Script).Return(nil, nil)
-	api.EXPECT().Create(&DeltaRecord{ID: delta.ID, Name: delta.Name}).Return(errors.New(expected))
+	api.EXPECT().Create(&DeltaRecord{ID: delta.ID, Name: delta.Name}).
+		Return("%s", errors.New("%s", expected))
 	actual := ExecuteDelta(api, delta)
 	assert.EqualError(actual, expected)
 }

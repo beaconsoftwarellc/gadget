@@ -3,12 +3,13 @@ package collection
 import (
 	"testing"
 
-	assert1 "github.com/stretchr/testify/assert"
+	_assert "github.com/stretchr/testify/assert"
+	_require "github.com/stretchr/testify/require"
 )
 
 func TestDListHead(t *testing.T) {
-	assert := assert1.New(t)
-
+	assert := _assert.New(t)
+	require := _require.New(t)
 	// test list initialization
 	list := NewDList[string]()
 	assert.Nil(list.Head())
@@ -17,7 +18,7 @@ func TestDListHead(t *testing.T) {
 	// test first insertion is the head
 	expected := "fun"
 	_, err := list.InsertNext(list.Head(), expected)
-	assert.NoError(err)
+	require.NoError(err)
 	head := list.Head()
 	assert.NotNil(head)
 	actual := head.Data()
@@ -29,7 +30,7 @@ func TestDListHead(t *testing.T) {
 	// test insertion after head
 	newData := "with"
 	_, err = list.InsertNext(list.Head(), newData)
-	assert.NoError(err)
+	require.NoError(err)
 	head = list.Head()
 	assert.NotNil(head)
 	actual = head.Data()
@@ -40,7 +41,7 @@ func TestDListHead(t *testing.T) {
 	// test insertion before the head
 	expected = "go"
 	_, err = list.InsertPrevious(list.Head(), expected)
-	assert.NoError(err)
+	require.NoError(err)
 	head = list.Head()
 	assert.NotNil(head)
 	actual = head.Data()
@@ -48,34 +49,40 @@ func TestDListHead(t *testing.T) {
 
 	// test head removal gets set back
 	expected = "fun"
-	list.Remove(list.Head())
+	_, err = list.Remove(list.Head())
+	require.NoError(err)
 	head = list.Head()
 	assert.NotNil(head)
 	actual = head.Data()
 	assert.Equal(expected, actual)
 
 	// test empty
-	list.Remove(list.Head())
-	list.Remove(list.Head())
+	_, err = list.Remove(list.Head())
+	require.NoError(err)
+	_, err = list.Remove(list.Head())
+	require.NoError(err)
 	assert.Nil(list.Head())
 }
 
 func TestDListIsHead(t *testing.T) {
-	assert := assert1.New(t)
+	require := _require.New(t)
+	assert := _assert.New(t)
 	list := NewDList[string]()
 	elm, err := list.InsertNext(nil, "foo")
-	assert.NoError(err)
+	require.NoError(err)
 	assert.True(list.IsHead(elm))
 	elm1, err := list.InsertPrevious(list.Head(), "bar")
-	assert.NoError(err)
+	require.NoError(err)
 	assert.True(list.IsHead(elm1))
 	assert.False(list.IsHead(elm))
-	list.Remove(list.Head())
+	_, err = list.Remove(list.Head())
+	require.NoError(err)
 	assert.True(list.IsHead(elm))
 }
 
 func TestDListTail(t *testing.T) {
-	assert := assert1.New(t)
+	require := _require.New(t)
+	assert := _assert.New(t)
 	// test list initialization
 	list := NewDList[string]()
 	assert.Nil(list.Tail())
@@ -83,7 +90,7 @@ func TestDListTail(t *testing.T) {
 	// test first insertion is the tail
 	expected := "fun"
 	_, err := list.InsertNext(list.Tail(), expected)
-	assert.NoError(err)
+	require.NoError(err)
 	// fun
 	tail := list.Tail()
 	assert.NotNil(tail)
@@ -93,7 +100,7 @@ func TestDListTail(t *testing.T) {
 	// test insertion after tail
 	expected = "with"
 	_, err = list.InsertNext(list.Tail(), expected)
-	assert.NoError(err)
+	require.NoError(err)
 	// fun with
 	tail = list.Tail()
 	assert.NotNil(tail)
@@ -103,7 +110,7 @@ func TestDListTail(t *testing.T) {
 	// test insertion between head and tail does not affect tail
 	newData := "go"
 	_, err = list.InsertNext(list.Head(), newData)
-	assert.NoError(err)
+	require.NoError(err)
 	//  fun go with
 	tail = list.Tail()
 	assert.NotNil(tail)
@@ -112,7 +119,8 @@ func TestDListTail(t *testing.T) {
 
 	// test tail removal
 	expected = "go"
-	list.Remove(list.Head().Next().Next())
+	_, err = list.Remove(list.Head().Next().Next())
+	require.NoError(err)
 	// fun go
 	tail = list.Tail()
 	assert.NotNil(tail)
@@ -120,40 +128,46 @@ func TestDListTail(t *testing.T) {
 	assert.Equal(expected, actual)
 
 	// test empty
-	list.Remove(list.Head())
+	_, err = list.Remove(list.Head())
+	require.NoError(err)
 	// go
-	list.Remove(list.Head())
+	_, err = list.Remove(list.Head())
+	require.NoError(err)
 	// {empty}
 	assert.Nil(list.Tail())
 }
 
 func TestDListIsTail(t *testing.T) {
-	assert := assert1.New(t)
+	assert := _assert.New(t)
+	require := _require.New(t)
 	list := NewDList[string]()
 	elm, err := list.InsertNext(nil, "foo")
-	assert.NoError(err)
+	require.NoError(err)
 	assert.True(list.IsTail(elm))
 	elm1, err := list.InsertNext(elm, "bar")
-	assert.NoError(err)
+	require.NoError(err)
 	assert.False(list.IsTail(elm))
 	assert.True(list.IsTail(elm1))
-	list.Remove(elm.Next())
+	_, err = list.Remove(elm.Next())
+	require.NoError(err)
 	assert.True(list.IsTail(elm))
 }
 
 func TestDListInsertNext(t *testing.T) {
-	assert := assert1.New(t)
+	assert := _assert.New(t)
+	require := _require.New(t)
 	list := NewDList[string]()
 	assert.Equal(0, list.Size())
 	elm, err := list.InsertNext(nil, "fun")
-	assert.NoError(err)
+	require.NoError(err)
 	assert.Equal(1, list.Size())
 	_, err = list.InsertNext(nil, "invalid")
 	assert.EqualError(err, NewListNonEmptyError().Error())
 	elm, err = list.InsertNext(elm, "with")
-	assert.NoError(err)
+	require.NoError(err)
 	assert.Equal(2, list.Size())
-	list.InsertNext(elm, "go")
+	_, err = list.InsertNext(elm, "go")
+	require.NoError(err)
 	assert.Equal(3, list.Size())
 	assert.Equal("fun", list.Head().Data())
 	assert.Equal("with", list.Head().Next().Data())
@@ -162,11 +176,12 @@ func TestDListInsertNext(t *testing.T) {
 }
 
 func TestDListInsertPrevious(t *testing.T) {
-	assert := assert1.New(t)
+	require := _require.New(t)
+	assert := _assert.New(t)
 	list := NewDList[string]()
 	assert.Equal(0, list.Size())
 	elm, err := list.InsertPrevious(nil, "fun")
-	assert.NoError(err)
+	require.NoError(err)
 	assert.NotNil(elm)
 	assert.Equal(1, list.Size())
 
@@ -175,19 +190,19 @@ func TestDListInsertPrevious(t *testing.T) {
 	assert.Equal(1, list.Size())
 
 	elm1, err := list.InsertPrevious(elm, "is")
-	assert.NoError(err)
+	require.NoError(err)
 	assert.NotNil(elm1)
 	assert.Equal(2, list.Size())
 	assert.True(list.IsHead(elm1))
 
 	elm2, err := list.InsertPrevious(elm1, "go")
-	assert.NoError(err)
+	require.NoError(err)
 	assert.NotNil(elm1)
 	assert.Equal(3, list.Size())
 	assert.True(list.IsHead(elm2))
 
 	elm3, err := list.InsertPrevious(elm, "super")
-	assert.NoError(err)
+	require.NoError(err)
 	assert.NotNil(elm3)
 	assert.Equal(4, list.Size())
 	assert.False(list.IsHead(elm3))
@@ -201,7 +216,8 @@ func TestDListInsertPrevious(t *testing.T) {
 }
 
 func TestDListRemove(t *testing.T) {
-	assert := assert1.New(t)
+	require := _require.New(t)
+	assert := _assert.New(t)
 	list := NewDList[string]()
 	data := "foo"
 	data1 := "bar"
@@ -221,12 +237,12 @@ func TestDListRemove(t *testing.T) {
 	assert.EqualError(err, NewNoElementError().Error())
 
 	actual, err := list.Remove(el1)
-	assert.NoError(err)
+	require.NoError(err)
 	assert.Equal(data1, actual)
 	assert.Equal(2, list.Size())
 
 	actual, err = list.Remove(el)
-	assert.NoError(err)
+	require.NoError(err)
 	assert.Equal(data, actual)
 	assert.Equal(1, list.Size())
 
@@ -236,7 +252,7 @@ func TestDListRemove(t *testing.T) {
 	assert.Equal(1, list.Size())
 
 	actual, err = list.Remove(el2)
-	assert.NoError(err)
+	require.NoError(err)
 	assert.Equal(data2, actual)
 	assert.Equal(0, list.Size())
 

@@ -2,8 +2,10 @@ package binutil
 
 import (
 	"encoding/binary"
-	"fmt"
+	"math"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var setTests = []struct {
@@ -46,25 +48,12 @@ func TestSet(t *testing.T) {
 	}
 }
 
-func renderBinary(u, size uint) {
-	for i := size - 1; i >= 0 && i < size; i-- {
-		v := u & (1 << i)
-		if v > 0 {
-			fmt.Print(1)
-		} else {
-			fmt.Print(0)
-		}
-		if i%4 == 0 {
-			fmt.Print(" ")
-		}
-	}
-}
-
 func TestUnSet(t *testing.T) {
 	// sanityCheck(0x1234)
+	i := uint(0)
+	assert.Equal(t, i-1, uint(math.MaxUint))
 	t.SkipNow()
-	var bv *BitVector
-	bv = new(BitVector)
+	var bv = new(BitVector)
 	// 0-3 are unused
 	// command
 	// for i := 0; i < 0xF; i++ {

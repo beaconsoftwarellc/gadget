@@ -1,7 +1,6 @@
 package dispatcher
 
 import (
-	"sync"
 	"sync/atomic"
 	"time"
 
@@ -35,8 +34,6 @@ type worker struct {
 	running int32
 	// the channel that this worker will add itself into
 	pool chan Worker
-	// mutex used for locking changes to the pool
-	mux sync.Mutex
 	// the channel this instance uses to receive messages
 	tasks chan *internalTask
 	// the channel used to tell this instance to exit it's main loop, see Quit below
@@ -101,7 +98,7 @@ func (w *worker) run(loaded chan bool) {
 		// never succeed
 		select {
 		case task := <-w.tasks:
-			w.log.Error(task.Execute())
+			_ = w.log.Error(task.Execute())
 			w.completeTask(task)
 			if exit {
 				w.exited <- true

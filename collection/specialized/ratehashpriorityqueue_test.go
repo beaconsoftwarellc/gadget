@@ -83,7 +83,7 @@ func TestRateHashPriorityQueue_Pop(t *testing.T) {
 		assert.True(ok)
 		// we want to make sure we waited at least 50ms. Don't make this dead on
 		// with the rate limit as the timers are not millisecond accurate.
-		assert.True(time.Now().Sub(start) > 50*time.Millisecond)
+		assert.True(time.Since(start) > 50*time.Millisecond)
 		assert.Equal(j, elm.GetPriority())
 	}
 }
@@ -98,7 +98,7 @@ func TestRateHashPriorityQueue_NoLimitPop(t *testing.T) {
 	for j := 9; j >= 0; j-- {
 		start := time.Now()
 		elm, ok := q.NoLimitPop()
-		assert.True(time.Now().Sub(start) < time.Millisecond)
+		assert.True(time.Since(start) < time.Millisecond)
 		assert.True(ok)
 		assert.Equal(j, elm.GetPriority())
 	}

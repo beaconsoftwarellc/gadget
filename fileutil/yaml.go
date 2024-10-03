@@ -3,14 +3,14 @@ package fileutil
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
+	"os"
 
 	yaml "gopkg.in/yaml.v3"
 )
 
 // ReadYamlFromFile at path filename into the target interface.
 func ReadYamlFromFile(filename string, target interface{}) error {
-	data, err := ioutil.ReadFile(filename)
+	data, err := os.ReadFile(filename)
 	if nil != err {
 		return err
 	}
@@ -23,7 +23,7 @@ func WriteYamlToFile(filename string, target interface{}) error {
 	if nil != err {
 		return err
 	}
-	return ioutil.WriteFile(filename, data, 0777)
+	return os.WriteFile(filename, data, 0777)
 }
 
 // WriteYamlToWriter returning any errors that occur.

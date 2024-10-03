@@ -3,11 +3,14 @@ package collection
 import (
 	"testing"
 
-	assert1 "github.com/stretchr/testify/assert"
+	_assert "github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	_require "github.com/stretchr/testify/require"
 )
 
 func TestListHead(t *testing.T) {
-	assert := assert1.New(t)
+	assert := _assert.New(t)
+	require := _require.New(t)
 
 	// test list initialization
 	list := NewList[string]()
@@ -39,32 +42,38 @@ func TestListHead(t *testing.T) {
 
 	// test head removal gets set back
 	expected = "fun"
-	list.RemoveNext(nil)
+	_, err := list.RemoveNext(nil)
+	require.NoError(err)
 	head = list.Head()
 	assert.NotNil(head)
 	actual = head.Data()
 	assert.Equal(expected, actual)
 
 	// test empty
-	list.RemoveNext(nil)
-	list.RemoveNext(nil)
+	_, err = list.RemoveNext(nil)
+	require.NoError(err)
+	_, err = list.RemoveNext(nil)
+	require.NoError(err)
 	assert.Nil(list.Head())
 }
 
 func TestListIsHead(t *testing.T) {
-	assert := assert1.New(t)
+	assert := _assert.New(t)
 	list := NewList[string]()
 	elm := list.InsertNext(nil, "foo")
 	assert.True(list.IsHead(elm))
 	elm1 := list.InsertNext(nil, "bar")
 	assert.True(list.IsHead(elm1))
 	assert.False(list.IsHead(elm))
-	list.RemoveNext(nil)
+	_, err := list.RemoveNext(nil)
+	require.NoError(t, err)
 	assert.True(list.IsHead(elm))
 }
 
 func TestListTail(t *testing.T) {
-	assert := assert1.New(t)
+	assert := _assert.New(t)
+	require := _require.New(t)
+	var err error
 	// test list initialization
 	list := NewList[string]()
 	assert.Nil(list.Tail())
@@ -98,7 +107,8 @@ func TestListTail(t *testing.T) {
 
 	// test tail removal
 	expected = "go"
-	list.RemoveNext(list.Head().Next())
+	_, err = list.RemoveNext(list.Head().Next())
+	require.NoError(err)
 	// fun go
 	tail = list.Tail()
 	assert.NotNil(tail)
@@ -106,27 +116,31 @@ func TestListTail(t *testing.T) {
 	assert.Equal(expected, actual)
 
 	// test empty
-	list.RemoveNext(nil)
+	_, err = list.RemoveNext(nil)
+	require.NoError(err)
 	// go
-	list.RemoveNext(nil)
+	_, err = list.RemoveNext(nil)
+	require.NoError(err)
 	// {empty}
 	assert.Nil(list.Tail())
 }
 
 func TestListIsTail(t *testing.T) {
-	assert := assert1.New(t)
+	assert := _assert.New(t)
+	require := _require.New(t)
 	list := NewList[string]()
 	elm := list.InsertNext(nil, "foo")
 	assert.True(list.IsTail(elm))
 	elm1 := list.InsertNext(elm, "bar")
 	assert.False(list.IsTail(elm))
 	assert.True(list.IsTail(elm1))
-	list.RemoveNext(elm)
+	_, err := list.RemoveNext(elm)
+	require.NoError(err)
 	assert.True(list.IsTail(elm))
 }
 
 func TestInsertNext(t *testing.T) {
-	assert := assert1.New(t)
+	assert := _assert.New(t)
 	list := NewList[string]()
 	assert.Equal(0, list.Size())
 	elm := list.InsertNext(nil, "fun")
@@ -142,7 +156,8 @@ func TestInsertNext(t *testing.T) {
 }
 
 func TestRemoveNext(t *testing.T) {
-	assert := assert1.New(t)
+	assert := _assert.New(t)
+	require := _require.New(t)
 	list := NewList[string]()
 	data, err := list.RemoveNext(nil)
 	assert.Empty(data)
@@ -156,18 +171,19 @@ func TestRemoveNext(t *testing.T) {
 	expected := "bar"
 	list.InsertNext(list.Head(), expected)
 	actual, err := list.RemoveNext(list.Head())
-	assert.NoError(err)
+	require.NoError(err)
 	assert.Equal(expected, actual)
 
 	expected1 := list.Head().Data()
 	actual, err = list.RemoveNext(nil)
-	assert.NoError(err)
+	require.NoError(err)
 	assert.Equal(expected1, actual)
 	assert.Equal(0, list.Size())
 
 	elm1 := list.InsertNext(nil, "bar")
 	assert.NotNil(elm1)
-	list.RemoveNext(elm)
+	_, err = list.RemoveNext(elm)
+	require.NoError(err)
 	assert.Equal(1, list.Size())
 }
 
@@ -179,7 +195,7 @@ func insert[T any](list List[T], ia []T, done chan bool) {
 }
 
 func TestListConcurrentInsert(t *testing.T) {
-	assert := assert1.New(t)
+	assert := _assert.New(t)
 	var done = make(chan bool, 2)
 	elms := []int{1, 2, 3}
 	elms1 := []int{4, 5, 6}

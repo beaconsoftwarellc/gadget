@@ -34,8 +34,7 @@ func AddOutput(output Output) {
 
 // Fatal logs a message regarding a failure that is severe enough to warrant process termination.
 func Fatal(e error) error {
-	publicLogger.Fatal(e)
-	return e
+	return publicLogger.Fatal(e)
 }
 
 // Fatalf logs a message regarding a failure that is severe enough to warrant process termination.
@@ -112,7 +111,7 @@ type stdLogAdapter struct{}
 // Write exists to allow the standard logger to have a way to send log messages to this logging service.
 // These messages will be recorded at INFO level.
 func (*stdLogAdapter) Write(p []byte) (n int, err error) {
-	message := publicLogger.NewMessagef(LevelInfo, strings.TrimSpace(string(p)))
+	message := publicLogger.NewMessagef(LevelInfo, "%s", strings.TrimSpace(string(p)))
 	message.Caller = stack.Caller(standardStackOffset).String()
 	publicLogger.log(message)
 	return len(p), nil

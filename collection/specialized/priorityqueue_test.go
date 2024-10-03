@@ -4,8 +4,6 @@ import (
 	"testing"
 
 	assert1 "github.com/stretchr/testify/assert"
-
-	"github.com/beaconsoftwarellc/gadget/v2/collection"
 )
 
 type MockPriority struct {
@@ -52,9 +50,6 @@ func TestPriorityQueue_Peek(t *testing.T) {
 
 func Test_priorityQueue_Pop(t *testing.T) {
 	assert := assert1.New(t)
-	type fields struct {
-		list collection.List[int]
-	}
 	tests := []struct {
 		name     string
 		input    []int

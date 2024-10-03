@@ -151,8 +151,8 @@ func TestLogErrorObj(t *testing.T) {
 			actual = m
 		}
 		NewGlobal(id, NewOutput(FlagAll, f))
-		err := errors.New(generator.String(7))
-		t.function(err)
+		err := errors.New("%s", generator.String(7))
+		_ = t.function(err)
 		if !t.noCaller {
 			assert.True(strings.HasPrefix(actual.Caller, "log_test.go"), "test for %s failed", t.expected)
 		}
@@ -182,12 +182,12 @@ func TestLogger_AddOutput(t *testing.T) {
 
 	assert.Contains(publicLogger.outputs[idxError], output)
 	expected := generator.String(10)
-	Warnf(expected)
+	_ = Warnf("%s", expected)
 	assert.Equal(expected, actual.Message)
 	assert.Empty(actual1.Message)
 
 	expected = generator.String(10)
-	Errorf(expected)
+	_ = Errorf("%s", expected)
 	assert.Equal(expected, actual.Message)
 	assert.Equal(expected, actual1.Message)
 }

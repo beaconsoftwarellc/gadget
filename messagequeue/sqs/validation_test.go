@@ -90,39 +90,39 @@ func Test_NameIsValid(t *testing.T) {
 		{
 			name:  "bad prefix 1",
 			input: fmt.Sprintf(".%s", generator.String(20)),
-			err:   errors.New(dotError),
+			err:   errors.New("%s", dotError),
 		},
 		{
 			name:  "bad prefix 2",
 			input: fmt.Sprintf("%s%s", prohibitedAWS, generator.String(20)),
-			err:   errors.New(prohibitedPrefixError),
+			err:   errors.New("%s", prohibitedPrefixError),
 		},
 		{
 			name: "bad prefix 3",
 			input: fmt.Sprintf("%s%s", strings.ToUpper(prohibitedAWS),
 				generator.String(20)),
-			err: errors.New(prohibitedPrefixError),
+			err: errors.New("%s", prohibitedPrefixError),
 		},
 		{
 			name: "bad prefix 4",
 			input: fmt.Sprintf("%s%s", strings.ToUpper(prohibitedAmazon),
 				generator.String(20)),
-			err: errors.New(prohibitedPrefixError),
+			err: errors.New("%s", prohibitedPrefixError),
 		},
 		{
 			name:  "bad prefix 5",
 			input: fmt.Sprintf("%s%s", prohibitedAmazon, generator.String(20)),
-			err:   errors.New(prohibitedPrefixError),
+			err:   errors.New("%s", prohibitedPrefixError),
 		},
 		{
 			name:  "bad suffix",
 			input: fmt.Sprintf("%s%s", generator.String(20), "."),
-			err:   errors.New(dotError),
+			err:   errors.New("%s", dotError),
 		},
 		{
 			name:  "bad sequence",
 			input: fmt.Sprintf("%s..%s", generator.String(20), generator.String(20)),
-			err:   errors.New(dotError),
+			err:   errors.New("%s", dotError),
 		},
 		{
 			name:  "min",

@@ -76,11 +76,11 @@ func (qr *enqueuer) Start(messageQueue MessageQueue) error {
 	qr.failed = make(chan *EnqueueMessageResult, int(qr.options.FailedBufferSize))
 	go qr.handleFailed()
 	qr.mux.Unlock()
-	if nil != err {
-		qr.Stop()
+	if err != nil {
+		err = qr.Stop()
 	}
 	// set the failure handler to just log if one is not defined
-	if nil == qr.options.FailureHandler {
+	if qr.options.FailureHandler == nil {
 		qr.options.FailureHandler = qr.logFailed
 	}
 	return err
@@ -92,11 +92,11 @@ func (qr *enqueuer) Stop() error {
 	if !qr.status.CompareAndSwap(statusRunning, statusStopped) {
 		return errors.New("Enqueuer.Stop called while not in state 'Running'")
 	}
-	qr.chunker.Stop()
+	err := qr.chunker.Stop()
 	close(qr.buffer)
 	close(qr.failed)
 	qr.messageQueue = nil
-	return nil
+	return err
 }
 
 func (qr *enqueuer) Running() bool {
