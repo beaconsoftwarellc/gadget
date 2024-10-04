@@ -186,7 +186,6 @@ func TestTOTPCompareWithVariance(t *testing.T) {
 		length    int
 		variance  uint
 		challenge func(test) string
-		drift     int
 
 		expected    bool
 		expectedErr string

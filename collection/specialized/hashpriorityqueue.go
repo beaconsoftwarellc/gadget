@@ -67,7 +67,7 @@ func (hpq *hashPriorityQueue[T]) Push(element HashPriority[T]) {
 		for elm := hpq.pqueue.(*priorityQueue).list.Head(); elm != nil; elm = elm.Next() {
 			d := hpq.convert(elm.Data())
 			if d.GetHash() == hash {
-				hpq.pqueue.(*priorityQueue).list.Remove(elm)
+				_, _ = hpq.pqueue.(*priorityQueue).list.Remove(elm)
 				wrappedElement.priority = d.GetPriority()
 			}
 		}

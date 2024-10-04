@@ -175,7 +175,7 @@ func TestBulkCreateRollback(t *testing.T) {
 	bulkCreate.Create(testRecord)
 
 	expected := generator.ID("err")
-	transaction.EXPECT().Rollback().Return(errors.New(expected))
+	transaction.EXPECT().Rollback().Return(errors.New("%s", expected))
 	actual := bulkCreate.Rollback()
 	assert.EqualError(actual, expected)
 	assert.Nil(bulkCreate.tx)

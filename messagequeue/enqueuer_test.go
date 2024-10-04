@@ -9,6 +9,7 @@ import (
 	"github.com/beaconsoftwarellc/gadget/v2/generator"
 	"github.com/beaconsoftwarellc/gadget/v2/log"
 	assert1 "github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )
 
@@ -46,7 +47,7 @@ func TestEnqueuerStart(t *testing.T) {
 	assert.NoError(eq.Start(messageQueue))
 	assert.EqualError(eq.Start(messageQueue),
 		"Enqueuer.Start called while not in state 'Stopped'")
-	eq.Stop()
+	require.NoError(t, eq.Stop())
 }
 
 func TestEnqueueStop(t *testing.T) {
@@ -98,7 +99,7 @@ func TestEnqueuerEnqueue_Validation(t *testing.T) {
 	}
 
 	messageQueue.EXPECT().EnqueueBatch(gomock.Any(), []*Message{expected}).
-		Return(nil, errors.New(expectedError))
+		Return(nil, errors.New("%s", expectedError))
 	assert.NoError(eq.Start(messageQueue))
 	assert.NoError(eq.Enqueue(expected))
 	waitGroup.Wait()
@@ -132,7 +133,7 @@ func TestEnqueue_BatchError(t *testing.T) {
 	}
 
 	messageQueue.EXPECT().EnqueueBatch(gomock.Any(), []*Message{expected}).
-		Return(nil, errors.New(expectedError))
+		Return(nil, errors.New("%s", expectedError))
 	assert.NoError(eq.Start(messageQueue))
 	assert.NoError(eq.Enqueue(expected))
 	waitGroup.Wait()

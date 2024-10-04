@@ -1,14 +1,15 @@
 package intutil
 
 import (
+	"math"
 	"testing"
 
-	assert1 "github.com/stretchr/testify/assert"
+	_assert "github.com/stretchr/testify/assert"
 	"golang.org/x/exp/constraints"
 )
 
 func TestMin(t *testing.T) {
-	assert := assert1.New(t)
+	assert := _assert.New(t)
 	var testData = []struct {
 		a        int
 		b        int
@@ -24,7 +25,7 @@ func TestMin(t *testing.T) {
 }
 
 func TestMinv(t *testing.T) {
-	assert := assert1.New(t)
+	assert := _assert.New(t)
 	var testData = []struct {
 		data     []int
 		expected int
@@ -40,7 +41,7 @@ func TestMinv(t *testing.T) {
 }
 
 func TestMax(t *testing.T) {
-	assert := assert1.New(t)
+	assert := _assert.New(t)
 	var testData = []struct {
 		a        int
 		b        int
@@ -56,7 +57,7 @@ func TestMax(t *testing.T) {
 }
 
 func TestMaxv(t *testing.T) {
-	assert := assert1.New(t)
+	assert := _assert.New(t)
 	var testData = []struct {
 		data     []int
 		expected int
@@ -112,14 +113,14 @@ func TestAbs(t *testing.T) {
 	}
 
 	t.Run("int", func(t *testing.T) {
-		assert := assert1.New(t)
+		assert := _assert.New(t)
 		for _, test := range testData.inttype {
 			assert.Equal(test.expected, Abs(test.input))
 		}
 	})
 
 	t.Run("int32", func(t *testing.T) {
-		assert := assert1.New(t)
+		assert := _assert.New(t)
 		for _, test := range testData.int32type {
 			assert.Equal(test.expected, Abs(test.input))
 		}
@@ -128,7 +129,7 @@ func TestAbs(t *testing.T) {
 }
 
 func TestDecrementor_Decrement_Resets(t *testing.T) {
-	assert := assert1.New(t)
+	assert := _assert.New(t)
 	decrementor := NewDecrementor(2)
 	assert.Equal(1, decrementor.Decrement())
 	assert.Equal(0, decrementor.Decrement())
@@ -137,7 +138,7 @@ func TestDecrementor_Decrement_Resets(t *testing.T) {
 
 func TestDecrementor_Decrement(t *testing.T) {
 	decrementor := NewDecrementor(10000)
-	assert := assert1.New(t)
+	assert := _assert.New(t)
 	ch := make(chan bool)
 	f := func() {
 		last := 0
@@ -208,16 +209,56 @@ func TestRange(t *testing.T) {
 	}
 
 	t.Run("int", func(t *testing.T) {
-		assert := assert1.New(t)
+		assert := _assert.New(t)
 		for _, test := range testData.inttype {
 			assert.Equal(test.expected, Clamp(test.input, test.min, test.max))
 		}
 	})
 
 	t.Run("int32", func(t *testing.T) {
-		assert := assert1.New(t)
+		assert := _assert.New(t)
 		for _, test := range testData.int32type {
 			assert.Equal(test.expected, Clamp(test.input, test.min, test.max))
 		}
+	})
+}
+
+func TestClampCast(t *testing.T) {
+	assert := _assert.New(t)
+
+	t.Run("int64 -> int8", func(t *testing.T) {
+		var actual int8
+		actual = ClampCast[int64, int8](math.MaxInt8 + 1)
+		assert.Equal(int8(math.MaxInt8), actual)
+
+		actual = ClampCast[int64, int8](math.MinInt8 - 1)
+		assert.Equal(int8(math.MinInt8), actual)
+	})
+
+	t.Run("int8 -> int64", func(t *testing.T) {
+		var actual int64
+		actual = ClampCast[int8, int64](math.MaxInt8)
+		assert.Equal(int64(math.MaxInt8), actual)
+
+		actual = ClampCast[int8, int64](math.MinInt8)
+		assert.Equal(int64(math.MinInt8), actual)
+	})
+
+	t.Run("uint64 -> int64", func(t *testing.T) {
+		var actual int64
+		actual = ClampCast[uint64, int64](math.MaxUint64)
+		assert.Equal(int64(math.MaxInt64), actual)
+
+		actual = ClampCast[uint64, int64](0)
+		assert.Equal(int64(0), actual)
+	})
+
+	t.Run("int64 -> uint64", func(t *testing.T) {
+		var actual uint64
+		actual = ClampCast[int64, uint64](math.MaxInt64)
+		assert.Equal(uint64(math.MaxInt64), actual)
+
+		actual = ClampCast[int64, uint64](math.MinInt64)
+		assert.Equal(uint64(0), actual)
 	})
 }

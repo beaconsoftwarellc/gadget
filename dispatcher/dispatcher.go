@@ -194,7 +194,7 @@ func (d *dispatcher) Resize(size int, start bool) {
 // prevent the Quit function from exiting.
 func (d *dispatcher) Dispatch(task Task) bool {
 	if d.Status() == Draining {
-		d.log.Error(fmt.Errorf("task added to dispatcher while draining: %+v", task))
+		_ = d.log.Error(fmt.Errorf("task added to dispatcher while draining: %+v", task))
 	}
 	return d.enqueue(newInternalTask(task), false)
 }

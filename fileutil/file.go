@@ -2,7 +2,7 @@ package fileutil
 
 import (
 	"bufio"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"path"
@@ -34,7 +34,10 @@ func EnsureDir(path string, mode os.FileMode) (os.FileInfo, error) {
 		return nil, err
 	}
 	if fi.Mode() != mode {
-		os.Chmod(path, mode)
+		err = os.Chmod(path, mode)
+		if err != nil {
+			return nil, err
+		}
 		// need to restat to reflect mode change.
 		fi, err = os.Stat(path)
 	}
@@ -61,14 +64,14 @@ func TempFile(contents string) (string, error) {
 func ReadLines(filepath string) ([]string, error) {
 	file, err := os.Open(filepath)
 	lines := []string{}
-	if nil != err {
+	if err != nil {
 		return lines, err
 	}
 	reader := bufio.NewReader(file)
 	prefix := ""
-	for nil == err {
+	for {
 		bytes, isPrefix, err := reader.ReadLine()
-		if nil != err {
+		if err != nil {
 			break
 		}
 		line := string(bytes)
@@ -91,7 +94,7 @@ func DownloadToMemory(url string) ([]byte, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	contents, err = ioutil.ReadAll(resp.Body)
+	contents, err = io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}

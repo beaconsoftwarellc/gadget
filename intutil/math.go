@@ -1,17 +1,10 @@
 package intutil
 
 import (
+	"math"
 	"sync/atomic"
 
 	"golang.org/x/exp/constraints"
-)
-
-// Constants
-const (
-	MaxUint = ^uint(0)
-	MinUint = 0
-	MaxInt  = int(MaxUint >> 1)
-	MinInt  = -MaxInt - 1
 )
 
 // Abs value of an int
@@ -99,7 +92,55 @@ func (decrementor *Decrementor) GetInitialMax() int {
 	return int(decrementor.initialMax)
 }
 
+func getMinMax[T constraints.Integer](i T) (int64, uint64) {
+	switch any(i).(type) {
+	case int:
+		return math.MinInt, math.MaxInt
+	case int8:
+		return math.MinInt8, math.MaxInt8
+	case int16:
+		return math.MinInt16, math.MaxInt16
+	case int32:
+		return math.MinInt32, math.MaxInt32
+	case int64:
+		return math.MinInt64, math.MaxInt64
+	case uint:
+		return 0, math.MaxUint
+	case uint8:
+		return 0, math.MaxUint8
+	case uint16:
+		return 0, math.MaxUint16
+	case uint32:
+		return 0, math.MaxUint32
+	case uint64:
+		return 0, math.MaxUint64
+	default:
+		return 0, 0
+	}
+}
+
 // Clamp limits value to a given minimum and maximum
-func Clamp[T constraints.Ordered](value, min, max T) T {
-	return Min(Max(value, min), max)
+func Clamp[T constraints.Integer](value, a, b T) T {
+	var (
+		lower, upper = a, b
+	)
+	if lower > upper {
+		lower, upper = upper, lower
+	}
+	return Min(Max(value, lower), upper)
+}
+
+// ClampCast will clamp a value to the range of V
+func ClampCast[T, V constraints.Integer](value T) V {
+	var (
+		min, max = getMinMax(V(0))
+	)
+	if int64(value) < min {
+		return V(min)
+	}
+	if value > 0 && uint64(value) > max {
+		return V(max)
+	}
+	// otherwise it fits
+	return V(value)
 }

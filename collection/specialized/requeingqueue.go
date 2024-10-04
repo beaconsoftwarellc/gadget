@@ -18,17 +18,23 @@ func (q *requeueingQueue[T]) Size() int { return q.list.Size() }
 
 // Push a new data element onto the queue.
 func (q *requeueingQueue[T]) Push(data T) {
-	q.list.InsertPrevious(q.list.Head(), data)
+	_, _ = q.list.InsertPrevious(q.list.Head(), data)
 }
 
 // Pop the most recently pushed data element off the queue and put it at the end of the queue.
-func (q *requeueingQueue[T]) Pop() (data T, err error) {
-	head := q.list.Head()
+func (q *requeueingQueue[T]) Pop() (T, error) {
+	var (
+		ret  T
+		head = q.list.Head()
+		err  error
+	)
 	if nil == head {
-		var ret T
 		return ret, collection.NewEmptyListError()
 	}
-	q.list.InsertNext(q.list.Tail(), head.Data())
+	_, err = q.list.InsertNext(q.list.Tail(), head.Data())
+	if nil != err {
+		return ret, err
+	}
 	return q.list.Remove(head)
 }
 

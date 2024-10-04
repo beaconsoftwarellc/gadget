@@ -75,7 +75,7 @@ func TestListenFailsAfterMaxErrors(t *testing.T) {
 		GetConnection: func() *MockConn {
 			return nil
 		},
-		AcceptError: errors.New(generator.String(20)),
+		AcceptError: errors.New("%s", generator.String(20)),
 	}
 	server := NewTCPServer(2, 10, mglgt, log.NewStackLogger())
 	done, err := server.Listen()
@@ -93,7 +93,7 @@ func TestListenFailsAfterMaxErrorsCreateTask(t *testing.T) {
 			return &MockConn{}
 		},
 	}
-	mglgt.getTaskError = errors.New(generator.String(20))
+	mglgt.getTaskError = errors.New("%s", generator.String(20))
 	server := NewTCPServer(2, 10, mglgt, log.NewStackLogger())
 	done, err := server.Listen()
 	if assert.NoError(err) {

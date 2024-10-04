@@ -5,7 +5,6 @@ import (
 
 	assert1 "github.com/stretchr/testify/assert"
 
-	"github.com/beaconsoftwarellc/gadget/v2/collection"
 	"github.com/beaconsoftwarellc/gadget/v2/generator"
 )
 
@@ -59,9 +58,6 @@ func TestHashPriorityQueue_Peek(t *testing.T) {
 
 func TestHashPriorityQueue(t *testing.T) {
 	assert := assert1.New(t)
-	type fields struct {
-		list collection.List[string]
-	}
 	tests := []struct {
 		name      string
 		pinput    []int

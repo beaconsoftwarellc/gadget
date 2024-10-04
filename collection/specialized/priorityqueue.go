@@ -1,6 +1,9 @@
 package specialized
 
-import "github.com/beaconsoftwarellc/gadget/v2/collection"
+import (
+	"github.com/beaconsoftwarellc/gadget/v2/collection"
+	"github.com/beaconsoftwarellc/gadget/v2/log"
+)
 
 // Priority is for use in collections that require elements to resolve
 // their own priority.
@@ -44,10 +47,10 @@ func (q *priorityQueue) Push(p Priority) {
 			e = elm
 		}
 	}
-	if nil == e {
-		q.list.InsertPrevious(q.list.Head(), p)
+	if e == nil {
+		_, _ = q.list.InsertPrevious(q.list.Head(), p)
 	} else {
-		q.list.InsertNext(e, p)
+		_, _ = q.list.InsertNext(e, p)
 	}
 }
 
@@ -58,7 +61,10 @@ func (q *priorityQueue) nextElement(remove bool) (Priority, bool) {
 		success = true
 		p = q.convert(q.list.Head().Data())
 		if remove {
-			q.list.Remove(q.list.Head())
+			_, err := q.list.Remove(q.list.Head())
+			if log.Error(err) != nil {
+				success = false
+			}
 		}
 	}
 	return p, success
