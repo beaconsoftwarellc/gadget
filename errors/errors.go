@@ -1,6 +1,10 @@
 package errors
 
-import "google.golang.org/grpc/codes"
+import (
+	"fmt"
+
+	"google.golang.org/grpc/codes"
+)
 
 // ErrParameterRequired is returned when a required parameter is empty or nil
 // but requires a value.
@@ -11,7 +15,7 @@ func (e ErrParameterRequired) GetCode() codes.Code {
 }
 
 func (e ErrParameterRequired) Error() string {
-	return "parameter '%s' cannot be empty"
+	return fmt.Sprintf("parameter '%s' cannot be empty", string(e))
 }
 
 // ErrRequiresSuperUser is returned when a user attempts to perform an action
@@ -19,7 +23,7 @@ func (e ErrParameterRequired) Error() string {
 type ErrRequiresSuperUser string
 
 func (e ErrRequiresSuperUser) Trace() string {
-	return "action %s requires a superuser"
+	return fmt.Sprintf("action %s requires a superuser", string(e))
 }
 
 func (e ErrRequiresSuperUser) GetCode() codes.Code {
@@ -27,5 +31,5 @@ func (e ErrRequiresSuperUser) GetCode() codes.Code {
 }
 
 func (e ErrRequiresSuperUser) Error() string {
-	return "action %s requires a superuser"
+	return fmt.Sprintf("action %s requires a superuser", string(e))
 }
