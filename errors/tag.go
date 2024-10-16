@@ -19,7 +19,7 @@ type taggedError struct {
 }
 
 func (e taggedError) Error() string {
-	return e.Status.Message()
+	return e.Status.Err().Error()
 }
 
 // Tag the passed error
