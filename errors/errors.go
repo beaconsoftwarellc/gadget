@@ -6,6 +6,19 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
+// ErrTesting is for use in error test cases only. Should
+// primarily be used for returning generic errors from mocks and
+// ensuring the error is expected
+type ErrTesting string
+
+func (e ErrTesting) GetCode() codes.Code {
+	return codes.Unknown
+}
+
+func (e ErrTesting) Error() string {
+	return string(e)
+}
+
 // ErrParameterRequired is returned when a required parameter is empty or nil
 // but requires a value.
 type ErrParameterRequired string
