@@ -213,6 +213,8 @@ func Push(config interface{}) error {
 			value = strconv.Itoa(t)
 		case time.Duration:
 			value = t.String()
+		case bool:
+			value = strconv.FormatBool(t)
 		default:
 			return UnsupportedDataTypeError{Type: typ.Type.Kind(), Field: typ.Name}
 		}
