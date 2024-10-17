@@ -16,13 +16,14 @@ import (
 type specification struct {
 	StringField         string        `env:"STRING_FIELD" s3:"bar,foo"`
 	IntField            int           `env:"INT_FIELD,junk" s3:"foo,bar"`
+	BoolField           bool          `env:"BOOL_FIELD" s3:"foo,bar"`
 	OptionalField       string        `env:"OPTIONAL_FIELD,optional,junk"`
 	Interval            time.Duration `env:"INTERVAL,optional"`
 	NotEnvironmentField string
 }
 
 type unsupportedTypeSpecification struct {
-	BoolField bool `env:"BOOL_FIELD" s3:"invalid,type"`
+	Float64Field float64 `env:"FLOAT64_FIELD" s3:"invalid,type"`
 }
 
 func TestPush(t *testing.T) {
@@ -32,6 +33,7 @@ func TestPush(t *testing.T) {
 	spec := &specification{
 		StringField:   generator.String(20),
 		IntField:      10,
+		BoolField:     true,
 		OptionalField: generator.String(30),
 		Interval:      time.Duration(int64(generator.Int16())),
 	}
@@ -39,6 +41,7 @@ func TestPush(t *testing.T) {
 	assert.NoError(Push(spec))
 	assert.Equal(os.Getenv("STRING_FIELD"), spec.StringField)
 	assert.Equal(os.Getenv("INT_FIELD"), "10")
+	assert.Equal(os.Getenv("BOOL_FIELD"), "true")
 	assert.Equal(os.Getenv("OPTIONAL_FIELD"), spec.OptionalField)
 	assert.Equal(os.Getenv("INTERVAL"), spec.Interval.String())
 }
@@ -56,6 +59,9 @@ func TestValidConfig(t *testing.T) {
 	interval := time.Duration(int64(generator.Int16()))
 	os.Setenv("INTERVAL", interval.String())
 
+	expectedBoolField := true
+	os.Setenv("BOOL_FIELD", strconv.FormatBool(expectedBoolField))
+
 	expectedNotEnvironmentField := "How many roads must a man walk down?"
 	config := &specification{NotEnvironmentField: expectedNotEnvironmentField}
 	err := Process(config, log.NewStackLogger())
@@ -63,6 +69,7 @@ func TestValidConfig(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(expectedStringField, config.StringField)
 	assert.Equal(expectedIntField, config.IntField)
+	assert.Equal(expectedBoolField, config.BoolField)
 	assert.Equal("", config.OptionalField)
 	assert.Equal(expectedNotEnvironmentField, config.NotEnvironmentField)
 	assert.Equal(interval, config.Interval)
@@ -107,12 +114,12 @@ func TestNotImplementedType(t *testing.T) {
 	assert := assert1.New(t)
 	os.Clearenv()
 
-	os.Setenv("BOOL_FIELD", "true")
+	os.Setenv("FLOAT64_FIELD", "20.12")
 
 	config := &unsupportedTypeSpecification{}
 	err := Process(config, log.NewStackLogger())
 
-	assert.EqualError(err, UnsupportedDataTypeError{Type: reflect.Bool, Field: "BoolField"}.Error())
+	assert.EqualError(err, UnsupportedDataTypeError{Type: reflect.Float64, Field: "Float64Field"}.Error())
 	assert.Equal(&unsupportedTypeSpecification{}, config)
 }
 

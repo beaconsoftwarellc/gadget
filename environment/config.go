@@ -148,6 +148,8 @@ func setValueField(valueField reflect.Value, structField reflect.StructField,
 	switch t := structField.Type.Kind(); t {
 	case reflect.Int:
 		valueField.SetInt(int64(env.(float64)))
+	case reflect.Bool:
+		valueField.SetBool(env.(bool))
 	default:
 		return UnsupportedDataTypeError{Type: t, Field: structField.Name}
 	}
@@ -165,6 +167,12 @@ func setValueFieldString(valueField reflect.Value, structField reflect.StructFie
 			return errors.New("%s while converting %s", err.Error(), envTag)
 		}
 		valueField.SetInt(int64(parsed))
+	case bool:
+		parsed, err := strconv.ParseBool(env)
+		if err != nil {
+			return errors.New("%s while converting %s", err.Error(), envTag)
+		}
+		valueField.SetBool(parsed)
 	case time.Duration:
 		parsed, err := time.ParseDuration(env)
 		if err != nil {
@@ -205,6 +213,8 @@ func Push(config interface{}) error {
 			value = strconv.Itoa(t)
 		case time.Duration:
 			value = t.String()
+		case bool:
+			value = strconv.FormatBool(t)
 		default:
 			return UnsupportedDataTypeError{Type: typ.Type.Kind(), Field: typ.Name}
 		}
