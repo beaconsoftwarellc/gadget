@@ -56,9 +56,9 @@ func (i ifStatement) GetTables() []string {
 
 func (i ifStatement) SQL() string {
 	conditionSQL, values := i.condition.SQL()
-	conditionSQL = strings.Replace(conditionSQL, "?", "%s", -1)
+	conditionSQL = strings.Replace(conditionSQL, "?", "'%s'", -1)
 	conditionSQL = fmt.Sprintf(conditionSQL, values...)
-	return fmt.Sprintf("IF(%s, %s, %s) AS `%s`", conditionSQL, i.trueValue, i.falseValue, i.alias)
+	return fmt.Sprintf("IF(%s, '%s', '%s') AS `%s`", conditionSQL, i.trueValue, i.falseValue, i.alias)
 }
 
 // If creates a SQL IF statement that can be used as a SelectExpression

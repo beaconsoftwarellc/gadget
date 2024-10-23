@@ -360,13 +360,22 @@ func TestQueryBuilderCoalesce(t *testing.T) {
 	assert.Equal("SELECT `person`.`id`, COALESCE(`person`.`name`, '') AS `coalesced` FROM `person` AS `person`", actual)
 }
 
-func TestQueryBuilderIf(t *testing.T) {
+func TestQueryBuilderIfFieldCondition(t *testing.T) {
 	assert := assert1.New(t)
 	query := Select(Person.ID, If(Person.Name.Equal(Person.ID), "1", "0", "has_robot_name")).From(Person)
 	actual, values, err := query.SQL(NoLimit, 10)
 	assert.NoError(err)
 	assert.Empty(values)
-	assert.Equal("SELECT `person`.`id`, IF(`person`.`name` = `person`.`id`, 1, 0) AS `has_robot_name` FROM `person` AS `person`", actual)
+	assert.Equal("SELECT `person`.`id`, IF(`person`.`name` = `person`.`id`, '1', '0') AS `has_robot_name` FROM `person` AS `person`", actual)
+}
+
+func TestQueryBuilderIfStringCondition(t *testing.T) {
+	assert := assert1.New(t)
+	query := Select(Person.ID, If(Person.Name.Equal("Joe"), "1", "0", "is_joe")).From(Person)
+	actual, values, err := query.SQL(NoLimit, 10)
+	assert.NoError(err)
+	assert.Empty(values)
+	assert.Equal("SELECT `person`.`id`, IF(`person`.`name` = 'Joe', '1', '0') AS `is_joe` FROM `person` AS `person`", actual)
 }
 
 func TestQueryBuilderGroupBy(t *testing.T) {
