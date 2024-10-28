@@ -37,6 +37,35 @@ func Alias(tableField TableField, aliasName string) SelectExpression {
 	return alias{field: tableField, alias: aliasName}
 }
 
+// need SelectExpression for an IF statement:
+// IF (condition, true, false) AS alias
+type ifStatement struct {
+	condition  *ConditionExpression
+	trueValue  string
+	falseValue string
+	alias      string
+}
+
+func (i ifStatement) GetName() string {
+	return i.alias
+}
+
+func (i ifStatement) GetTables() []string {
+	return i.condition.Tables()
+}
+
+func (i ifStatement) SQL() string {
+	conditionSQL, values := i.condition.SQL()
+	conditionSQL = strings.Replace(conditionSQL, "?", "'%s'", -1)
+	conditionSQL = fmt.Sprintf(conditionSQL, values...)
+	return fmt.Sprintf("IF(%s, '%s', '%s') AS `%s`", conditionSQL, i.trueValue, i.falseValue, i.alias)
+}
+
+// If creates a SQL IF statement that can be used as a SelectExpression
+func If(condition *ConditionExpression, trueValue, falseValue, alias string) SelectExpression {
+	return ifStatement{condition: condition, trueValue: trueValue, falseValue: falseValue, alias: alias}
+}
+
 type count struct {
 	field TableField
 	alias string
