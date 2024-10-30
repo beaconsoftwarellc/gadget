@@ -99,7 +99,7 @@ func TestEnqueuerEnqueue_Validation(t *testing.T) {
 	}
 
 	messageQueue.EXPECT().EnqueueBatch(gomock.Any(), []*Message{expected}).
-		Return(nil, errors.New("%s", expectedError))
+		Return(nil, errors.New(expectedError))
 	assert.NoError(eq.Start(messageQueue))
 	assert.NoError(eq.Enqueue(expected))
 	waitGroup.Wait()
@@ -133,7 +133,7 @@ func TestEnqueue_BatchError(t *testing.T) {
 	}
 
 	messageQueue.EXPECT().EnqueueBatch(gomock.Any(), []*Message{expected}).
-		Return(nil, errors.New("%s", expectedError))
+		Return(nil, errors.New(expectedError))
 	assert.NoError(eq.Start(messageQueue))
 	assert.NoError(eq.Enqueue(expected))
 	waitGroup.Wait()

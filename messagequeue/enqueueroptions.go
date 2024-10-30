@@ -46,11 +46,11 @@ func (eo *EnqueuerOptions) Validate() error {
 	}
 	// buffer size must be within sensible bounds
 	if eo.BufferSize < minimumBufferSize || eo.BufferSize > maximumBufferSize {
-		return errors.New("EnqueuerOptions.BufferSize(%d) was out of bounds [%d, %d]",
+		return errors.Newf("EnqueuerOptions.BufferSize(%d) was out of bounds [%d, %d]",
 			eo.BufferSize, minimumBufferSize, maximumBufferSize)
 	}
 	if eo.FailedBufferSize < minimumFailedBufferSize || eo.FailedBufferSize > maximumFailedBufferSize {
-		return errors.New("EnqueuerOptions.FailedBufferSize(%d) was out of bounds [%d, %d)",
+		return errors.Newf("EnqueuerOptions.FailedBufferSize(%d) was out of bounds [%d, %d)",
 			eo.FailedBufferSize, minimumFailedBufferSize, maximumFailedBufferSize)
 	}
 	return eo.ChunkerOptions.Validate()

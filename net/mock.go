@@ -71,7 +71,7 @@ func (client *MockHTTPClient) Do(req *http.Request) (*http.Response, errors.Trac
 
 	err, ok = top.(error)
 	if !ok {
-		return nil, errors.New("MockHTTPClient.Do invalid return value :: %#v", top)
+		return nil, errors.Newf("MockHTTPClient.Do invalid return value :: %#v", top)
 	}
 	return nil, errors.Wrap(err)
 }

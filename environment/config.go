@@ -164,19 +164,19 @@ func setValueFieldString(valueField reflect.Value, structField reflect.StructFie
 	case int:
 		parsed, err := strconv.Atoi(env)
 		if err != nil {
-			return errors.New("%s while converting %s", err.Error(), envTag)
+			return errors.Newf("%s while converting %s", err.Error(), envTag)
 		}
 		valueField.SetInt(int64(parsed))
 	case bool:
 		parsed, err := strconv.ParseBool(env)
 		if err != nil {
-			return errors.New("%s while converting %s", err.Error(), envTag)
+			return errors.Newf("%s while converting %s", err.Error(), envTag)
 		}
 		valueField.SetBool(parsed)
 	case time.Duration:
 		parsed, err := time.ParseDuration(env)
 		if err != nil {
-			return errors.New("%s while converting %s", err.Error(), envTag)
+			return errors.Newf("%s while converting %s", err.Error(), envTag)
 		}
 		valueField.SetInt(int64(parsed))
 	default:

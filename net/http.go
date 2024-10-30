@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
+	"github.com/beaconsoftwarellc/gadget/v2/log"
 )
 
 const (
@@ -76,4 +78,91 @@ type DoHTTPRequest interface {
 	Cookies(url *url.URL) []*http.Cookie
 	// SetCookies adds cookies to the jar
 	SetCookies(url *url.URL, cookies []*http.Cookie)
+}
+
+// NewHTTPRedirectClient is the default net/http client with headers being set on redirect
+func NewHTTPRedirectClient(timeout time.Duration, logger log.Logger) DoHTTPRequest {
+	transport := &http.Transport{}
+	return &httpRedirectClient{
+		client: &http.Client{
+			Timeout:   timeout,
+			Transport: transport,
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				if len(via) >= 10 {
+					return fmt.Errorf("too many redirects")
+				}
+				if len(via) == 0 {
+					return nil
+				}
+				for attr, val := range via[0].Header {
+					if _, ok := req.Header[attr]; !ok {
+						req.Header[attr] = val
+					}
+				}
+				return nil
+			},
+		},
+		transport: transport,
+		log:       logger,
+	}
+}
+
+type httpRedirectClient struct {
+	client    *http.Client
+	transport *http.Transport
+	log       log.Logger
+}
+
+// Do the request by sending the payload to the remote server and returning the response and any errors
+func (client *httpRedirectClient) Do(req *http.Request) (*http.Response, errors.TracerError) {
+	now := time.Now()
+	resp, err := client.client.Do(req)
+	statusCode := 0
+	message := "success"
+	if nil != resp {
+		statusCode = resp.StatusCode
+	}
+	if nil != err {
+		message = err.Error()
+	}
+	client.log.Debugf("%d %s %s (%s) - %s", statusCode, req.Method, req.URL.String(), time.Since(now), message)
+	if nil == err && (resp.StatusCode < 200 || resp.StatusCode > 299) {
+		err = NewBadStatusError(req.Method, req.URL.String(), resp.StatusCode)
+	}
+	return resp, errors.Wrap(err)
+}
+
+// DoWithContext the request by sending the payload to the remote server and returning the response and any errors
+// cancelling the request at the transport level when the context returns on it's 'Done' channel.
+func (client *httpRedirectClient) DoWithContext(ctx context.Context, req *http.Request) (*http.Response, errors.TracerError) {
+	complete := make(chan bool, 1)
+	var response *http.Response
+	var err error
+	go func() {
+		response, err = client.Do(req)
+		complete <- true
+	}()
+	select {
+	case <-ctx.Done():
+		client.transport.CancelRequest(req)
+		err = errors.Newf("request to %s was cancelled by controlling context", req.URL.String())
+	case <-complete:
+		break
+	}
+	return response, errors.Wrap(err)
+}
+
+// AddCookieJar to http client to make them available to all future requests
+func (client *httpRedirectClient) AddCookieJar(jar http.CookieJar) {
+	client.client.Jar = jar
+}
+
+// Cookies lists cookies in the jar
+func (client *httpRedirectClient) Cookies(url *url.URL) []*http.Cookie {
+	return client.client.Jar.Cookies(url)
+}
+
+// SetCookies adds cookies to the jar
+func (client *httpRedirectClient) SetCookies(url *url.URL, cookies []*http.Cookie) {
+	client.client.Jar.SetCookies(url, cookies)
 }
