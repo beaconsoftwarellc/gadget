@@ -31,5 +31,5 @@ func s256(codeVerifier string) string {
 		buffer = make([]byte, len(hash))
 	)
 	copy(buffer, hash[:])
-	return base64.URLEncoding.EncodeToString(buffer)
+	return base64.RawURLEncoding.EncodeToString(buffer)
 }
