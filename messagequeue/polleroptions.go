@@ -62,24 +62,24 @@ func (po *PollerOptions) Validate() error {
 		return errors.New("PollerOptions.Logger cannot be nil")
 	}
 	if po.ConcurrentMessageHandlers < minimumConcurrentMessageHandlers {
-		return errors.New("PollerOptions.ConcurrentMessageHandlers(%d) was out of bounds [%d, -)",
+		return errors.Newf("PollerOptions.ConcurrentMessageHandlers(%d) was out of bounds [%d, -)",
 			po.ConcurrentMessageHandlers, minimumConcurrentMessageHandlers)
 	}
 	if po.WaitForBatch < minimumWaitForBatch || po.WaitForBatch > maximumWaitForBatch {
-		return errors.New("PollerOptions.WaitForBatch(%s) was out of bounds [%s, %s]",
+		return errors.Newf("PollerOptions.WaitForBatch(%s) was out of bounds [%s, %s]",
 			po.WaitForBatch, minimumWaitForBatch, maximumWaitForBatch)
 	}
 	if po.QueueOperationTimeout < minimumQueueOperationTimeout ||
 		po.QueueOperationTimeout > maximumQueueOperationTimeout {
-		return errors.New("PollerOptions.QueueOperationTimeout(%s) was out of bounds [%s, %s]",
+		return errors.Newf("PollerOptions.QueueOperationTimeout(%s) was out of bounds [%s, %s]",
 			po.QueueOperationTimeout, minimumQueueOperationTimeout, maximumQueueOperationTimeout)
 	}
 	if po.DequeueCount < minimumDequeueCount || po.DequeueCount > maximumDequeueCount {
-		return errors.New("PollerOptions.DequeueCount(%d) was out of bounds [%d, %d]",
+		return errors.Newf("PollerOptions.DequeueCount(%d) was out of bounds [%d, %d]",
 			po.DequeueCount, minimumDequeueCount, maximumDequeueCount)
 	}
 	if po.VisibilityTimeout < minimumVisibilityTimeout || po.VisibilityTimeout > maximumVisibilityTimeout {
-		return errors.New("PollerOptions.VisibilityTimeout(%s) was out of bounds [%s, %s]",
+		return errors.Newf("PollerOptions.VisibilityTimeout(%s) was out of bounds [%s, %s]",
 			po.VisibilityTimeout, minimumVisibilityTimeout, maximumVisibilityTimeout)
 	}
 	return nil

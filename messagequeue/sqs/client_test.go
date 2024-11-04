@@ -290,6 +290,6 @@ func Test_SQS_Delete(t *testing.T) {
 	}
 	expected := generator.String(32)
 	apiMock.EXPECT().DeleteMessage(ctx, NewMatcher(assert, message), gomock.Any()).
-		Return(nil, errors.New("%s", expected))
+		Return(nil, errors.New(expected))
 	assert.EqualError(sdk.Delete(ctx, message), expected)
 }

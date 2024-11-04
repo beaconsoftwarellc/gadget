@@ -151,7 +151,7 @@ func TestLogErrorObj(t *testing.T) {
 			actual = m
 		}
 		NewGlobal(id, NewOutput(FlagAll, f))
-		err := errors.New("%s", generator.String(7))
+		err := errors.New(generator.String(7))
 		_ = t.function(err)
 		if !t.noCaller {
 			assert.True(strings.HasPrefix(actual.Caller, "log_test.go"), "test for %s failed", t.expected)

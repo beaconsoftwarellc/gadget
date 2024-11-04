@@ -384,10 +384,10 @@ func EqualLogError(assert assertion, theError error, errString string, msgAndArg
 	if nil != theError {
 		// remove log prefix line numbers
 		normErrorStr = logPrefixRegex.ReplaceAllString(errString, "${1}${3}")
-		normError = errors.New("%s", logPrefixRegex.ReplaceAllString(theError.Error(), "${1}${3}"))
+		normError = errors.New(logPrefixRegex.ReplaceAllString(theError.Error(), "${1}${3}"))
 		// remove db error string
 		normErrorStr = dbErrRegex.ReplaceAllString(normErrorStr, "")
-		normError = errors.New("%s", dbErrRegex.ReplaceAllString(normError.Error(), ""))
+		normError = errors.New(dbErrRegex.ReplaceAllString(normError.Error(), ""))
 	}
 	return assert.EqualError(normError, normErrorStr, msgAndArgs...)
 }

@@ -38,12 +38,12 @@ func NewChunkerOptions() *ChunkerOptions {
 // within the bounds necessary for operation.
 func (o *ChunkerOptions) Validate() error {
 	if o.ChunkSize < minimumChunkSize || o.ChunkSize > maximumChunkSize {
-		return errors.New("ChunkerOptions.ChunkSize(%d) was out of bounds [%d, %d]",
+		return errors.Newf("ChunkerOptions.ChunkSize(%d) was out of bounds [%d, %d]",
 			o.ChunkSize, minimumChunkSize, maximumChunkSize,
 		)
 	}
 	if o.MaxElementWait < minimumWait || o.MaxElementWait > maximumWait {
-		return errors.New("ChunkerOptions.MaxElementWait(%s) was out of bounds [%s,%s]",
+		return errors.Newf("ChunkerOptions.MaxElementWait(%s) was out of bounds [%s,%s]",
 			o.MaxElementWait.String(), minimumWait, maximumWait)
 	}
 	return nil

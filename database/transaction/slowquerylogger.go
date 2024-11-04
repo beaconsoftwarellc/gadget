@@ -80,7 +80,7 @@ func (tx *slowQueryLoggerTx) logSlow(query string, elapsed time.Duration) {
 		return
 	}
 
-	err := errors.New(
+	err := errors.Newf(
 		"[%s] query execution time: %s query: %s", tx.id, elapsed, query)
 	_ = tx.log.Error(err)
 	tx.loggedQueries[query] = elapsed

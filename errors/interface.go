@@ -20,8 +20,16 @@ type TracerError interface {
 	error
 }
 
-// New instantiates a TracerError with a stack trace
-func New(format string, args ...interface{}) TracerError {
+// New instantiates a TracerError with a message and a stack trace
+func New(message string) TracerError {
+	return &errorTracer{
+		message: message,
+		trace:   GetStackTrace(),
+	}
+}
+
+// Newf instantiates a TracerError with a formatted message and a stack trace
+func Newf(format string, args ...interface{}) TracerError {
 	return &errorTracer{
 		message: fmt.Sprintf(format, args...),
 		trace:   GetStackTrace(),

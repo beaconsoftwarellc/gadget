@@ -66,7 +66,7 @@ func HOTP(key string, counter uint64, length int) (string, error) {
 		return "", err
 	}
 	if n != len(counterBytes) {
-		return "", errors.New("unable to generate HOTP, unexpected number of bytes written (%d, %d)",
+		return "", errors.Newf("unable to generate HOTP, unexpected number of bytes written (%d, %d)",
 			n, len(counterBytes))
 	}
 	return DynamicTruncate(cipher.Sum(nil), length), nil

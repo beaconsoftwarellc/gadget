@@ -61,7 +61,7 @@ func NameIsValid(s string) error {
 
 	runeCount := utf8.RuneCountInString(s)
 	if runeCount < minNameCharacters || runeCount > maxNameCharacters {
-		return errors.New("name character count out of bounds [%d, %d] (%d)",
+		return errors.Newf("name character count out of bounds [%d, %d] (%d)",
 			minNameCharacters, maxNameCharacters, runeCount)
 	}
 
@@ -71,11 +71,11 @@ func NameIsValid(s string) error {
 
 	if strings.HasPrefix(s, period) || strings.HasSuffix(s, period) ||
 		strings.Contains(s, period+period) {
-		return errors.New("%s", dotError)
+		return errors.New(dotError)
 	}
 	low := strings.ToLower(s)
 	if strings.HasPrefix(low, prohibitedAmazon) || strings.HasPrefix(low, prohibitedAWS) {
-		return errors.New("%s", prohibitedPrefixError)
+		return errors.New(prohibitedPrefixError)
 	}
 	return nil
 }
@@ -94,16 +94,16 @@ func BodyIsValid(s string) error {
 		see the W3C specification for characters (http://www.w3.org/TR/REC-xml/#charsets).
 	*/
 	if utf8.RuneCountInString(s) == 0 {
-		return errors.New("%s", bodyMinimumError)
+		return errors.New(bodyMinimumError)
 	}
 
 	if len(s) > maxBodyKibibytes*1024 {
-		return errors.New("body cannot exceed %d KiB (was %d bytes)", maxBodyKibibytes, len(s))
+		return errors.Newf("body cannot exceed %d KiB (was %d bytes)", maxBodyKibibytes, len(s))
 	}
 
 	for _, r := range s {
 		if !unicode.In(r, allowedRanges) {
-			return errors.New("body cannot contain forbidden unicode character 0x%x", r)
+			return errors.Newf("body cannot contain forbidden unicode character 0x%x", r)
 		}
 	}
 	return nil

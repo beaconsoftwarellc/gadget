@@ -52,7 +52,7 @@ func ParseAddress(address string) (*Address, errors.TracerError) {
 	}
 	colons := strings.Count(address, ":")
 	if colons > 1 {
-		return nil, errors.New("Invalid address: too many colons '%s'", address)
+		return nil, errors.Newf("Invalid address: too many colons '%s'", address)
 	} else if colons == 0 {
 		return &Address{Host: address, HasPort: false}, nil
 	}
@@ -60,10 +60,10 @@ func ParseAddress(address string) (*Address, errors.TracerError) {
 	addr.Host = split[0]
 	port, err := strconv.Atoi(split[1])
 	if err != nil {
-		return nil, errors.New("address '%s' is invalid: could not parse port data, %s", address, err)
+		return nil, errors.Newf("address '%s' is invalid: could not parse port data, %s", address, err)
 	}
 	if port <= 0 || port > math.MaxUint16 {
-		return nil, errors.New("port '%d' is not a valid port number, must be uint16", port)
+		return nil, errors.Newf("port '%d' is not a valid port number, must be uint16", port)
 	}
 	addr.Port = port
 	addr.HasPort = true
@@ -83,7 +83,7 @@ func (addr *Address) MarshalString() (string, error) {
 func (addr *Address) UnmarshalString(s string) error {
 	err := json.Unmarshal([]byte(s), addr)
 	if nil == err && stringutil.IsWhiteSpace(addr.Host) && addr.Port < 1 {
-		err = errors.New("Invalid Address JSON '%s'", s)
+		err = errors.Newf("Invalid Address JSON '%s'", s)
 	}
 	return err
 }

@@ -70,7 +70,7 @@ func (p *poller) Poll(handler HandleMessage, messageQueue MessageQueue) error {
 	p.mux.Lock()
 	defer p.mux.Unlock()
 	if !p.status.CompareAndSwap(statusStopped, statusRunning) {
-		return errors.New("Poller.Poll called on instance not in state stopped (%d)",
+		return errors.Newf("Poller.Poll called on instance not in state stopped (%d)",
 			statusStopped)
 	}
 	p.handler = handler
@@ -157,7 +157,7 @@ func (p *poller) Stop() error {
 	p.mux.Lock()
 	defer p.mux.Unlock()
 	if !p.status.CompareAndSwap(statusRunning, statusDraining) {
-		return errors.New("Poller.Stop called on instance not in state running (%d)",
+		return errors.Newf("Poller.Stop called on instance not in state running (%d)",
 			statusRunning)
 	}
 	p.cancel()

@@ -77,7 +77,7 @@ func setAttribute(mapping map[string]types.MessageAttributeValue, name, value st
 		return err
 	}
 	if err = BodyIsValid(value); nil != err {
-		return errors.New("invalid attribute value: %s", err.Error())
+		return errors.Newf("invalid attribute value: %s", err.Error())
 	}
 	mav := types.MessageAttributeValue{}
 	mav.DataType = aws.String(stringDataType)

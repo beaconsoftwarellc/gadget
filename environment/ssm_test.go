@@ -59,7 +59,7 @@ func Test_ssm_loadSSMParameters(t *testing.T) {
 			&ssm.GetParametersByPathInput{
 				MaxResults: aws.Int32(10),
 				Path:       aws.String("foo"),
-			}).Return(nil, errors.New("%s", expected))
+			}).Return(nil, errors.New(expected))
 
 		err := ssmClient.loadSSMParameters(path)
 		assert.EqualError(err, expected)
@@ -177,7 +177,7 @@ func Test_ssm_Get(t *testing.T) {
 			&ssm.GetParametersByPathInput{
 				MaxResults: aws.Int32(10),
 				Path:       aws.String(ssmClient.getPath(project)),
-			}).Return(nil, errors.New("%s", expected))
+			}).Return(nil, errors.New(expected))
 
 		actual, ok := ssmClient.Get(project, name)
 		assert.False(ok)
