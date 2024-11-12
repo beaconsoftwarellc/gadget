@@ -35,14 +35,22 @@ func (e ErrParameterRequired) Error() string {
 // that requires superuser privileges.
 type ErrRequiresSuperUser string
 
-func (e ErrRequiresSuperUser) Trace() string {
-	return fmt.Sprintf("action %s requires a superuser", string(e))
-}
-
 func (e ErrRequiresSuperUser) GetCode() codes.Code {
 	return codes.PermissionDenied
 }
 
 func (e ErrRequiresSuperUser) Error() string {
 	return fmt.Sprintf("action %s requires a superuser", string(e))
+}
+
+// ErrNotFound is returned when a resource does not exist for a
+// given identifier.
+type ErrNotFound string
+
+func (e ErrNotFound) GetCode() codes.Code {
+	return codes.NotFound
+}
+
+func (e ErrNotFound) Error() string {
+	return fmt.Sprintf("resource '%s' not found", string(e))
 }
