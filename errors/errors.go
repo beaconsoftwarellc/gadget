@@ -54,3 +54,14 @@ func (e ErrNotFound) GetCode() codes.Code {
 func (e ErrNotFound) Error() string {
 	return fmt.Sprintf("resource '%s' not found", string(e))
 }
+
+// ErrParameterInvalid value for the expected functionality.
+type ErrParameterInvalid string
+
+func (e ErrParameterInvalid) GetCode() codes.Code {
+	return codes.InvalidArgument
+}
+
+func (e ErrParameterInvalid) Error() string {
+	return fmt.Sprintf("parameter '%s' value is invalid", string(e))
+}
