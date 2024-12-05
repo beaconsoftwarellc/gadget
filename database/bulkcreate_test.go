@@ -3,11 +3,13 @@ package database
 import (
 	"testing"
 
+	"github.com/beaconsoftwarellc/gadget/v2/database/record"
 	"github.com/beaconsoftwarellc/gadget/v2/database/transaction"
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
 	"github.com/beaconsoftwarellc/gadget/v2/generator"
 	"github.com/beaconsoftwarellc/gadget/v2/log"
 	"github.com/jmoiron/sqlx"
+	"github.com/stretchr/testify/assert"
 	assert1 "github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -86,6 +88,14 @@ func TestBulkCreateCreate(t *testing.T) {
 	assert.Equal(testRecord.ID, bulkCreate.pending[0].ID)
 	assert.Equal(testRecord1.ID, bulkCreate.pending[1].ID)
 	assert.Equal(testRecord2.ID, bulkCreate.pending[2].ID)
+
+	bulkCreate.upsert = true
+	id := generator.ID("tr")
+	testRecord3 := &TestRecord{ID: id, Name: generator.String(32)}
+	bulkCreate.Create(testRecord3)
+	assert.Equal(4, len(bulkCreate.pending))
+	assert.Equal(id, testRecord3.ID)
+	assert.Equal(id, bulkCreate.pending[3].ID)
 }
 
 func TestBulkCreateCommit(t *testing.T) {
@@ -180,4 +190,11 @@ func TestBulkCreateRollback(t *testing.T) {
 	assert.EqualError(actual, expected)
 	assert.Nil(bulkCreate.tx)
 	assert.Empty(bulkCreate.pending)
+}
+
+func Test_isZeroValue(t *testing.T) {
+	assert.True(t, isZeroValue(record.NewPrimaryKey(0)))
+	assert.False(t, isZeroValue(record.NewPrimaryKey(1)))
+	assert.True(t, isZeroValue(record.NewPrimaryKey("")))
+	assert.False(t, isZeroValue(record.NewPrimaryKey("test")))
 }

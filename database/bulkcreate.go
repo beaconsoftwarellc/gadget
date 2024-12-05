@@ -27,7 +27,9 @@ type bulkCreate[T record.Record] struct {
 
 func (api *bulkCreate[T]) Create(objs ...T) {
 	for _, obj := range objs {
-		obj.Initialize()
+		if !api.upsert && isZeroValue(obj.PrimaryKey()) {
+			obj.Initialize()
+		}
 		api.pending = append(api.pending, obj)
 	}
 }
@@ -68,4 +70,11 @@ func (api *bulkCreate[T]) Commit() (sql.Result, errors.TracerError) {
 		return nil, dberrors.TranslateError(err, dberrors.Insert, stmt)
 	}
 	return result, api.tx.Commit()
+}
+
+func isZeroValue(primaryKey record.PrimaryKeyValue) bool {
+	if primaryKey.IsInteger() {
+		return primaryKey.Value().(int) == 0
+	}
+	return primaryKey.Value().(string) == ""
 }

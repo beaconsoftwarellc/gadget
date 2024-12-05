@@ -52,3 +52,8 @@ func (pk PrimaryKeyValue) Value() interface{} {
 	}
 	return pk.strPK
 }
+
+// IsInteger returns true if the Primary Key is an integer
+func (pk PrimaryKeyValue) IsInteger() bool {
+	return pk.isInt
+}
