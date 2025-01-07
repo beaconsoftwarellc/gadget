@@ -115,9 +115,9 @@ func String(length int) string {
 	return random(length, AlphaRunes)
 }
 
-// Digit returns a random digit between 0 and 9
-func Digit() string {
-	return random(1, DigitRunes)
+// Digits returns random digits between 0 and 9 of the requested length
+func Digits(length int) string {
+	return random(length, DigitRunes)
 }
 
 // HexColor returns a 7 length string from #000000 - #FFFFFF

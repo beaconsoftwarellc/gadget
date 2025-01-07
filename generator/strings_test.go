@@ -139,13 +139,16 @@ func TestString(t *testing.T) {
 	}
 }
 
-func TestDigit(t *testing.T) {
+func TestDigits(t *testing.T) {
 	assert := assert1.New(t)
 
+	var expected []string
 	for i := 0; i < 100; i++ {
-		actual := Digit()
-		assert.Contains(string(DigitRunes), actual)
-		assert.Len(actual, 1)
+		length := (i % 13) + 10
+		actual := Digits(length)
+		assert.NotContains(expected, actual)
+		assert.Len(actual, length)
+		expected = append(expected, actual)
 	}
 }
 
