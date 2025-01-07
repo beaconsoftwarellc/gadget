@@ -139,6 +139,16 @@ func TestString(t *testing.T) {
 	}
 }
 
+func TestDigit(t *testing.T) {
+	assert := assert1.New(t)
+
+	for i := 0; i < 100; i++ {
+		actual := Digit()
+		assert.Contains(string(DigitRunes), actual)
+		assert.Len(actual, 1)
+	}
+}
+
 func TestCode(t *testing.T) {
 	assert := assert1.New(t)
 
