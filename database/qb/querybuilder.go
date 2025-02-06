@@ -31,7 +31,7 @@ type MissingTablesError struct {
 }
 
 func (err *MissingTablesError) Error() string {
-	return fmt.Sprintf("validation: the folllowing tables are required but were not included in a join or from: %s",
+	return fmt.Sprintf("validation: the following tables are required but were not included in a join or from: %s",
 		err.Tables)
 }
 
