@@ -10,15 +10,15 @@ import (
 
 func Test_NewSumExpression(t *testing.T) {
 	expectedTable := generator.String(20)
-	exptectedField := generator.String(20)
+	exptectedField := TableField{Name: generator.String(20)}
 
 	expression := NewSumExpression(expectedTable, exptectedField)
 	assert.Equal(t, 1, len(expression.GetTables()))
 	assert.Equal(t, expectedTable, expression.GetTables()[0])
 
-	expectedName := fmt.Sprintf("SUM(%s)", exptectedField)
+	expectedName := fmt.Sprintf("SUM(%s)", exptectedField.GetName())
 	assert.Equal(t, expectedName, expression.GetName())
 
-	expectedSQL := fmt.Sprintf("SUM(%s) as sum", exptectedField)
+	expectedSQL := fmt.Sprintf("SUM(%s) as sum", exptectedField.GetName())
 	assert.Equal(t, expectedSQL, expression.SQL())
 }

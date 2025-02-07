@@ -166,7 +166,7 @@ func (db *api) Sum(field qb.TableField, query *qb.SelectQuery) (int32, error) {
 		err    error
 	)
 	err = db.Select(&target,
-		query.SelectFrom(qb.NewSumExpression(field.Table, field.GetName())),
+		query.SelectFrom(qb.NewSumExpression(field.Table, field)),
 		record.NewListOptions(1, 0),
 	)
 	if err != nil {

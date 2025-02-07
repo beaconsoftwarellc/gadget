@@ -17,11 +17,11 @@ type SumResult struct {
 // name that exists in the query to bind to for validation and a field name to sum.
 type SumExpression struct {
 	table string
-	field string
+	field TableField
 }
 
 // NewSumExpression for the passed table and field.
-func NewSumExpression(table, field string) SelectExpression {
+func NewSumExpression(table string, field TableField) SelectExpression {
 	return &SumExpression{
 		table: table,
 		field: field,
@@ -30,7 +30,7 @@ func NewSumExpression(table, field string) SelectExpression {
 
 // GetName of this sum expression
 func (ce *SumExpression) GetName() string {
-	return fmt.Sprintf("SUM(%s)", ce.field)
+	return fmt.Sprintf("SUM(%s)", ce.field.GetName())
 }
 
 // GetTables used by this sum expression
@@ -40,5 +40,5 @@ func (ce *SumExpression) GetTables() []string {
 
 // SQL fragment this sum expressions represents
 func (ce *SumExpression) SQL() string {
-	return fmt.Sprintf(sumSQL, ce.field)
+	return fmt.Sprintf(sumSQL, ce.field.GetName())
 }
