@@ -29,16 +29,16 @@ func NewSumExpression(table string, field TableField) SelectExpression {
 }
 
 // GetName of this sum expression
-func (ce *SumExpression) GetName() string {
-	return fmt.Sprintf("SUM(%s)", ce.field.GetName())
+func (se *SumExpression) GetName() string {
+	return fmt.Sprintf("SUM(%s)", se.field.GetName())
 }
 
 // GetTables used by this sum expression
-func (ce *SumExpression) GetTables() []string {
-	return []string{ce.table}
+func (se *SumExpression) GetTables() []string {
+	return []string{se.table}
 }
 
 // SQL fragment this sum expressions represents
-func (ce *SumExpression) SQL() string {
-	return fmt.Sprintf(sumSQL, ce.field.GetName())
+func (se *SumExpression) SQL() string {
+	return fmt.Sprintf(sumSQL, se.field.GetName())
 }
