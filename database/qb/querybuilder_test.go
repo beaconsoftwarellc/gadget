@@ -11,6 +11,7 @@ type person struct {
 	ID         TableField
 	Name       TableField
 	AddressID  TableField
+	Age        TableField
 	allColumns TableField
 }
 
@@ -39,6 +40,7 @@ func (p *person) ReadColumns() []TableField {
 		p.ID,
 		p.Name,
 		p.AddressID,
+		p.Age,
 	}
 }
 
@@ -52,6 +54,7 @@ func (p *person) Alias(alias string) *person {
 		ID:         TableField{Name: "id", Table: alias},
 		Name:       TableField{Name: "name", Table: alias},
 		AddressID:  TableField{Name: "address_id", Table: alias},
+		Age:        TableField{Name: "age", Table: alias},
 		allColumns: TableField{Name: "*", Table: alias},
 	}
 }
@@ -144,6 +147,16 @@ func TestQueryBuilderTableCount(t *testing.T) {
 	assert.NoError(err)
 	assert.Empty(values)
 	expected := "SELECT `person`.`id`, COUNT(`person`.`name`) AS `person_name` FROM `person` AS `person`"
+	assert.Equal(expected, actual)
+}
+
+func TestQueryBuilderTableSum(t *testing.T) {
+	assert := assert1.New(t)
+	query := Select(Person.ID, Sum(Person.Age, "person_age")).From(Person)
+	actual, values, err := query.SQL(NoLimit, 0)
+	assert.NoError(err)
+	assert.Empty(values)
+	expected := "SELECT `person`.`id`, SUM(`person`.`age`) AS `person_age` FROM `person` AS `person`"
 	assert.Equal(expected, actual)
 }
 
