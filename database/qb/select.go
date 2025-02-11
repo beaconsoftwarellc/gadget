@@ -88,6 +88,28 @@ func Count(tableField TableField, aliasName string) SelectExpression {
 	return count{field: tableField, alias: aliasName}
 }
 
+type sum struct {
+	field TableField
+	alias string
+}
+
+func (s sum) GetName() string {
+	return s.alias
+}
+
+func (s sum) GetTables() []string {
+	return s.field.GetTables()
+}
+
+func (s sum) SQL() string {
+	return fmt.Sprintf("SUM(%s) AS `%s`", s.field.SQL(), s.alias)
+}
+
+// Sum the passed table field for use in or as a SelectExpression
+func Sum(tableField TableField, aliasName string) SelectExpression {
+	return sum{field: tableField, alias: aliasName}
+}
+
 type notNull struct {
 	field TableField
 	alias string

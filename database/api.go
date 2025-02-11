@@ -31,6 +31,9 @@ type API interface {
 	// CountWhere rows match the passed condition in the specified table. Condition
 	// may be nil in order to just count the table rows.
 	CountWhere(qb.Table, *qb.ConditionExpression) (int32, error)
+	// Sum calculates the total of the specified numeric field over all rows
+	// matching the given select query.
+	Sum(qb.TableField, *qb.SelectQuery) (int32, error)
 	// Create initializes a Record and inserts it into the Database
 	Create(obj record.Record) errors.TracerError
 	// Read populates a Record from the database
@@ -155,6 +158,24 @@ func (d *api) CountWhere(table qb.Table, where *qb.ConditionExpression) (int32, 
 		qb.Select(qb.NewCountExpression(table.GetName())).
 			From(table).
 			Where(where))
+}
+
+func (db *api) Sum(field qb.TableField, query *qb.SelectQuery) (int32, error) {
+	var (
+		target []*qb.SumResult
+		err    error
+	)
+	err = db.Select(&target,
+		query.SelectFrom(qb.NewSumExpression(field.Table, field)),
+		record.NewListOptions(1, 0),
+	)
+	if err != nil {
+		return 0, err
+	}
+	if len(target) == 0 {
+		return 0, nil
+	}
+	return int32(target[0].Sum), nil
 }
 
 func (d *api) Create(obj record.Record) errors.TracerError {
