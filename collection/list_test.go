@@ -183,7 +183,7 @@ func TestRemoveNext(t *testing.T) {
 	elm1 := list.InsertNext(nil, "bar")
 	assert.NotNil(elm1)
 	_, err = list.RemoveNext(elm)
-	require.NoError(err)
+	require.EqualError(err, NewNoElementError().Error())
 	assert.Equal(1, list.Size())
 }
 
