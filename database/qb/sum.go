@@ -10,7 +10,7 @@ const (
 
 // SumResult serves as a target for queries returning only a sum of passed field.
 type SumResult struct {
-	Sum int `db:"sum"`
+	Sum *int `db:"sum"`
 }
 
 // SumExpression can be used as the expression in sum query's. Requires a table
