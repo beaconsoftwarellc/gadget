@@ -172,10 +172,10 @@ func (db *api) Sum(field qb.TableField, query *qb.SelectQuery) (int32, error) {
 	if err != nil {
 		return 0, err
 	}
-	if len(target) == 0 {
+	if len(target) == 0 || target[0].Sum == nil {
 		return 0, nil
 	}
-	return int32(target[0].Sum), nil
+	return int32(*target[0].Sum), nil
 }
 
 func (d *api) Create(obj record.Record) errors.TracerError {
