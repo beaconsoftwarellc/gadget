@@ -336,7 +336,7 @@ func TestExecuteDelta(t *testing.T) {
 	tx.EXPECT().Implementation().Return(txImp)
 	txImp.EXPECT().Exec(delta.Script).Return(nil, nil)
 	api.EXPECT().Create(&DeltaRecord{ID: delta.ID, Name: delta.Name}).
-		Return("%s", errors.New(expected))
+		Return(errors.New(expected))
 	actual := ExecuteDelta(api, delta)
 	assert.EqualError(actual, expected)
 }
