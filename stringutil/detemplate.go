@@ -12,7 +12,8 @@ import (
 // the rendering.
 // NOTE: This function does not support sequential template variables.
 // e.g. 'test {{id1}}{{id2}}' as there is no way of knowing where one would end
-//      and the next would begin.
+//
+//	and the next would begin.
 func Detemplate(template string, rendered string) (map[string]string, error) {
 	// traverse template looking for first non-matching character
 	// ensure the character is a '{'
