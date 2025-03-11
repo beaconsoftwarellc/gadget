@@ -178,6 +178,11 @@ func (tf TableField) SQL() string {
 	return fmt.Sprintf("`%s`.`%s`", tf.Table, tf.Name)
 }
 
+// ParameterizedSQL that represents this table field
+func (tf TableField) ParameterizedSQL() (string, []interface{}) {
+	return tf.SQL(), nil
+}
+
 // Equal returns a condition expression for this table field Equal to the passed obj.
 func (tf TableField) Equal(obj interface{}) *ConditionExpression {
 	return FieldComparison(tf, Equal, obj)
@@ -357,7 +362,7 @@ func Select(selectExpressions ...SelectExpression) *SelectQuery {
 	query := &SelectQuery{
 		selectExps: selectExpressions,
 		orderBy:    &orderBy{},
-		groupBy:    []SelectExpression{},
+		groupBy:    []TableField{},
 		where:      &whereCondition{},
 		Seperator:  " ",
 	}

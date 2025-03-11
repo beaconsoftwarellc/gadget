@@ -42,3 +42,8 @@ func (ce *CountExpression) SQL() string {
 	// need to look into how aliasing works in qb
 	return countSQL
 }
+
+// ParameterizedSQL that represents this count expression
+func (ce *CountExpression) ParameterizedSQL() (string, []interface{}) {
+	return ce.SQL(), nil
+}

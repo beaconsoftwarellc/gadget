@@ -3,7 +3,9 @@ package qb
 import (
 	"testing"
 
+	"github.com/beaconsoftwarellc/gadget/v2/generator"
 	assert1 "github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type person struct {
@@ -366,29 +368,44 @@ func TestQueryBuilderAlias(t *testing.T) {
 
 func TestQueryBuilderCoalesce(t *testing.T) {
 	assert := assert1.New(t)
-	query := Select(Person.ID, Coalesce(Person.Name, "", "coalesced")).From(Person)
+	value := generator.ID("value")
+	query := Select(Person.ID, Coalesce(Person.Name, value, "coalesced")).From(Person)
 	actual, values, err := query.SQL(NoLimit, 10)
 	assert.NoError(err)
-	assert.Empty(values)
-	assert.Equal("SELECT `person`.`id`, COALESCE(`person`.`name`, '') AS `coalesced` FROM `person` AS `person`", actual)
+	assert.Len(values, 1)
+	assert.Equal(value, values[0])
+	assert.Equal("SELECT `person`.`id`, COALESCE(`person`.`name`, ?) AS `coalesced` FROM `person` AS `person`", actual)
+	actual = InsertSQLParameters(actual, values)
+	assert.Equal("SELECT `person`.`id`, COALESCE(`person`.`name`, \""+value+"\") AS `coalesced` FROM `person` AS `person`", actual)
 }
 
 func TestQueryBuilderIfFieldCondition(t *testing.T) {
 	assert := assert1.New(t)
+	require := require.New(t)
 	query := Select(Person.ID, If(Person.Name.Equal(Person.ID), "1", "0", "has_robot_name")).From(Person)
 	actual, values, err := query.SQL(NoLimit, 10)
 	assert.NoError(err)
-	assert.Empty(values)
-	assert.Equal("SELECT `person`.`id`, IF(`person`.`name` = `person`.`id`, '1', '0') AS `has_robot_name` FROM `person` AS `person`", actual)
+	require.Len(values, 2)
+	assert.Equal("1", values[0])
+	assert.Equal("0", values[1])
+	assert.Equal("SELECT `person`.`id`, IF(`person`.`name` = `person`.`id`, ?, ?) AS `has_robot_name` FROM `person` AS `person`", actual)
+	actual = InsertSQLParameters(actual, values)
+	assert.Equal("SELECT `person`.`id`, IF(`person`.`name` = `person`.`id`, \"1\", \"0\") AS `has_robot_name` FROM `person` AS `person`", actual)
 }
 
 func TestQueryBuilderIfStringCondition(t *testing.T) {
 	assert := assert1.New(t)
+	require := require.New(t)
 	query := Select(Person.ID, If(Person.Name.Equal("Joe"), "1", "0", "is_joe")).From(Person)
 	actual, values, err := query.SQL(NoLimit, 10)
 	assert.NoError(err)
-	assert.Empty(values)
-	assert.Equal("SELECT `person`.`id`, IF(`person`.`name` = 'Joe', '1', '0') AS `is_joe` FROM `person` AS `person`", actual)
+	require.Len(values, 3)
+	assert.Equal("Joe", values[0])
+	assert.Equal("1", values[1])
+	assert.Equal("0", values[2])
+	assert.Equal("SELECT `person`.`id`, IF(`person`.`name` = ?, ?, ?) AS `is_joe` FROM `person` AS `person`", actual)
+	actual = InsertSQLParameters(actual, values)
+	assert.Equal("SELECT `person`.`id`, IF(`person`.`name` = \"Joe\", \"1\", \"0\") AS `is_joe` FROM `person` AS `person`", actual)
 }
 
 func TestQueryBuilderGroupBy(t *testing.T) {
@@ -415,11 +432,13 @@ func TestSelectBitwise(t *testing.T) {
 	assert := assert1.New(t)
 	query := Select(Person.Name)
 	query.From(Person)
-	query.Where(Person.ID.NotEqual(Bitwise(Person.ID, BitwiseAnd, "5")))
+	query.Where(Person.ID.NotEqual(Bitwise(Person.ID, BitwiseAnd, 5)))
 	actual, values, err := query.SQL(NoLimit, 10)
 	assert.NoError(err)
-	assert.Equal(values, []interface{}{"5"})
+	assert.Equal(values, []interface{}{5})
 	assert.Equal("SELECT `person`.`name` FROM `person` AS `person` WHERE `person`.`id` != `person`.`id` & ?", actual)
+	actual = InsertSQLParameters(actual, values)
+	assert.Equal("SELECT `person`.`name` FROM `person` AS `person` WHERE `person`.`id` != `person`.`id` & 5", actual)
 }
 
 func TestSelectFrom(t *testing.T) {

@@ -13,6 +13,8 @@ type SelectExpression interface {
 	GetTables() []string
 	// SQL that represents this SelectExpression
 	SQL() string
+	// ParameterizedSQL that represents this SelectExpression
+	ParameterizedSQL() (string, []interface{})
 }
 
 type alias struct {
@@ -30,6 +32,10 @@ func (a alias) GetTables() []string {
 
 func (a alias) SQL() string {
 	return fmt.Sprintf("%s AS `%s`", a.field.SQL(), a.alias)
+}
+
+func (a alias) ParameterizedSQL() (string, []interface{}) {
+	return a.SQL(), nil
 }
 
 // Alias the passed table field for use in or as a SelectExpression
@@ -55,10 +61,12 @@ func (i ifStatement) GetTables() []string {
 }
 
 func (i ifStatement) SQL() string {
+	return InsertSQLParameters(i.ParameterizedSQL())
+}
+
+func (i ifStatement) ParameterizedSQL() (string, []interface{}) {
 	conditionSQL, values := i.condition.SQL()
-	conditionSQL = strings.Replace(conditionSQL, "?", "'%s'", -1)
-	conditionSQL = fmt.Sprintf(conditionSQL, values...)
-	return fmt.Sprintf("IF(%s, '%s', '%s') AS `%s`", conditionSQL, i.trueValue, i.falseValue, i.alias)
+	return fmt.Sprintf("IF(%s, ?, ?) AS `%s`", conditionSQL, i.alias), append(values, i.trueValue, i.falseValue)
 }
 
 // If creates a SQL IF statement that can be used as a SelectExpression
@@ -83,6 +91,10 @@ func (c count) SQL() string {
 	return fmt.Sprintf("COUNT(%s) AS `%s`", c.field.SQL(), c.alias)
 }
 
+func (c count) ParameterizedSQL() (string, []interface{}) {
+	return c.SQL(), nil
+}
+
 // Count the passed table field for use in or as a SelectExpression
 func Count(tableField TableField, aliasName string) SelectExpression {
 	return count{field: tableField, alias: aliasName}
@@ -103,6 +115,10 @@ func (s sum) GetTables() []string {
 
 func (s sum) SQL() string {
 	return fmt.Sprintf("SUM(%s) AS `%s`", s.field.SQL(), s.alias)
+}
+
+func (s sum) ParameterizedSQL() (string, []interface{}) {
+	return s.SQL(), nil
 }
 
 // Sum the passed table field for use in or as a SelectExpression
@@ -127,6 +143,10 @@ func (nn notNull) SQL() string {
 	return fmt.Sprintf("(%s IS NOT NULL) AS `%s`", nn.field.SQL(), nn.alias)
 }
 
+func (nn notNull) ParameterizedSQL() (string, []interface{}) {
+	return nn.SQL(), nil
+}
+
 // NotNull field for use as a select expression
 func NotNull(tableField TableField, alias string) SelectExpression {
 	return notNull{field: tableField, alias: alias}
@@ -134,7 +154,7 @@ func NotNull(tableField TableField, alias string) SelectExpression {
 
 type coalesce struct {
 	field TableField
-	def   string
+	value interface{}
 	name  string
 }
 
@@ -147,12 +167,16 @@ func (c coalesce) GetTables() []string {
 }
 
 func (c coalesce) SQL() string {
-	return fmt.Sprintf("COALESCE(%s, '%s') AS `%s`", c.field.SQL(), c.def, c.name)
+	return InsertSQLParameters(c.ParameterizedSQL())
+}
+
+func (c coalesce) ParameterizedSQL() (string, []interface{}) {
+	return fmt.Sprintf("COALESCE(%s, ?) AS `%s`", c.field.SQL(), c.name), []interface{}{c.value}
 }
 
 // Coalesce creates a SQL coalesce that can be used as a SelectExpression
-func Coalesce(column TableField, defaultValue string, alias string) SelectExpression {
-	return coalesce{field: column, def: defaultValue, name: alias}
+func Coalesce(column TableField, defaultValue interface{}, alias string) SelectExpression {
+	return coalesce{field: column, value: defaultValue, name: alias}
 }
 
 // SelectQuery for retrieving data from a database table.
@@ -162,7 +186,7 @@ type SelectQuery struct {
 	selectExps []SelectExpression
 	joins      []*Join
 	orderBy    *orderBy
-	groupBy    []SelectExpression
+	groupBy    []TableField
 	where      *whereCondition
 	Seperator  string
 	err        error
@@ -221,12 +245,12 @@ func (q *SelectQuery) OrderBy(field TableField, direction OrderDirection) *Selec
 }
 
 // GroupBy the passed table field.
-func (q *SelectQuery) GroupBy(expressions ...SelectExpression) *SelectQuery {
+func (q *SelectQuery) GroupBy(expressions ...TableField) *SelectQuery {
 	q.groupBy = append(q.groupBy, expressions...)
 	return q
 }
 
-func (q *SelectQuery) selectExpressionsSQL() string {
+func (q *SelectQuery) selectExpressionsSQL() (string, []interface{}) {
 	var prefix string
 	if q.distinct {
 		prefix = "SELECT DISTINCT"
@@ -234,10 +258,13 @@ func (q *SelectQuery) selectExpressionsSQL() string {
 		prefix = "SELECT"
 	}
 	expressions := make([]string, len(q.selectExps))
+	values := make([]interface{}, 0, len(q.selectExps))
 	for i, exp := range q.selectExps {
-		expressions[i] = exp.SQL()
+		selectSQL, selectValues := exp.ParameterizedSQL()
+		expressions[i] = selectSQL
+		values = append(values, selectValues...)
 	}
-	return fmt.Sprintf("%s %s", prefix, strings.Join(expressions, ", "))
+	return fmt.Sprintf("%s %s", prefix, strings.Join(expressions, ", ")), values
 }
 
 // Validate that this query can be executed.
@@ -300,8 +327,8 @@ func (q *SelectQuery) SQL(limit, offset uint) (string, []interface{}, error) {
 		return "", []interface{}{}, q.err
 	}
 	// SELECT
-	lines := []string{q.selectExpressionsSQL()}
-	var values []interface{}
+	selectExpressionsSQL, values := q.selectExpressionsSQL()
+	lines := []string{selectExpressionsSQL}
 
 	// FROM
 	from := fmt.Sprintf("FROM `%s` AS `%s`",

@@ -42,3 +42,8 @@ func (se *SumExpression) GetTables() []string {
 func (se *SumExpression) SQL() string {
 	return fmt.Sprintf(sumSQL, se.field.GetName())
 }
+
+// ParameterizedSQL that represents this sum expression
+func (se *SumExpression) ParameterizedSQL() (string, []interface{}) {
+	return se.SQL(), nil
+}
