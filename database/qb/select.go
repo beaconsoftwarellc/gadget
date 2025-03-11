@@ -101,8 +101,8 @@ func Count(tableField TableField, aliasName string) SelectExpression {
 }
 
 type sum struct {
-	field TableField
-	alias string
+	selectExpression SelectExpression
+	alias            string
 }
 
 func (s sum) GetName() string {
@@ -110,20 +110,21 @@ func (s sum) GetName() string {
 }
 
 func (s sum) GetTables() []string {
-	return s.field.GetTables()
+	return s.selectExpression.GetTables()
 }
 
 func (s sum) SQL() string {
-	return fmt.Sprintf("SUM(%s) AS `%s`", s.field.SQL(), s.alias)
+	return InsertSQLParameters(s.ParameterizedSQL())
 }
 
 func (s sum) ParameterizedSQL() (string, []interface{}) {
-	return s.SQL(), nil
+	caseSQL, caseValues := s.selectExpression.ParameterizedSQL()
+	return fmt.Sprintf("SUM(%s) AS `%s`", caseSQL, s.alias), caseValues
 }
 
 // Sum the passed table field for use in or as a SelectExpression
-func Sum(tableField TableField, aliasName string) SelectExpression {
-	return sum{field: tableField, alias: aliasName}
+func Sum(selectExpression SelectExpression, aliasName string) SelectExpression {
+	return sum{selectExpression: selectExpression, alias: aliasName}
 }
 
 type notNull struct {
