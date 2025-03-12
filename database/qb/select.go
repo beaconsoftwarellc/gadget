@@ -154,9 +154,9 @@ func NotNull(tableField TableField, alias string) SelectExpression {
 }
 
 type coalesce struct {
-	field TableField
-	value interface{}
-	name  string
+	expression SelectExpression
+	value      interface{}
+	name       string
 }
 
 func (c coalesce) GetName() string {
@@ -164,7 +164,7 @@ func (c coalesce) GetName() string {
 }
 
 func (c coalesce) GetTables() []string {
-	return c.field.GetTables()
+	return c.expression.GetTables()
 }
 
 func (c coalesce) SQL() string {
@@ -172,12 +172,12 @@ func (c coalesce) SQL() string {
 }
 
 func (c coalesce) ParameterizedSQL() (string, []interface{}) {
-	return fmt.Sprintf("COALESCE(%s, ?) AS `%s`", c.field.SQL(), c.name), []interface{}{c.value}
+	return fmt.Sprintf("COALESCE(%s, ?) AS `%s`", c.expression.SQL(), c.name), []interface{}{c.value}
 }
 
 // Coalesce creates a SQL coalesce that can be used as a SelectExpression
-func Coalesce(column TableField, defaultValue interface{}, alias string) SelectExpression {
-	return coalesce{field: column, value: defaultValue, name: alias}
+func Coalesce(expression SelectExpression, defaultValue interface{}, alias string) SelectExpression {
+	return coalesce{expression: expression, value: defaultValue, name: alias}
 }
 
 // SelectQuery for retrieving data from a database table.
