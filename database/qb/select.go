@@ -172,7 +172,12 @@ func (c coalesce) SQL() string {
 }
 
 func (c coalesce) ParameterizedSQL() (string, []interface{}) {
-	return fmt.Sprintf("COALESCE(%s, ?) AS `%s`", c.expression.SQL(), c.name), []interface{}{c.value}
+	expressionSQL, values := c.expression.ParameterizedSQL()
+	sql := "COALESCE(%s, ?)"
+	if c.name != "" {
+		sql += fmt.Sprintf(" AS `%s`", c.name)
+	}
+	return fmt.Sprintf(sql, expressionSQL), append(values, c.value)
 }
 
 // Coalesce creates a SQL coalesce that can be used as a SelectExpression
