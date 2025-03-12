@@ -3,6 +3,8 @@ package qb
 import (
 	"fmt"
 	"strings"
+
+	"github.com/beaconsoftwarellc/gadget/v2/stringutil"
 )
 
 // SelectExpression for use in identifying the fields desired in a select query.
@@ -118,8 +120,12 @@ func (s sum) SQL() string {
 }
 
 func (s sum) ParameterizedSQL() (string, []interface{}) {
-	caseSQL, caseValues := s.selectExpression.ParameterizedSQL()
-	return fmt.Sprintf("SUM(%s) AS `%s`", caseSQL, s.alias), caseValues
+	expressionSQL, values := s.selectExpression.ParameterizedSQL()
+	sql := "SUM(%s)"
+	if !stringutil.IsWhiteSpace(s.alias) {
+		sql += fmt.Sprintf(" AS `%s`", s.alias)
+	}
+	return fmt.Sprintf(sql, expressionSQL), values
 }
 
 // Sum the passed table field for use in or as a SelectExpression
@@ -174,7 +180,7 @@ func (c coalesce) SQL() string {
 func (c coalesce) ParameterizedSQL() (string, []interface{}) {
 	expressionSQL, values := c.expression.ParameterizedSQL()
 	sql := "COALESCE(%s, ?)"
-	if c.name != "" {
+	if !stringutil.IsWhiteSpace(c.name) {
 		sql += fmt.Sprintf(" AS `%s`", c.name)
 	}
 	return fmt.Sprintf(sql, expressionSQL), append(values, c.value)
