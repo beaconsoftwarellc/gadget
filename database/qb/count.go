@@ -36,14 +36,7 @@ func (ce *CountExpression) GetTables() []string {
 	return []string{ce.table}
 }
 
-// SQL fragment this count expressions represents
-func (ce *CountExpression) SQL() string {
-	// we could just do a single table that this was initialized with
-	// need to look into how aliasing works in qb
-	return countSQL
-}
-
 // ParameterizedSQL that represents this count expression
-func (ce *CountExpression) ParameterizedSQL() (string, []interface{}) {
-	return ce.SQL(), nil
+func (ce *CountExpression) ParameterizedSQL() (string, []any) {
+	return countSQL, nil
 }

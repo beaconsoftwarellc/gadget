@@ -375,8 +375,6 @@ func TestQueryBuilderCoalesce(t *testing.T) {
 	assert.Len(values, 1)
 	assert.Equal(value, values[0])
 	assert.Equal("SELECT `person`.`id`, COALESCE(`person`.`name`, ?) AS `coalesced` FROM `person` AS `person`", actual)
-	actual = InsertSQLParameters(actual, values)
-	assert.Equal("SELECT `person`.`id`, COALESCE(`person`.`name`, \""+value+"\") AS `coalesced` FROM `person` AS `person`", actual)
 }
 
 func TestQueryBuilderIfFieldCondition(t *testing.T) {
@@ -389,8 +387,6 @@ func TestQueryBuilderIfFieldCondition(t *testing.T) {
 	assert.Equal("1", values[0])
 	assert.Equal("0", values[1])
 	assert.Equal("SELECT `person`.`id`, IF(`person`.`name` = `person`.`id`, ?, ?) AS `has_robot_name` FROM `person` AS `person`", actual)
-	actual = InsertSQLParameters(actual, values)
-	assert.Equal("SELECT `person`.`id`, IF(`person`.`name` = `person`.`id`, \"1\", \"0\") AS `has_robot_name` FROM `person` AS `person`", actual)
 }
 
 func TestQueryBuilderIfStringCondition(t *testing.T) {
@@ -404,8 +400,6 @@ func TestQueryBuilderIfStringCondition(t *testing.T) {
 	assert.Equal("1", values[1])
 	assert.Equal("0", values[2])
 	assert.Equal("SELECT `person`.`id`, IF(`person`.`name` = ?, ?, ?) AS `is_joe` FROM `person` AS `person`", actual)
-	actual = InsertSQLParameters(actual, values)
-	assert.Equal("SELECT `person`.`id`, IF(`person`.`name` = \"Joe\", \"1\", \"0\") AS `is_joe` FROM `person` AS `person`", actual)
 }
 
 func TestQueryBuilderGroupBy(t *testing.T) {
@@ -435,10 +429,8 @@ func TestSelectBitwise(t *testing.T) {
 	query.Where(Person.ID.NotEqual(Bitwise(Person.ID, BitwiseAnd, 5)))
 	actual, values, err := query.SQL(NoLimit, 10)
 	assert.NoError(err)
-	assert.Equal(values, []interface{}{5})
+	assert.Equal(values, []any{5})
 	assert.Equal("SELECT `person`.`name` FROM `person` AS `person` WHERE `person`.`id` != `person`.`id` & ?", actual)
-	actual = InsertSQLParameters(actual, values)
-	assert.Equal("SELECT `person`.`name` FROM `person` AS `person` WHERE `person`.`id` != `person`.`id` & 5", actual)
 }
 
 func TestSelectFrom(t *testing.T) {
@@ -465,6 +457,6 @@ func TestUpdateBitwise(t *testing.T) {
 	actual, values, err := Update(Person).Set(Person.AddressID,
 		Bitwise(Person.AddressID, BitwiseAndNegation, "5")).SQL(NoLimit)
 	assert.NoError(err)
-	assert.Equal(values, []interface{}{"5"})
+	assert.Equal(values, []any{"5"})
 	assert.Equal("UPDATE `person` SET  `person`.`address_id` = `person`.`address_id` &~ ?", actual)
 }

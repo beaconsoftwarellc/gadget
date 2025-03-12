@@ -10,14 +10,14 @@ import (
 // InsertQuery for inserting a row into the database.
 type InsertQuery struct {
 	columns           []TableField
-	values            [][]interface{}
+	values            [][]any
 	onDuplicate       []TableField
-	onDuplicateValues []interface{}
+	onDuplicateValues []any
 	err               error
 }
 
 // Values to be inserted. Call multiple times to insert multiple rows.
-func (q *InsertQuery) Values(values ...interface{}) *InsertQuery {
+func (q *InsertQuery) Values(values ...any) *InsertQuery {
 	if len(values) != len(q.columns) {
 		q.err = errors.New("insert field/value count mismatch")
 	} else {
@@ -38,12 +38,12 @@ func (q *InsertQuery) GetAlias(tableName string) string {
 }
 
 // SQL that represents this insert query.
-func (q *InsertQuery) SQL() (string, []interface{}, error) {
+func (q *InsertQuery) SQL() (string, []any, error) {
 	sql, err := q.getSQL(false)
 	if err != nil {
 		return "", nil, err
 	}
-	values := []interface{}{}
+	values := []any{}
 	for _, valGrp := range q.values {
 		values = append(values, valGrp...)
 	}

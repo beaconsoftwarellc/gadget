@@ -18,5 +18,8 @@ func Test_NewCountExpression(t *testing.T) {
 	expectedName := fmt.Sprintf("COUNT(%s)", expected)
 	assert.Equal(expectedName, expression.GetName())
 
-	assert.Equal(countSQL, expression.SQL())
+	expectedSQL := "COUNT(*) as count"
+	actualSQL, values := expression.ParameterizedSQL()
+	assert.Equal(expectedSQL, actualSQL)
+	assert.Nil(values)
 }
