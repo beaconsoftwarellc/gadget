@@ -157,7 +157,7 @@ type TableField struct {
 // FieldValue represents a single field value on a table.
 type FieldValue struct {
 	Field TableField
-	Value interface{}
+	Value any
 }
 
 // GetName that can be used to reference this expression
@@ -178,48 +178,53 @@ func (tf TableField) SQL() string {
 	return fmt.Sprintf("`%s`.`%s`", tf.Table, tf.Name)
 }
 
+// ParameterizedSQL that represents this table field
+func (tf TableField) ParameterizedSQL() (string, []any) {
+	return tf.SQL(), nil
+}
+
 // Equal returns a condition expression for this table field Equal to the passed obj.
-func (tf TableField) Equal(obj interface{}) *ConditionExpression {
+func (tf TableField) Equal(obj any) *ConditionExpression {
 	return FieldComparison(tf, Equal, obj)
 }
 
 // NotEqual returns a condition expression for this table field NotEqual to the passed obj.
-func (tf TableField) NotEqual(obj interface{}) *ConditionExpression {
+func (tf TableField) NotEqual(obj any) *ConditionExpression {
 	return FieldComparison(tf, NotEqual, obj)
 }
 
 // LessThan returns a condition expression for this table field LessThan to the passed obj.
-func (tf TableField) LessThan(obj interface{}) *ConditionExpression {
+func (tf TableField) LessThan(obj any) *ConditionExpression {
 	return FieldComparison(tf, LessThan, obj)
 }
 
 // LessThanEqual returns a condition expression for this table field LessThanEqual to the passed obj.
-func (tf TableField) LessThanEqual(obj interface{}) *ConditionExpression {
+func (tf TableField) LessThanEqual(obj any) *ConditionExpression {
 	return FieldComparison(tf, LessThanEqual, obj)
 }
 
 // GreaterThan returns a condition expression for this table field GreaterThan to the passed obj.
-func (tf TableField) GreaterThan(obj interface{}) *ConditionExpression {
+func (tf TableField) GreaterThan(obj any) *ConditionExpression {
 	return FieldComparison(tf, GreaterThan, obj)
 }
 
 // GreaterThanEqual returns a condition expression for this table field GreaterThanEqual to the passed obj.
-func (tf TableField) GreaterThanEqual(obj interface{}) *ConditionExpression {
+func (tf TableField) GreaterThanEqual(obj any) *ConditionExpression {
 	return FieldComparison(tf, GreaterThanEqual, obj)
 }
 
 // NullSafeEqual returns a condition expression for this table field NullSafeEqual to the passed obj.
-func (tf TableField) NullSafeEqual(obj interface{}) *ConditionExpression {
+func (tf TableField) NullSafeEqual(obj any) *ConditionExpression {
 	return FieldComparison(tf, NullSafeEqual, obj)
 }
 
 // In returns a condition expression for this table field in to the passed objs.
-func (tf TableField) In(objs ...interface{}) *ConditionExpression {
+func (tf TableField) In(objs ...any) *ConditionExpression {
 	return FieldIn(tf, objs...)
 }
 
 // Like returns a condition expression for this table field Like to the passed obj.
-func (tf TableField) Like(obj interface{}) *ConditionExpression {
+func (tf TableField) Like(obj any) *ConditionExpression {
 	return FieldComparison(tf, Like, obj)
 }
 
@@ -283,9 +288,9 @@ func (wc *whereCondition) tables() []string {
 	return tables
 }
 
-func (wc *whereCondition) sql() (string, []interface{}, bool) {
+func (wc *whereCondition) sql() (string, []any, bool) {
 	var sql string
-	var values []interface{}
+	var values []any
 	ok := false
 	if nil != wc.expression {
 		sql, values = wc.expression.SQL()
@@ -321,7 +326,7 @@ func (err *JoinError) Error() string {
 }
 
 // On specifies the the conditions of a join based upon two fields or a field and a discrete value
-func (join *Join) On(left TableField, comparison Comparison, right interface{}) *ConditionExpression {
+func (join *Join) On(left TableField, comparison Comparison, right any) *ConditionExpression {
 	join.err = nil
 	rt, ok := right.(TableField)
 	if ok && left.Table != join.table.GetName() && rt.Table != join.table.GetName() {
@@ -334,9 +339,9 @@ func (join *Join) On(left TableField, comparison Comparison, right interface{}) 
 }
 
 // SQL that represents this join.
-func (join *Join) SQL() (string, []interface{}) {
+func (join *Join) SQL() (string, []any) {
 	if nil != join.err {
-		return "", []interface{}{}
+		return "", []any{}
 	}
 	var lines []string
 	if join.joinType == Inner || join.joinType == Cross {
@@ -357,7 +362,7 @@ func Select(selectExpressions ...SelectExpression) *SelectQuery {
 	query := &SelectQuery{
 		selectExps: selectExpressions,
 		orderBy:    &orderBy{},
-		groupBy:    []SelectExpression{},
+		groupBy:    []TableField{},
 		where:      &whereCondition{},
 		Seperator:  " ",
 	}
@@ -376,9 +381,9 @@ func SelectDistinct(selectExpressions ...SelectExpression) *SelectQuery {
 func Insert(columns ...TableField) *InsertQuery {
 	return &InsertQuery{
 		columns:           columns,
-		values:            [][]interface{}{},
+		values:            [][]any{},
 		onDuplicate:       []TableField{},
-		onDuplicateValues: []interface{}{},
+		onDuplicateValues: []any{},
 	}
 }
 

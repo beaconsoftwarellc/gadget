@@ -20,5 +20,7 @@ func Test_NewSumExpression(t *testing.T) {
 	assert.Equal(t, expectedName, expression.GetName())
 
 	expectedSQL := fmt.Sprintf("SUM(%s) as sum", exptectedField.GetName())
-	assert.Equal(t, expectedSQL, expression.SQL())
+	actualSQL, values := expression.ParameterizedSQL()
+	assert.Equal(t, expectedSQL, actualSQL)
+	assert.Nil(t, values)
 }

@@ -14,13 +14,13 @@ const (
 )
 
 type expressionUnion struct {
-	value  interface{}
+	value  any
 	field  *TableField
 	multi  []expressionUnion
 	binary *binaryExpression
 }
 
-func newUnion(values ...interface{}) expressionUnion {
+func newUnion(values ...any) expressionUnion {
 	if len(values) == 1 {
 
 		switch v := values[0].(type) {
@@ -70,14 +70,14 @@ func (union expressionUnion) getTables() []string {
 	}
 }
 
-func (union expressionUnion) sql() (string, []interface{}) {
+func (union expressionUnion) sql() (string, []any) {
 	var sql string
-	values := []interface{}{}
+	values := []any{}
 
 	switch {
 	case union.isMulti():
 		sa := make([]string, len(union.multi))
-		var subvalues []interface{}
+		var subvalues []any
 		for i, exp := range union.multi {
 			sa[i], subvalues = exp.sql()
 			values = append(values, subvalues...)
@@ -101,7 +101,7 @@ func (union expressionUnion) sql() (string, []interface{}) {
 }
 
 type comparisonExpression interface {
-	SQL() (string, []interface{})
+	SQL() (string, []any)
 }
 
 type parameterExpression struct {
@@ -109,9 +109,9 @@ type parameterExpression struct {
 	comparison Comparison
 }
 
-func (be parameterExpression) SQL() (string, []interface{}) {
+func (be parameterExpression) SQL() (string, []any) {
 	left := be.left.SQL()
-	return fmt.Sprintf("%s %s :%s", left, be.comparison, be.left.GetName()), make([]interface{}, 0)
+	return fmt.Sprintf("%s %s :%s", left, be.comparison, be.left.GetName()), make([]any, 0)
 }
 
 type binaryExpression struct {
@@ -120,7 +120,7 @@ type binaryExpression struct {
 	right      expressionUnion
 }
 
-func (be binaryExpression) SQL() (string, []interface{}) {
+func (be binaryExpression) SQL() (string, []any) {
 	left := be.left.SQL()
 	right, values := be.right.sql()
 	return fmt.Sprintf("%s %s %s", left, be.comparison, right), values
@@ -148,7 +148,7 @@ func (exp *ConditionExpression) Tables() []string {
 }
 
 // FieldComparison to another field or a discrete value.
-func FieldComparison(left TableField, comparison Comparison, right interface{}) *ConditionExpression {
+func FieldComparison(left TableField, comparison Comparison, right any) *ConditionExpression {
 	if nil == right {
 		right = SQLNull
 	}
@@ -156,9 +156,9 @@ func FieldComparison(left TableField, comparison Comparison, right interface{}) 
 }
 
 // FieldIn a series of TableFields and/or values
-func FieldIn(left TableField, in ...interface{}) *ConditionExpression {
+func FieldIn(left TableField, in ...any) *ConditionExpression {
 	// swap any 'nils' for sql null
-	rightValues := make([]interface{}, len(in))
+	rightValues := make([]any, len(in))
 	for i, value := range in {
 		if nil == value {
 			value = SQLNull
@@ -172,7 +172,7 @@ func FieldIn(left TableField, in ...interface{}) *ConditionExpression {
 	return &ConditionExpression{binary: &binaryExpression{left: left, comparison: comparison, right: newUnion(rightValues...)}}
 }
 
-func Bitwise(left TableField, operator BitwiseOperator, right interface{}) *binaryExpression {
+func Bitwise(left TableField, operator BitwiseOperator, right any) *binaryExpression {
 	return &binaryExpression{
 		left:       left,
 		comparison: Comparison(operator),
@@ -208,7 +208,7 @@ func (exp *ConditionExpression) XOr(expression *ConditionExpression) *ConditionE
 }
 
 // SQL returns this condition expression as a SQL expression.
-func (exp *ConditionExpression) SQL() (string, []interface{}) {
+func (exp *ConditionExpression) SQL() (string, []any) {
 	if nil != exp.binary {
 		return exp.binary.SQL()
 	}

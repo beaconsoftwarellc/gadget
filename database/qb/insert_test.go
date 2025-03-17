@@ -99,7 +99,8 @@ func TestInsertQueryOnDuplicate(t *testing.T) {
 		"ON DUPLICATE KEY UPDATE "+
 		"`person`.`id` = VALUES(`person`.`id`), "+
 		"`person`.`name` = VALUES(`person`.`name`), "+
-		"`person`.`address_id` = VALUES(`person`.`address_id`)", sql)
+		"`person`.`address_id` = VALUES(`person`.`address_id`), "+
+		"`person`.`age` = VALUES(`person`.`age`)", sql)
 }
 
 func TestInsertQueryMultiOnDuplicate(t *testing.T) {
@@ -124,7 +125,8 @@ func TestInsertQueryMultiOnDuplicate(t *testing.T) {
 		"ON DUPLICATE KEY UPDATE "+
 		"`person`.`id` = VALUES(`person`.`id`), "+
 		"`person`.`name` = VALUES(`person`.`name`), "+
-		"`person`.`address_id` = VALUES(`person`.`address_id`)", sql)
+		"`person`.`address_id` = VALUES(`person`.`address_id`), "+
+		"`person`.`age` = VALUES(`person`.`age`)", sql)
 	sql, err = query.ParameterizedSQL()
 	assert.NoError(err)
 	assert.Equal("INSERT INTO `person` (`person`.`id`, `person`.`name`, `person`.`address_id`) VALUES "+
@@ -132,5 +134,6 @@ func TestInsertQueryMultiOnDuplicate(t *testing.T) {
 		"ON DUPLICATE KEY UPDATE "+
 		"`person`.`id` = VALUES(`person`.`id`), "+
 		"`person`.`name` = VALUES(`person`.`name`), "+
-		"`person`.`address_id` = VALUES(`person`.`address_id`)", sql)
+		"`person`.`address_id` = VALUES(`person`.`address_id`), "+
+		"`person`.`age` = VALUES(`person`.`age`)", sql)
 }

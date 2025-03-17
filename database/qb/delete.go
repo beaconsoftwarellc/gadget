@@ -78,12 +78,12 @@ func (q *DeleteQuery) Validate() bool {
 }
 
 // SQL representation of this delete query.
-func (q *DeleteQuery) SQL() (string, []interface{}, error) {
+func (q *DeleteQuery) SQL() (string, []any, error) {
 	if !q.Validate() {
 		return "", nil, q.err
 	}
 	lines := []string{"DELETE"}
-	values := []interface{}{}
+	values := []any{}
 	rowsInLines := make([]string, len(q.tables))
 
 	if len(q.tables) == 1 && nil == q.from {

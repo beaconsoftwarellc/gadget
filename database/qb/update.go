@@ -42,7 +42,7 @@ func (q *UpdateQuery) GetAlias(tableName string) string {
 }
 
 // Set adds a assignment to this update query.
-func (q *UpdateQuery) Set(field TableField, value interface{}) *UpdateQuery {
+func (q *UpdateQuery) Set(field TableField, value any) *UpdateQuery {
 	if field.Table != q.tableReference.GetName() {
 		q.err = errors.New("field table does not match table reference on update query")
 	} else {
@@ -75,7 +75,7 @@ func (q *UpdateQuery) OrderBy(field TableField, direction OrderDirection) *Updat
 }
 
 // SQL representation of this query.
-func (q *UpdateQuery) SQL(limit int) (string, []interface{}, error) {
+func (q *UpdateQuery) SQL(limit int) (string, []any, error) {
 	if nil != q.err {
 		return "", nil, q.err
 	}
@@ -84,7 +84,7 @@ func (q *UpdateQuery) SQL(limit int) (string, []interface{}, error) {
 	}
 	sql := []string{fmt.Sprintf("UPDATE `%s` SET ", q.tableReference.GetName())}
 	alines := []string{}
-	values := []interface{}{}
+	values := []any{}
 	for _, assignment := range q.assignments {
 		s, v := assignment.SQL()
 		alines = append(alines, s)
