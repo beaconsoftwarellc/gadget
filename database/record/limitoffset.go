@@ -1,4 +1,4 @@
-package database
+package record
 
 import (
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
@@ -12,17 +12,26 @@ const (
 	defaultOffset uint = 0
 )
 
-// LimitOffset provides named limit and offset
-// accessors and setters for use with queries.
-type LimitOffset[T constraints.Integer] interface {
-	SetLimit(limit T) LimitOffset[T]
-	SetOffset(offset T) LimitOffset[T]
+// LimitOffset provides named limit and offset accessors
+type LimitOffset interface {
+	// Limit the number of records returned by a query
 	Limit() uint
+	// Offset the number of records to skip before returning results
 	Offset() uint
 }
 
+// LimitOffsetSetter provides named limit and offset
+// accessors and setters for use with queries.
+type LimitOffsetSetter[T constraints.Integer] interface {
+	LimitOffset
+	// SetLimit to the passed value
+	SetLimit(limit T) LimitOffsetSetter[T]
+	// SetOffset to the passed value
+	SetOffset(offset T) LimitOffsetSetter[T]
+}
+
 // NewLimitOffset with the specified Integer type
-func NewLimitOffset[T constraints.Integer]() LimitOffset[T] {
+func NewLimitOffset[T constraints.Integer]() LimitOffsetSetter[T] {
 	return &limitOffset[T]{
 		offset: defaultOffset,
 		limit:  defaultLimit,
@@ -34,7 +43,7 @@ type limitOffset[T constraints.Integer] struct {
 	offset uint
 }
 
-func (lo *limitOffset[T]) SetLimit(limit T) LimitOffset[T] {
+func (lo *limitOffset[T]) SetLimit(limit T) LimitOffsetSetter[T] {
 	if limit < 0 {
 		// use an error so we get a stack trace
 		_ = log.Warn(errors.Newf(
@@ -45,7 +54,7 @@ func (lo *limitOffset[T]) SetLimit(limit T) LimitOffset[T] {
 	return lo
 }
 
-func (lo *limitOffset[T]) SetOffset(offset T) LimitOffset[T] {
+func (lo *limitOffset[T]) SetOffset(offset T) LimitOffsetSetter[T] {
 	if offset < 0 {
 		// use an error so we get a stack trace
 		_ = log.Warn(errors.Newf(

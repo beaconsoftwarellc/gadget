@@ -34,15 +34,15 @@ type Transaction interface {
 	// List populates obj with a list of Records from the database
 	// TODO: [COR-586] we can expand the Record interface to return an collection
 	// 		 of its type so we don't have to pass this clumsily
-	List(record.Record, any, record.ListOptions) errors.TracerError
+	List(record.Record, any, record.LimitOffset) errors.TracerError
 	// ListWhere populates target with a list of Records from the database
 	// TODO: [COR-586] we can expand the Record interface to return a collection
 	// 		 of its type so we don't have to pass this clumsily
-	ListWhere(record.Record, any, *qb.ConditionExpression, record.ListOptions) errors.TracerError
+	ListWhere(record.Record, any, *qb.ConditionExpression, record.LimitOffset) errors.TracerError
 	// Select executes a given select query and populates the target
 	// TODO: [COR-586] we can expand the Record interface to return a collection
 	// 		 of its type so we don't have to pass this clumsily
-	Select(any, *qb.SelectQuery, record.ListOptions) errors.TracerError
+	Select(any, *qb.SelectQuery, record.LimitOffset) errors.TracerError
 	// Update replaces an entry in the database for the Record
 	Update(record.Record) errors.TracerError
 	// UpdateWhere updates fields for the Record based on a supplied where clause in a transaction
@@ -162,11 +162,11 @@ func (tx *transaction) ReadOneWhere(obj record.Record, condition *qb.ConditionEx
 }
 
 func (tx *transaction) List(def record.Record, obj any,
-	options record.ListOptions) errors.TracerError {
+	options record.LimitOffset) errors.TracerError {
 	stmt, _, err := qb.Select(def.Meta().AllColumns()).
 		From(def.Meta()).
 		OrderBy(def.Meta().SortBy()).
-		SQL(options.Limit, options.Offset)
+		SQL(options.Limit(), options.Offset())
 	if err != nil {
 		return errors.Wrap(err)
 	}
@@ -177,8 +177,8 @@ func (tx *transaction) List(def record.Record, obj any,
 }
 
 func (tx *transaction) ListWhere(meta record.Record, target interface{},
-	condition *qb.ConditionExpression, options record.ListOptions) errors.TracerError {
-	stmt, values, err := tx.buildListWhere(meta, condition).SQL(options.Limit, options.Offset)
+	condition *qb.ConditionExpression, options record.LimitOffset) errors.TracerError {
+	stmt, values, err := tx.buildListWhere(meta, condition).SQL(options.Limit(), options.Offset())
 	if nil != err {
 		return errors.Wrap(err)
 	}
@@ -196,8 +196,8 @@ func (tx *transaction) buildListWhere(def record.Record, condition *qb.Condition
 }
 
 func (tx *transaction) Select(target interface{}, query *qb.SelectQuery,
-	options record.ListOptions) errors.TracerError {
-	stmt, values, err := query.SQL(options.Limit, options.Offset)
+	options record.LimitOffset) errors.TracerError {
+	stmt, values, err := query.SQL(options.Limit(), options.Offset())
 	if err != nil {
 		return errors.Wrap(err)
 	}

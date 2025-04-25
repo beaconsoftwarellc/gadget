@@ -170,7 +170,7 @@ func (mr *MockAPIMockRecorder) GetTransaction() *gomock.Call {
 }
 
 // ListWhere mocks base method.
-func (m *MockAPI) ListWhere(meta record.Record, target any, condition *qb.ConditionExpression, options *record.ListOptions) errors.TracerError {
+func (m *MockAPI) ListWhere(meta record.Record, target any, condition *qb.ConditionExpression, options record.LimitOffset) errors.TracerError {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListWhere", meta, target, condition, options)
 	ret0, _ := ret[0].(errors.TracerError)
@@ -226,7 +226,7 @@ func (mr *MockAPIMockRecorder) Rollback() *gomock.Call {
 }
 
 // Select mocks base method.
-func (m *MockAPI) Select(target any, query *qb.SelectQuery, options *record.ListOptions) errors.TracerError {
+func (m *MockAPI) Select(target any, query *qb.SelectQuery, options record.LimitOffset) errors.TracerError {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Select", target, query, options)
 	ret0, _ := ret[0].(errors.TracerError)

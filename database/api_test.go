@@ -125,26 +125,26 @@ func Test_database_enforceLimits(t *testing.T) {
 	var tests = []struct {
 		name          string
 		maxQueryLimit uint
-		options       *record.ListOptions
-		expected      *record.ListOptions
+		options       record.LimitOffset
+		expected      record.LimitOffset
 	}{
 		{
 			name:          "no limit",
 			maxQueryLimit: 0,
-			options:       &record.ListOptions{Limit: 100, Offset: 0},
-			expected:      &record.ListOptions{Limit: 100, Offset: 0},
+			options:       record.NewLimitOffset[int]().SetLimit(100).SetOffset(0),
+			expected:      record.NewLimitOffset[int]().SetLimit(0).SetOffset(0),
 		},
 		{
 			name:          "limit enforced",
 			maxQueryLimit: 10,
-			options:       &record.ListOptions{Limit: 100, Offset: 0},
-			expected:      &record.ListOptions{Limit: 10, Offset: 0},
+			options:       record.NewLimitOffset[int]().SetLimit(100).SetOffset(0),
+			expected:      record.NewLimitOffset[int]().SetLimit(10).SetOffset(0),
 		},
 		{
 			name:          "nil gets defaults",
 			maxQueryLimit: 20,
 			options:       nil,
-			expected:      &record.ListOptions{Limit: 20, Offset: 0},
+			expected:      record.NewLimitOffset[int]().SetLimit(20).SetOffset(0),
 		},
 	}
 	for _, tc := range tests {
@@ -172,7 +172,7 @@ func Test_api_Count(t *testing.T) {
 	transaction.EXPECT().Select(&countMatcher{count: expected},
 		&queryMatcher{t: t, sql: "SELECT COUNT(*) as count FROM " +
 			"`test_record` AS `test_record`"},
-		record.ListOptions{Limit: 1, Offset: 0},
+		record.NewLimitOffset[int]().SetLimit(1).SetOffset(0),
 	).Return(nil)
 	actual, err := api.Count(MetaTestRecord, query)
 	assert.NoError(err)
@@ -192,7 +192,7 @@ func Test_api_CountWhere_nil(t *testing.T) {
 	transaction.EXPECT().Select(&countMatcher{count: expected},
 		&queryMatcher{t: t, sql: "SELECT COUNT(*) as count FROM " +
 			"`test_record` AS `test_record`"},
-		record.ListOptions{Limit: 1, Offset: 0},
+		record.NewLimitOffset[int]().SetLimit(1).SetOffset(0),
 	).Return(nil)
 	actual, err := api.CountWhere(MetaTestRecord, nil)
 	assert.NoError(err)
@@ -212,7 +212,7 @@ func Test_api_CountWhere(t *testing.T) {
 	transaction.EXPECT().Select(&countMatcher{count: expected},
 		&queryMatcher{t: t, sql: "SELECT COUNT(*) as count FROM `test_record` AS" +
 			" `test_record` WHERE `test_record`.`name` = ?"},
-		record.ListOptions{Limit: 1, Offset: 0},
+		record.NewLimitOffset[int]().SetLimit(1).SetOffset(0),
 	).Return(nil)
 	actual, err := api.CountWhere(MetaTestRecord,
 		qb.FieldComparison(MetaTestRecord.Name, qb.Equal, ""))
