@@ -28,9 +28,10 @@ func Test_CaseExpression_InSelect(t *testing.T) {
 
 	selectExpression := Select(
 		Person.ID, expression.As("alias")).From(Person)
-	actual, values, err := selectExpression.SQL(0, 0)
+	actual, values, err := selectExpression.SQL(NewLimitOffset[int]().
+		SetLimit(0).SetOffset(0))
 	assert.Nil(err)
-	assert.Equal("SELECT `person`.`id`, CASE WHEN `person`.`address_id` = `person`.`name` THEN ? WHEN `person`.`address_id` IS NULL THEN ? ELSE ? END AS `alias` FROM `person` AS `person` LIMIT 0 OFFSET 0", actual)
+	assert.Equal("SELECT `person`.`id`, CASE WHEN `person`.`address_id` = `person`.`name` THEN ? WHEN `person`.`address_id` IS NULL THEN ? ELSE ? END AS `alias` FROM `person` AS `person`", actual)
 	require.Len(values, 3)
 	assert.Equal(1, values[0])
 	assert.Equal(2, values[1])

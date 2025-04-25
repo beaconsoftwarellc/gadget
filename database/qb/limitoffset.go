@@ -1,4 +1,4 @@
-package record
+package qb
 
 import (
 	"github.com/beaconsoftwarellc/gadget/v2/errors"

@@ -111,7 +111,9 @@ func (matcher *queryMatcher) Matches(x interface{}) bool {
 		// the assert take care of failure and messaging
 		return false
 	}
-	sql, _, err := query.SQL(qb.NoLimit, 0)
+	options := qb.NewLimitOffset[int]().
+		SetLimit(qb.NoLimit).SetOffset(0)
+	sql, _, err := query.SQL(options)
 	assert1.NoError(matcher.t, err)
 	assert1.Equal(matcher.t, matcher.sql, sql)
 	return true
@@ -125,26 +127,26 @@ func Test_database_enforceLimits(t *testing.T) {
 	var tests = []struct {
 		name          string
 		maxQueryLimit uint
-		options       record.LimitOffset
-		expected      record.LimitOffset
+		options       qb.LimitOffset
+		expected      qb.LimitOffset
 	}{
 		{
 			name:          "no limit",
 			maxQueryLimit: 0,
-			options:       record.NewLimitOffset[int]().SetLimit(100).SetOffset(0),
-			expected:      record.NewLimitOffset[int]().SetLimit(0).SetOffset(0),
+			options:       qb.NewLimitOffset[int]().SetLimit(0).SetOffset(0),
+			expected:      qb.NewLimitOffset[int]().SetLimit(0).SetOffset(0),
 		},
 		{
 			name:          "limit enforced",
 			maxQueryLimit: 10,
-			options:       record.NewLimitOffset[int]().SetLimit(100).SetOffset(0),
-			expected:      record.NewLimitOffset[int]().SetLimit(10).SetOffset(0),
+			options:       qb.NewLimitOffset[int]().SetLimit(100).SetOffset(0),
+			expected:      qb.NewLimitOffset[int]().SetLimit(10).SetOffset(0),
 		},
 		{
 			name:          "nil gets defaults",
 			maxQueryLimit: 20,
 			options:       nil,
-			expected:      record.NewLimitOffset[int]().SetLimit(20).SetOffset(0),
+			expected:      qb.NewLimitOffset[int]().SetLimit(20).SetOffset(0),
 		},
 	}
 	for _, tc := range tests {
@@ -154,7 +156,8 @@ func Test_database_enforceLimits(t *testing.T) {
 			conf.MaxLimit = tc.maxQueryLimit
 			database := &api{configuration: conf}
 			actual := database.enforceLimits(tc.options)
-			assert.Equal(tc.expected, actual)
+			assert.Equal(tc.expected.Limit(), actual.Limit())
+			assert.Equal(tc.expected.Offset(), actual.Offset())
 		})
 	}
 }
@@ -172,7 +175,7 @@ func Test_api_Count(t *testing.T) {
 	transaction.EXPECT().Select(&countMatcher{count: expected},
 		&queryMatcher{t: t, sql: "SELECT COUNT(*) as count FROM " +
 			"`test_record` AS `test_record`"},
-		record.NewLimitOffset[int]().SetLimit(1).SetOffset(0),
+		qb.NewLimitOffset[int]().SetLimit(1).SetOffset(0),
 	).Return(nil)
 	actual, err := api.Count(MetaTestRecord, query)
 	assert.NoError(err)
@@ -192,7 +195,7 @@ func Test_api_CountWhere_nil(t *testing.T) {
 	transaction.EXPECT().Select(&countMatcher{count: expected},
 		&queryMatcher{t: t, sql: "SELECT COUNT(*) as count FROM " +
 			"`test_record` AS `test_record`"},
-		record.NewLimitOffset[int]().SetLimit(1).SetOffset(0),
+		qb.NewLimitOffset[int]().SetLimit(1).SetOffset(0),
 	).Return(nil)
 	actual, err := api.CountWhere(MetaTestRecord, nil)
 	assert.NoError(err)
@@ -212,7 +215,7 @@ func Test_api_CountWhere(t *testing.T) {
 	transaction.EXPECT().Select(&countMatcher{count: expected},
 		&queryMatcher{t: t, sql: "SELECT COUNT(*) as count FROM `test_record` AS" +
 			" `test_record` WHERE `test_record`.`name` = ?"},
-		record.NewLimitOffset[int]().SetLimit(1).SetOffset(0),
+		qb.NewLimitOffset[int]().SetLimit(1).SetOffset(0),
 	).Return(nil)
 	actual, err := api.CountWhere(MetaTestRecord,
 		qb.FieldComparison(MetaTestRecord.Name, qb.Equal, ""))

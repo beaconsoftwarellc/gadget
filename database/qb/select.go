@@ -308,7 +308,7 @@ func (q *SelectQuery) Validate() bool {
 }
 
 // SQL statement corresponding to this query.
-func (q *SelectQuery) SQL(limit, offset uint) (string, []any, error) {
+func (q *SelectQuery) SQL(options LimitOffset) (string, []any, error) {
 	if !q.Validate() {
 		return "", []any{}, q.err
 	}
@@ -351,8 +351,9 @@ func (q *SelectQuery) SQL(limit, offset uint) (string, []any, error) {
 	}
 
 	// LIMIT, OFFSET
-	if NoLimit != limit {
-		lines = append(lines, fmt.Sprintf("LIMIT %d OFFSET %d", limit, offset))
+	if NoLimit != options.Limit() {
+		lines = append(lines, fmt.Sprintf("LIMIT %d OFFSET %d",
+			options.Limit(), options.Offset()))
 	}
 	return strings.Join(lines, q.Seperator), values, q.err
 }

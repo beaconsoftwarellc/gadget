@@ -41,10 +41,10 @@ type API interface {
 	// ReadOneWhere populates a Record from a custom where clause
 	ReadOneWhere(obj record.Record, condition *qb.ConditionExpression) errors.TracerError
 	// Select executes a given select query and populates the target
-	Select(target interface{}, query *qb.SelectQuery, options record.LimitOffset) errors.TracerError
+	Select(target interface{}, query *qb.SelectQuery, options qb.LimitOffset) errors.TracerError
 	// ListWhere populates target with a list of records from the database
 	ListWhere(meta record.Record, target interface{},
-		condition *qb.ConditionExpression, options record.LimitOffset) errors.TracerError
+		condition *qb.ConditionExpression, options qb.LimitOffset) errors.TracerError
 	// Update replaces an entry in the database for the Record using a transaction
 	Update(obj record.Record) errors.TracerError
 	// UpdateWhere updates fields for the Record based on a supplied where clause
@@ -60,7 +60,7 @@ type API interface {
 // SelectWithTotal executes the select query populating target and returning the
 // total records possible
 func SelectWithTotal[T any](db API, table qb.Table, target T,
-	query *qb.SelectQuery, options record.LimitOffset) (T, int, error) {
+	query *qb.SelectQuery, options qb.LimitOffset) (T, int, error) {
 	var (
 		total int32
 		err   error
@@ -141,7 +141,7 @@ func (db *api) Count(table qb.Table, query *qb.SelectQuery) (int32, error) {
 	)
 	err = db.Select(&target,
 		query.SelectFrom(qb.NewCountExpression(table.GetName())),
-		record.NewLimitOffset[int]().SetLimit(1).SetOffset(0),
+		qb.NewLimitOffset[int]().SetLimit(1).SetOffset(0),
 	)
 	if err != nil {
 		return 0, err
@@ -167,7 +167,7 @@ func (db *api) Sum(field qb.TableField, query *qb.SelectQuery) (int32, error) {
 	)
 	err = db.Select(&target,
 		query.SelectFrom(qb.NewSumExpression(field.Table, field)),
-		record.NewLimitOffset[int]().SetLimit(1).SetOffset(0),
+		qb.NewLimitOffset[int]().SetLimit(1).SetOffset(0),
 	)
 	if err != nil {
 		return 0, err
@@ -197,7 +197,7 @@ func (d *api) ReadOneWhere(obj record.Record, condition *qb.ConditionExpression)
 }
 
 func (d *api) Select(target interface{}, query *qb.SelectQuery,
-	options record.LimitOffset) errors.TracerError {
+	options qb.LimitOffset) errors.TracerError {
 	options = d.enforceLimits(options)
 	return d.runInTransaction(func(tx transaction.Transaction) errors.TracerError {
 		return tx.Select(target, query, options)
@@ -205,7 +205,7 @@ func (d *api) Select(target interface{}, query *qb.SelectQuery,
 }
 
 func (d *api) ListWhere(meta record.Record, target interface{},
-	condition *qb.ConditionExpression, options record.LimitOffset) errors.TracerError {
+	condition *qb.ConditionExpression, options qb.LimitOffset) errors.TracerError {
 	options = d.enforceLimits(options)
 	return d.runInTransaction(func(tx transaction.Transaction) errors.TracerError {
 		return tx.ListWhere(meta, target, condition, options)
@@ -244,15 +244,15 @@ func (d *api) DeleteWhere(obj record.Record, condition *qb.ConditionExpression) 
 	})
 }
 
-func (d *api) enforceLimits(options record.LimitOffset) record.LimitOffset {
+func (d *api) enforceLimits(options qb.LimitOffset) qb.LimitOffset {
 	if options == nil {
-		options = record.NewLimitOffset[uint]()
+		options = qb.NewLimitOffset[uint]()
 	}
 	if d.configuration.MaxQueryLimit() != qb.NoLimit &&
 		options.Limit() > d.configuration.MaxQueryLimit() {
 		d.configuration.Logger().Warnf("limit %d exceeds max limit of %d", options.Limit,
 			d.configuration.MaxQueryLimit())
-		options = record.NewLimitOffset[uint]().SetOffset(options.Offset()).
+		options = qb.NewLimitOffset[uint]().SetOffset(options.Offset()).
 			SetLimit(d.configuration.MaxQueryLimit())
 	}
 	return options
