@@ -350,10 +350,16 @@ func (q *SelectQuery) SQL(options LimitOffset) (string, []any, error) {
 		lines = append(lines, orderby)
 	}
 
+	// early exit if the options are nil
+	if options == nil {
+		return strings.Join(lines, q.Seperator), values, q.err
+	}
 	// LIMIT, OFFSET
 	if NoLimit != options.Limit() {
-		lines = append(lines, fmt.Sprintf("LIMIT %d OFFSET %d",
-			options.Limit(), options.Offset()))
+		lines = append(lines, fmt.Sprintf("LIMIT %d", options.Limit()))
+	}
+	if options.Offset() > 0 {
+		lines = append(lines, fmt.Sprintf("OFFSET %d", options.Offset()))
 	}
 	return strings.Join(lines, q.Seperator), values, q.err
 }

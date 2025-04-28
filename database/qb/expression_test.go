@@ -174,7 +174,11 @@ func Test_CaseSelect(t *testing.T) {
 	actual, values, err := selectStatement.
 		SQL(NewLimitOffset[int]().SetLimit(0).SetOffset(0))
 	assert.Nil(err)
-	assert.Equal("SELECT `smtp_statistics`.`id`, `smtp_statistics`.`communication`, COUNT(`smtp_message`.`id`) AS `sends`, SUM(CASE WHEN `smtp_message`.`status` = ? THEN ? ELSE ? END) AS `bounces`, SUM(CASE WHEN `smtp_message`.`status` = ? THEN ? ELSE ? END) AS `complaints`, SUM(`smtp_message`.`opens`) AS `opens`, SUM(CASE WHEN `smtp_message`.`opens` > ? THEN ? ELSE ? END) AS `unique-opens` FROM `smtp_statistics` AS `smtp_statistics` INNER JOIN `smtp_message` AS `smtp_message` ON `smtp_statistics`.`communication` = `smtp_message`.`communication` WHERE `smtp_statistics`.`id` = ? LIMIT 0 OFFSET 0", actual)
+	assert.Equal("SELECT `smtp_statistics`.`id`, `smtp_statistics`.`communication`, COUNT(`smtp_message`.`id`) AS `sends`,"+
+		" SUM(CASE WHEN `smtp_message`.`status` = ? THEN ? ELSE ? END) AS `bounces`, SUM(CASE WHEN `smtp_message`.`status` = ? "+
+		"THEN ? ELSE ? END) AS `complaints`, SUM(`smtp_message`.`opens`) AS `opens`, SUM(CASE WHEN `smtp_message`.`opens` > ? THEN ? ELSE ? END) "+
+		"AS `unique-opens` FROM `smtp_statistics` AS `smtp_statistics` INNER JOIN `smtp_message` AS `smtp_message` "+
+		"ON `smtp_statistics`.`communication` = `smtp_message`.`communication` WHERE `smtp_statistics`.`id` = ? LIMIT 0", actual)
 	assert.Equal(10, len(values))
 	assert.Equal("EC_BOUNCE", values[0])
 	assert.Equal(1, values[1])

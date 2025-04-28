@@ -196,7 +196,7 @@ func (d *api) ReadOneWhere(obj record.Record, condition *qb.ConditionExpression)
 	})
 }
 
-func (d *api) Select(target interface{}, query *qb.SelectQuery,
+func (d *api) Select(target any, query *qb.SelectQuery,
 	options qb.LimitOffset) errors.TracerError {
 	options = d.enforceLimits(options)
 	return d.runInTransaction(func(tx transaction.Transaction) errors.TracerError {

@@ -104,16 +104,14 @@ type queryMatcher struct {
 	sql string
 }
 
-func (matcher *queryMatcher) Matches(x interface{}) bool {
+func (matcher *queryMatcher) Matches(x any) bool {
 	query, ok := x.(*qb.SelectQuery)
 	if !ok {
 		// only return false if we got an unexpected type, otherwise let
 		// the assert take care of failure and messaging
 		return false
 	}
-	options := qb.NewLimitOffset[int]().
-		SetLimit(qb.NoLimit).SetOffset(0)
-	sql, _, err := query.SQL(options)
+	sql, _, err := query.SQL(nil)
 	assert1.NoError(matcher.t, err)
 	assert1.Equal(matcher.t, matcher.sql, sql)
 	return true
@@ -133,8 +131,8 @@ func Test_database_enforceLimits(t *testing.T) {
 		{
 			name:          "no limit",
 			maxQueryLimit: 0,
-			options:       qb.NewLimitOffset[int]().SetLimit(0).SetOffset(0),
-			expected:      qb.NewLimitOffset[int]().SetLimit(0).SetOffset(0),
+			options:       qb.NewLimitOffset[int]().SetLimit(100).SetOffset(0),
+			expected:      qb.NewLimitOffset[int]().SetLimit(100).SetOffset(0),
 		},
 		{
 			name:          "limit enforced",

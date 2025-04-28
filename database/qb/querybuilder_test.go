@@ -124,7 +124,7 @@ var Address = (&address{}).Alias("address")
 func TestQueryBuilderSimple(t *testing.T) {
 	assert := assert1.New(t)
 	query := Select(Person.ID, Person.Name).From(Person)
-	actual, values, err := query.SQL(NewLimitOffset[int]().SetLimit(NoLimit).SetOffset(0))
+	actual, values, err := query.SQL(nil)
 	assert.NoError(err)
 	assert.Empty(values)
 	expected := "SELECT `person`.`id`, `person`.`name` FROM `person` AS `person`"
@@ -135,7 +135,7 @@ func TestQueryBuilderTableAlias(t *testing.T) {
 	assert := assert1.New(t)
 	table := Person.Alias("p")
 	query := Select(table.ID, table.Name).From(table)
-	actual, values, err := query.SQL(NewLimitOffset[int]().SetLimit(NoLimit).SetOffset(0))
+	actual, values, err := query.SQL(nil)
 	assert.NoError(err)
 	assert.Empty(values)
 	expected := "SELECT `p`.`id`, `p`.`name` FROM `person` AS `p`"
@@ -145,7 +145,7 @@ func TestQueryBuilderTableAlias(t *testing.T) {
 func TestQueryBuilderTableCount(t *testing.T) {
 	assert := assert1.New(t)
 	query := Select(Person.ID, Count(Person.Name, "person_name")).From(Person)
-	actual, values, err := query.SQL(NewLimitOffset[int]().SetLimit(NoLimit).SetOffset(0))
+	actual, values, err := query.SQL(nil)
 	assert.NoError(err)
 	assert.Empty(values)
 	expected := "SELECT `person`.`id`, COUNT(`person`.`name`) AS `person_name` FROM `person` AS `person`"
@@ -266,7 +266,7 @@ func TestQueryBuilderJoin(t *testing.T) {
 		"FROM `person` AS `person` "+
 		"INNER JOIN `address` AS `address` ON `person`.`address_id` = `address`.`id` "+
 		"WHERE (`person`.`name` != ? AND `address`.`id` != ?) "+
-		"LIMIT 10 OFFSET 0", actual)
+		"LIMIT 10", actual)
 }
 
 func TestQueryBuilderJoin_SQL_Outer(t *testing.T) {
@@ -286,7 +286,7 @@ func TestQueryBuilderJoin_SQL_Outer(t *testing.T) {
 		"FROM `person` AS `person` "+
 		"LEFT OUTER JOIN `address` AS `address` ON `person`.`address_id` = `address`.`id` "+
 		"WHERE (`person`.`name` != ? AND `address`.`id` != ?) "+
-		"LIMIT 10 OFFSET 0", actual)
+		"LIMIT 10", actual)
 }
 
 func TestQueryBuilderJoin_OnValue(t *testing.T) {
@@ -307,7 +307,7 @@ func TestQueryBuilderJoin_OnValue(t *testing.T) {
 		"FROM `person` AS `person` "+
 		"LEFT OUTER JOIN `address` AS `address` ON `address`.`id` = ? "+
 		"WHERE (`person`.`name` != ? AND `address`.`id` != ?) "+
-		"LIMIT 10 OFFSET 0", actual)
+		"LIMIT 10", actual)
 }
 
 func TestQueryBuilderSelectQuery_SQL_JoinFVError(t *testing.T) {
@@ -366,7 +366,7 @@ func TestQueryBuilderAlias(t *testing.T) {
 	actual, values, err := query.SQL(NewLimitOffset[int]().SetLimit(NoLimit).SetOffset(10))
 	assert.NoError(err)
 	assert.Empty(values)
-	assert.Equal("SELECT `person`.`id`, `person`.`name` AS `person_name` FROM `person` AS `person`", actual)
+	assert.Equal("SELECT `person`.`id`, `person`.`name` AS `person_name` FROM `person` AS `person` OFFSET 10", actual)
 }
 
 func TestQueryBuilderCoalesce(t *testing.T) {
@@ -377,7 +377,7 @@ func TestQueryBuilderCoalesce(t *testing.T) {
 	assert.NoError(err)
 	assert.Len(values, 1)
 	assert.Equal(value, values[0])
-	assert.Equal("SELECT `person`.`id`, COALESCE(`person`.`name`, ?) AS `coalesced` FROM `person` AS `person`", actual)
+	assert.Equal("SELECT `person`.`id`, COALESCE(`person`.`name`, ?) AS `coalesced` FROM `person` AS `person` OFFSET 10", actual)
 }
 
 func TestQueryBuilderIfFieldCondition(t *testing.T) {
@@ -389,7 +389,7 @@ func TestQueryBuilderIfFieldCondition(t *testing.T) {
 	require.Len(values, 2)
 	assert.Equal("1", values[0])
 	assert.Equal("0", values[1])
-	assert.Equal("SELECT `person`.`id`, IF(`person`.`name` = `person`.`id`, ?, ?) AS `has_robot_name` FROM `person` AS `person`", actual)
+	assert.Equal("SELECT `person`.`id`, IF(`person`.`name` = `person`.`id`, ?, ?) AS `has_robot_name` FROM `person` AS `person` OFFSET 10", actual)
 }
 
 func TestQueryBuilderIfStringCondition(t *testing.T) {
@@ -402,7 +402,7 @@ func TestQueryBuilderIfStringCondition(t *testing.T) {
 	assert.Equal("Joe", values[0])
 	assert.Equal("1", values[1])
 	assert.Equal("0", values[2])
-	assert.Equal("SELECT `person`.`id`, IF(`person`.`name` = ?, ?, ?) AS `is_joe` FROM `person` AS `person`", actual)
+	assert.Equal("SELECT `person`.`id`, IF(`person`.`name` = ?, ?, ?) AS `is_joe` FROM `person` AS `person` OFFSET 10", actual)
 }
 
 func TestQueryBuilderGroupBy(t *testing.T) {
@@ -412,7 +412,7 @@ func TestQueryBuilderGroupBy(t *testing.T) {
 	assert.NoError(err)
 	assert.Empty(values)
 	assert.Equal("SELECT `person`.`id`, `person`.`name`, `person`.`address_id` FROM `person` AS `person`"+
-		" GROUP BY `person`.`name`, `person`.`address_id`", actual)
+		" GROUP BY `person`.`name`, `person`.`address_id` OFFSET 10", actual)
 }
 
 func TestSelectNotNull(t *testing.T) {
@@ -422,7 +422,7 @@ func TestSelectNotNull(t *testing.T) {
 	actual, values, err := query.SQL(NewLimitOffset[int]().SetLimit(NoLimit).SetOffset(10))
 	assert.NoError(err)
 	assert.Empty(values)
-	assert.Equal("SELECT (`person`.`id` IS NOT NULL) AS `person_id_not_null`, `person`.`name` FROM `person` AS `person`", actual)
+	assert.Equal("SELECT (`person`.`id` IS NOT NULL) AS `person_id_not_null`, `person`.`name` FROM `person` AS `person` OFFSET 10", actual)
 }
 
 func TestSelectBitwise(t *testing.T) {
@@ -433,7 +433,7 @@ func TestSelectBitwise(t *testing.T) {
 	actual, values, err := query.SQL(NewLimitOffset[int]().SetLimit(NoLimit).SetOffset(10))
 	assert.NoError(err)
 	assert.Equal(values, []any{5})
-	assert.Equal("SELECT `person`.`name` FROM `person` AS `person` WHERE `person`.`id` != `person`.`id` & ?", actual)
+	assert.Equal("SELECT `person`.`name` FROM `person` AS `person` WHERE `person`.`id` != `person`.`id` & ? OFFSET 10", actual)
 }
 
 func TestSelectFrom(t *testing.T) {
@@ -445,13 +445,13 @@ func TestSelectFrom(t *testing.T) {
 	assert.NoError(err)
 	assert.Empty(values)
 	assert.Equal("SELECT `person`.`id`, `person`.`name`, `person`.`address_id` FROM `person` AS `person`"+
-		" GROUP BY `person`.`name`, `person`.`address_id`", actual)
+		" GROUP BY `person`.`name`, `person`.`address_id` OFFSET 10", actual)
 
-	actual, values, err = query2.SQL(NewLimitOffset[int]().SetLimit(NoLimit).SetOffset(10))
+	actual, values, err = query2.SQL(NewLimitOffset[int]().SetLimit(NoLimit).SetOffset(20))
 	assert.NoError(err)
 	assert.Empty(values)
 	assert.Equal("SELECT `person`.`id` FROM `person` AS `person`"+
-		" GROUP BY `person`.`name`, `person`.`address_id`", actual)
+		" GROUP BY `person`.`name`, `person`.`address_id` OFFSET 20", actual)
 }
 
 func TestUpdateBitwise(t *testing.T) {
