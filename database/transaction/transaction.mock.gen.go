@@ -111,7 +111,8 @@ func (mr *MockTransactionMockRecorder) Implementation() *gomock.Call {
 }
 
 // List mocks base method.
-func (m *MockTransaction) List(arg0 record.Record, arg1 any, arg2 record.ListOptions) errors.TracerError {
+func (m *MockTransaction) List(arg0 record.Record, arg1 any, 
+	arg2 qb.LimitOffset) errors.TracerError {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "List", arg0, arg1, arg2)
 	ret0, _ := ret[0].(errors.TracerError)
@@ -125,7 +126,7 @@ func (mr *MockTransactionMockRecorder) List(arg0, arg1, arg2 any) *gomock.Call {
 }
 
 // ListWhere mocks base method.
-func (m *MockTransaction) ListWhere(arg0 record.Record, arg1 any, arg2 *qb.ConditionExpression, arg3 record.ListOptions) errors.TracerError {
+func (m *MockTransaction) ListWhere(arg0 record.Record, arg1 any, arg2 *qb.ConditionExpression, arg3 qb.LimitOffset) errors.TracerError {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListWhere", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(errors.TracerError)
@@ -196,7 +197,7 @@ func (mr *MockTransactionMockRecorder) Rollback() *gomock.Call {
 }
 
 // Select mocks base method.
-func (m *MockTransaction) Select(arg0 any, arg1 *qb.SelectQuery, arg2 record.ListOptions) errors.TracerError {
+func (m *MockTransaction) Select(arg0 any, arg1 *qb.SelectQuery, arg2 qb.LimitOffset) errors.TracerError {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Select", arg0, arg1, arg2)
 	ret0, _ := ret[0].(errors.TracerError)

@@ -34,7 +34,7 @@ type PrimaryKeyValue struct {
 }
 
 // NewPrimaryKey returns a populated PrimaryKeyValue
-func NewPrimaryKey(value interface{}) (pk PrimaryKeyValue) {
+func NewPrimaryKey(value any) (pk PrimaryKeyValue) {
 	switch t := reflect.TypeOf(value).Kind(); t {
 	case reflect.String:
 		pk.strPK = value.(string)
@@ -46,7 +46,7 @@ func NewPrimaryKey(value interface{}) (pk PrimaryKeyValue) {
 }
 
 // Value returns the string or integer value for a Record
-func (pk PrimaryKeyValue) Value() interface{} {
+func (pk PrimaryKeyValue) Value() any {
 	if pk.isInt {
 		return pk.intPK
 	}
