@@ -126,7 +126,7 @@ func NewExecutionError(action SQLQueryType, stmt string, err error) errors.Trace
 // Error logs the reference id and statement for reference and returns a string
 // representation of this error containing the reference ID
 func (e *SQLExecutionError) Error() string {
-	log.Infof("[Ref:%s] ERROR STMT: %s", e.ReferenceID, e.Stmt)
+	log.Infof("[Ref:%s] STMT: %s", e.ReferenceID, e.Stmt)
 	return fmt.Sprintf("%s: %s [Ref:%s]",
 		e.message, e.ErrMsg, e.ReferenceID)
 }
