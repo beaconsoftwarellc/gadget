@@ -1,7 +1,10 @@
 package email
 
 import (
+	"fmt"
+	"net"
 	"net/mail"
+	"strings"
 )
 
 type Validator struct {
@@ -29,6 +32,14 @@ func (v Validator) Validate(email string) (bool, error) {
 			return ok, nil
 		}
 	}
+
+	if v.config.ValidateDNS {
+		ok, err := v.validateDNS(email)
+		if !ok {
+			return ok, err
+		}
+	}
+
 	return true, nil
 }
 
@@ -39,4 +50,20 @@ func (v Validator) validateForm(email string) bool {
 	}
 
 	return true
+}
+
+func (v Validator) validateDNS(email string) (bool, error) {
+	atIdx := strings.LastIndex(email, "@")
+	if atIdx == -1 {
+		return false, fmt.Errorf("'@' not found in address: %q", email)
+	}
+
+	domain := email[atIdx+1:]
+
+	nameServers, err := net.LookupNS(domain)
+	if err != nil {
+		return false, err
+	}
+
+	return len(nameServers) > 0, nil
 }

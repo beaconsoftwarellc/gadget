@@ -75,3 +75,64 @@ func TestValidator_Validate_WithoutFormValidation(t *testing.T) {
 		assert.NoError(err)
 	}
 }
+
+func TestValidator_Validate_WithDNSValidation(t *testing.T) {
+	t.Parallel()
+
+	validator := email.NewValidator(
+		email.WithFormValidation(false),
+		email.WithDNSValidation(true),
+	)
+
+	assert := assert.New(t)
+
+	tests := []struct {
+		email       string
+		expected    bool
+		expectedErr string
+	}{
+		{
+			email:    "test@example.com",
+			expected: true,
+		},
+		{
+			email:    "user@domain.co.uk",
+			expected: true,
+		},
+		{
+			email:       "invalid-email",
+			expected:    false,
+			expectedErr: `'@' not found in address: "invalid-email"`,
+		},
+		{
+			email:       "@missinglocal.com",
+			expected:    false,
+			expectedErr: "no such host",
+		},
+		{
+			email:       "missingatsign.com",
+			expected:    false,
+			expectedErr: `'@' not found in address: "missingatsign.com"`,
+		},
+		{
+			email:       "missingdomain@",
+			expected:    false,
+			expectedErr: "lookup : no such host",
+		},
+		{
+			email:       "",
+			expected:    false,
+			expectedErr: `'@' not found in address: ""`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.email, func(t *testing.T) {
+			ok, err := validator.Validate(tt.email)
+			assert.Equal(tt.expected, ok)
+			if !tt.expected {
+				assert.ErrorContains(err, tt.expectedErr)
+			}
+		})
+	}
+}
