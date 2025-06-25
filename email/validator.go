@@ -40,6 +40,13 @@ func (v Validator) Validate(email string) (bool, error) {
 		}
 	}
 
+	if v.config.ValidateDisposable {
+		ok, err := v.validateDisposable(email)
+		if !ok {
+			return ok, err
+		}
+	}
+
 	return true, nil
 }
 
@@ -66,4 +73,15 @@ func (v Validator) validateDNS(email string) (bool, error) {
 	}
 
 	return len(nameServers) > 0, nil
+}
+
+func (v Validator) validateDisposable(email string) (bool, error) {
+	atIdx := strings.LastIndex(email, "@")
+	if atIdx == -1 {
+		return false, fmt.Errorf("'@' not found in address: %q", email)
+	}
+
+	domain := email[atIdx+1:]
+
+	return NewWhitelist().Validate(domain), nil
 }

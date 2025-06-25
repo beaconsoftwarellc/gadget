@@ -136,3 +136,45 @@ func TestValidator_Validate_WithDNSValidation(t *testing.T) {
 		})
 	}
 }
+func TestValidator_validateDisposable(t *testing.T) {
+	t.Parallel()
+	assert := assert.New(t)
+
+	tests := []struct {
+		name        string
+		email       string
+		expected    bool
+		expectedErr string
+	}{
+		{
+			name:     "disposable email returns false",
+			email:    "disposable@mailinator.com",
+			expected: false,
+		},
+		{
+			name:     "non-disposable email returns true",
+			email:    "user@example.com",
+			expected: true,
+		},
+		{
+			email:       "",
+			expected:    false,
+			expectedErr: `'@' not found in address: ""`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			validator := email.NewValidator(
+				email.WithFormValidation(false),
+				email.WithDisposableValidation(true),
+			)
+
+			ok, err := validator.Validate(tt.email)
+			assert.Equal(tt.expected, ok)
+			if !tt.expected && tt.expectedErr != "" {
+				assert.ErrorContains(err, tt.expectedErr)
+			}
+		})
+	}
+}
