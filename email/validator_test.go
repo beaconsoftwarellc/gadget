@@ -192,7 +192,8 @@ func TestValidator_Validate_WithDNSValidation(t *testing.T) {
 		})
 	}
 }
-func TestValidator_validateDisposable(t *testing.T) {
+
+func TestValidator_ValidateDisposable(t *testing.T) {
 	t.Parallel()
 	assert := assert.New(t)
 
@@ -213,23 +214,28 @@ func TestValidator_validateDisposable(t *testing.T) {
 			expected: true,
 		},
 		{
+			name:        "missing at sign",
+			email:       "invalid-email",
+			expected:    false,
+			expectedErr: "'@' not found in address: \"invalid-email\"",
+		},
+		{
+			name:        "empty email",
 			email:       "",
 			expected:    false,
-			expectedErr: `'@' not found in address: ""`,
+			expectedErr: "'@' not found in address: \"\"",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			validator := email.NewValidator(
-				email.WithFormValidation(false),
-				email.WithDisposableValidation(true),
-			)
-
+			validator := email.NewValidator().WithDisposableValidation()
 			ok, err := validator.Validate(tt.email)
 			assert.Equal(tt.expected, ok)
 			if !tt.expected && tt.expectedErr != "" {
 				assert.ErrorContains(err, tt.expectedErr)
+			} else {
+				assert.NoError(err)
 			}
 		})
 	}
