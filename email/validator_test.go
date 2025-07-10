@@ -7,6 +7,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	testEmail          = "test@example.com"
+	userDomainEmail    = "user@domain.co.uk"
+	invalidEmail       = "invalid-email"
+	missingLocalEmail  = "@missinglocal.com"
+	missingAtSignEmail = "missingatsign.com"
+	missingDomainEmail = "missingdomain@"
+)
+
 func TestValidator_EmptyValidatorAlwaysPasses(t *testing.T) {
 	t.Parallel()
 
@@ -18,27 +27,27 @@ func TestValidator_EmptyValidatorAlwaysPasses(t *testing.T) {
 		expected bool
 	}{
 		{
-			email:    "test@example.com",
+			email:    testEmail,
 			expected: true,
 		},
 		{
-			email:    "user@domain.co.uk",
+			email:    userDomainEmail,
 			expected: true,
 		},
 		{
-			email:    "invalid-email",
+			email:    invalidEmail,
 			expected: true,
 		},
 		{
-			email:    "@missinglocal.com",
+			email:    missingLocalEmail,
 			expected: true,
 		},
 		{
-			email:    "missingatsign.com",
+			email:    missingAtSignEmail,
 			expected: true,
 		},
 		{
-			email:    "missingdomain@",
+			email:    missingDomainEmail,
 			expected: true,
 		},
 		{
@@ -56,7 +65,7 @@ func TestValidator_EmptyValidatorAlwaysPasses(t *testing.T) {
 	}
 }
 
-func TestValidator_Validate(t *testing.T) {
+func TestValidator_ValidateForm(t *testing.T) {
 	t.Parallel()
 
 	validator := email.NewValidator().WithFormValidation()
@@ -67,27 +76,27 @@ func TestValidator_Validate(t *testing.T) {
 		expected bool
 	}{
 		{
-			email:    "test@example.com",
+			email:    testEmail,
 			expected: true,
 		},
 		{
-			email:    "user@domain.co.uk",
+			email:    userDomainEmail,
 			expected: true,
 		},
 		{
-			email:    "invalid-email",
+			email:    invalidEmail,
 			expected: false,
 		},
 		{
-			email:    "@missinglocal.com",
+			email:    missingLocalEmail,
 			expected: false,
 		},
 		{
-			email:    "missingatsign.com",
+			email:    missingAtSignEmail,
 			expected: false,
 		},
 		{
-			email:    "missingdomain@",
+			email:    missingDomainEmail,
 			expected: false,
 		},
 		{
@@ -101,6 +110,85 @@ func TestValidator_Validate(t *testing.T) {
 			ok, err := validator.Validate(tt.email)
 			assert.Equal(tt.expected, ok)
 			assert.NoError(err)
+		})
+	}
+}
+
+func TestValidator_Validate_WithoutFormValidation(t *testing.T) {
+	t.Parallel()
+
+	validator := email.NewValidator()
+	assert := assert.New(t)
+
+	emails := []string{
+		testEmail,
+		invalidEmail,
+		"",
+		missingLocalEmail,
+	}
+
+	for _, e := range emails {
+		ok, err := validator.Validate(e)
+		assert.True(ok)
+		assert.NoError(err)
+	}
+}
+
+func TestValidator_Validate_WithDNSValidation(t *testing.T) {
+	t.Parallel()
+
+	validator := email.NewValidator().WithDNSValidation()
+	assert := assert.New(t)
+
+	tests := []struct {
+		email       string
+		expected    bool
+		expectedErr string
+	}{
+		{
+			email:    testEmail,
+			expected: true,
+		},
+		{
+			email:    userDomainEmail,
+			expected: true,
+		},
+		{
+			email:       invalidEmail,
+			expected:    false,
+			expectedErr: "'@' not found in address: \"invalid-email\"",
+		},
+		{
+			email:       missingLocalEmail,
+			expected:    false,
+			expectedErr: "no such host",
+		},
+		{
+			email:       missingAtSignEmail,
+			expected:    false,
+			expectedErr: "'@' not found in address: \"missingatsign.com\"",
+		},
+		{
+			email:       missingDomainEmail,
+			expected:    false,
+			expectedErr: "no such host",
+		},
+		{
+			email:       "",
+			expected:    false,
+			expectedErr: "'@' not found in address: \"\"",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.email, func(t *testing.T) {
+			ok, err := validator.Validate(tt.email)
+			assert.Equal(tt.expected, ok)
+			if !tt.expected {
+				assert.ErrorContains(err, tt.expectedErr)
+			} else {
+				assert.NoError(err)
+			}
 		})
 	}
 }
