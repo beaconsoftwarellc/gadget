@@ -204,13 +204,23 @@ func TestValidator_ValidateDisposable(t *testing.T) {
 		expectedErr string
 	}{
 		{
-			name:     "disposable email returns false",
-			email:    "disposable@mailinator.com",
+			name:     "blocked email returns false",
+			email:    "user@mailinator.com",
 			expected: false,
 		},
 		{
-			name:     "non-disposable email returns true",
+			name:     "blocked email returns false - guerrillamail",
+			email:    "test@guerrillamail.com",
+			expected: false,
+		},
+		{
+			name:     "allowed email returns true",
 			email:    "user@example.com",
+			expected: true,
+		},
+		{
+			name:     "allowed email returns true - gmail",
+			email:    "user@gmail.com",
 			expected: true,
 		},
 		{

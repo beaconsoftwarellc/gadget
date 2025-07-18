@@ -79,5 +79,5 @@ func validateDisposable(email string) (bool, error) {
 
 	domain := email[atIdx+1:]
 
-	return NewWhitelist().Validate(domain), nil
+	return NewBlockList().Validate(domain), nil
 }
