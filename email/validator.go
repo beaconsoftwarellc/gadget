@@ -31,9 +31,9 @@ func (v Validator) WithDNSValidation() Validator {
 	return v
 }
 
-// WithDisposableValidation adds disposable email validation to the Validator.
+// WithBlocklistValidation adds disposable email validation to the Validator.
 // It returns a new Validator with the validateDisposable function appended.
-func (v Validator) WithDisposableValidation() Validator {
+func (v Validator) WithBlocklistValidation() Validator {
 	v.validateFuncs = append(v.validateFuncs, validateDisposable)
 	return v
 }

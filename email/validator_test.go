@@ -239,7 +239,7 @@ func TestValidator_ValidateDisposable(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			validator := email.NewValidator().WithDisposableValidation()
+			validator := email.NewValidator().WithBlocklistValidation()
 			ok, err := validator.Validate(tt.email)
 			assert.Equal(tt.expected, ok)
 			if !tt.expected && tt.expectedErr != "" {
