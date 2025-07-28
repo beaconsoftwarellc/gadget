@@ -192,3 +192,61 @@ func TestValidator_Validate_WithDNSValidation(t *testing.T) {
 		})
 	}
 }
+
+func TestValidator_ValidateDisposable(t *testing.T) {
+	t.Parallel()
+	assert := assert.New(t)
+
+	tests := []struct {
+		name        string
+		email       string
+		expected    bool
+		expectedErr string
+	}{
+		{
+			name:     "blocked email returns false",
+			email:    "user@mailinator.com",
+			expected: false,
+		},
+		{
+			name:     "blocked email returns false - guerrillamail",
+			email:    "test@guerrillamail.com",
+			expected: false,
+		},
+		{
+			name:     "allowed email returns true",
+			email:    "user@example.com",
+			expected: true,
+		},
+		{
+			name:     "allowed email returns true - gmail",
+			email:    "user@gmail.com",
+			expected: true,
+		},
+		{
+			name:        "missing at sign",
+			email:       "invalid-email",
+			expected:    false,
+			expectedErr: "'@' not found in address: \"invalid-email\"",
+		},
+		{
+			name:        "empty email",
+			email:       "",
+			expected:    false,
+			expectedErr: "'@' not found in address: \"\"",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			validator := email.NewValidator().WithBlocklistValidation()
+			ok, err := validator.Validate(tt.email)
+			assert.Equal(tt.expected, ok)
+			if !tt.expected && tt.expectedErr != "" {
+				assert.ErrorContains(err, tt.expectedErr)
+			} else {
+				assert.NoError(err)
+			}
+		})
+	}
+}

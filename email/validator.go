@@ -31,6 +31,13 @@ func (v Validator) WithDNSValidation() Validator {
 	return v
 }
 
+// WithBlocklistValidation adds disposable email validation to the Validator.
+// It returns a new Validator with the validateBlocklist function appended.
+func (v Validator) WithBlocklistValidation() Validator {
+	v.validateFuncs = append(v.validateFuncs, validateBlocklist)
+	return v
+}
+
 // Validate runs all validation functions on the provided email string.
 // It returns true if all validations pass, or false and an error if any fail.
 func (v Validator) Validate(email string) (bool, error) {
@@ -62,4 +69,15 @@ func validateDNS(email string) (bool, error) {
 	}
 
 	return len(nameServers) > 0, nil
+}
+
+func validateBlocklist(email string) (bool, error) {
+	atIdx := strings.LastIndex(email, "@")
+	if atIdx == -1 {
+		return false, fmt.Errorf("'@' not found in address: %q", email)
+	}
+
+	domain := email[atIdx+1:]
+
+	return NewBlockList().Validate(domain), nil
 }
