@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // ErrTesting is for use in error test cases only. Should
@@ -19,6 +20,10 @@ func (e ErrTesting) Error() string {
 	return string(e)
 }
 
+func (e ErrTesting) GRPCStatus() *status.Status {
+	return status.New(e.GetCode(), e.Error())
+}
+
 // ErrParameterRequired is returned when a required parameter is empty or nil
 // but requires a value.
 type ErrParameterRequired string
@@ -29,6 +34,10 @@ func (e ErrParameterRequired) GetCode() codes.Code {
 
 func (e ErrParameterRequired) Error() string {
 	return fmt.Sprintf("parameter '%s' cannot be empty", string(e))
+}
+
+func (e ErrParameterRequired) GRPCStatus() *status.Status {
+	return status.New(e.GetCode(), e.Error())
 }
 
 // ErrRequiresSuperUser is returned when a user attempts to perform an action
@@ -43,6 +52,10 @@ func (e ErrRequiresSuperUser) Error() string {
 	return fmt.Sprintf("action %s requires a superuser", string(e))
 }
 
+func (e ErrRequiresSuperUser) GRPCStatus() *status.Status {
+	return status.New(e.GetCode(), e.Error())
+}
+
 // ErrNotFound is returned when a resource does not exist for a
 // given identifier.
 type ErrNotFound string
@@ -55,6 +68,10 @@ func (e ErrNotFound) Error() string {
 	return fmt.Sprintf("resource '%s' not found", string(e))
 }
 
+func (e ErrNotFound) GRPCStatus() *status.Status {
+	return status.New(e.GetCode(), e.Error())
+}
+
 // ErrInvalidArgument value for the expected functionality.
 type ErrInvalidArgument string
 
@@ -64,4 +81,8 @@ func (e ErrInvalidArgument) GetCode() codes.Code {
 
 func (e ErrInvalidArgument) Error() string {
 	return fmt.Sprintf("argument '%s' value is invalid", string(e))
+}
+
+func (e ErrInvalidArgument) GRPCStatus() *status.Status {
+	return status.New(e.GetCode(), e.Error())
 }
