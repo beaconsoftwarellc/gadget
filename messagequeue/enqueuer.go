@@ -8,6 +8,8 @@ import (
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
 )
 
+//go:generate mockgen -package $GOPACKAGE -source $GOFILE -destination mock_$GOFILE
+
 const (
 	statusStopped  uint32 = 0
 	statusRunning  uint32 = 1

@@ -5,6 +5,7 @@
 //
 //	mockgen -package messagequeue -source messagequeue.go -destination messagequeue_mock_test.gen.go
 //
+
 // Package messagequeue is a generated GoMock package.
 package messagequeue
 
@@ -20,6 +21,7 @@ import (
 type MockMessageQueue struct {
 	ctrl     *gomock.Controller
 	recorder *MockMessageQueueMockRecorder
+	isgomock struct{}
 }
 
 // MockMessageQueueMockRecorder is the mock recorder for MockMessageQueue.
