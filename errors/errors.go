@@ -86,3 +86,18 @@ func (e ErrInvalidArgument) Error() string {
 func (e ErrInvalidArgument) GRPCStatus() *status.Status {
 	return status.New(e.GetCode(), e.Error())
 }
+
+// ErrNotImplemented for a feature that is not implemented.
+type ErrNotImplemented string
+
+func (e ErrNotImplemented) GetCode() codes.Code {
+	return codes.Unimplemented
+}
+
+func (e ErrNotImplemented) Error() string {
+	return fmt.Sprintf("%s is not implemented", string(e))
+}
+
+func (e ErrNotImplemented) GRPCStatus() *status.Status {
+	return status.New(e.GetCode(), e.Error())
+}
