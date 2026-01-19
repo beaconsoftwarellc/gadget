@@ -13,8 +13,12 @@ import (
 	"github.com/beaconsoftwarellc/gadget/v2/stringutil"
 )
 
-// default path is /${Environment}-${Project}/
-const ssmPathFmt = "/%s-%s/"
+const (
+	// default path is /${Environment}-${Project}/
+	ssmPathFmt = "/%s-%s/"
+	// max retry attempts for SSM calls
+	maxRetryAttempts = 50
+)
 
 //go:generate mockgen -source=$GOFILE -package environment -destination ssmclient_mock.gen.go
 type ssmClient interface {
@@ -35,7 +39,9 @@ type ssmAddGet struct {
 // NewSSM returns a SSM for the environment with a client and an initialized cache
 func NewSSM(ctx context.Context, region, environment, project string,
 	logger log.Logger) AddGet {
-	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(region))
+	cfg, err := config.LoadDefaultConfig(ctx,
+		config.WithRegion(region),
+		config.WithRetryMaxAttempts(maxRetryAttempts))
 	if err != nil {
 		panic(log.Fatalf("[ENV.SSM.42] failed to load default config: %s", err))
 	}
