@@ -152,7 +152,6 @@ func (c *cron) schedule(event Event, attempt uint, override *time.Time) {
 	})
 }
 
-// Execute the passed [Execution] and return the next [Execution] for the Event
 func (c *cron) execute(event Event) {
 	et, ok := c.loadAndDelete(event.GetID())
 	if !ok {
