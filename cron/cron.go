@@ -148,7 +148,7 @@ func (c *cron) trigger(event Event) {
 		et.Timer.Stop()
 	}
 	execution := &Execution{
-		Event: event.GetID(),
+		Event: event,
 		Time:  et.NextExecution.Unix(),
 	}
 	select {
