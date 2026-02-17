@@ -39,18 +39,46 @@ func (m *MockEvent) EXPECT() *MockEventMockRecorder {
 	return m.recorder
 }
 
-// Execute mocks base method.
-func (m *MockEvent) Execute() error {
+// GetDayOfMonth mocks base method.
+func (m *MockEvent) GetDayOfMonth() int32 {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Execute")
-	ret0, _ := ret[0].(error)
+	ret := m.ctrl.Call(m, "GetDayOfMonth")
+	ret0, _ := ret[0].(int32)
 	return ret0
 }
 
-// Execute indicates an expected call of Execute.
-func (mr *MockEventMockRecorder) Execute() *gomock.Call {
+// GetDayOfMonth indicates an expected call of GetDayOfMonth.
+func (mr *MockEventMockRecorder) GetDayOfMonth() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Execute", reflect.TypeOf((*MockEvent)(nil).Execute))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDayOfMonth", reflect.TypeOf((*MockEvent)(nil).GetDayOfMonth))
+}
+
+// GetDayOfWeek mocks base method.
+func (m *MockEvent) GetDayOfWeek() int32 {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDayOfWeek")
+	ret0, _ := ret[0].(int32)
+	return ret0
+}
+
+// GetDayOfWeek indicates an expected call of GetDayOfWeek.
+func (mr *MockEventMockRecorder) GetDayOfWeek() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDayOfWeek", reflect.TypeOf((*MockEvent)(nil).GetDayOfWeek))
+}
+
+// GetHour mocks base method.
+func (m *MockEvent) GetHour() int32 {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetHour")
+	ret0, _ := ret[0].(int32)
+	return ret0
+}
+
+// GetHour indicates an expected call of GetHour.
+func (mr *MockEventMockRecorder) GetHour() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHour", reflect.TypeOf((*MockEvent)(nil).GetHour))
 }
 
 // GetID mocks base method.
@@ -67,16 +95,30 @@ func (mr *MockEventMockRecorder) GetID() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetID", reflect.TypeOf((*MockEvent)(nil).GetID))
 }
 
-// GetSchedule mocks base method.
-func (m *MockEvent) GetSchedule() Schedule {
+// GetMinute mocks base method.
+func (m *MockEvent) GetMinute() int32 {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSchedule")
-	ret0, _ := ret[0].(Schedule)
+	ret := m.ctrl.Call(m, "GetMinute")
+	ret0, _ := ret[0].(int32)
 	return ret0
 }
 
-// GetSchedule indicates an expected call of GetSchedule.
-func (mr *MockEventMockRecorder) GetSchedule() *gomock.Call {
+// GetMinute indicates an expected call of GetMinute.
+func (mr *MockEventMockRecorder) GetMinute() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSchedule", reflect.TypeOf((*MockEvent)(nil).GetSchedule))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMinute", reflect.TypeOf((*MockEvent)(nil).GetMinute))
+}
+
+// GetMonth mocks base method.
+func (m *MockEvent) GetMonth() int32 {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMonth")
+	ret0, _ := ret[0].(int32)
+	return ret0
+}
+
+// GetMonth indicates an expected call of GetMonth.
+func (mr *MockEventMockRecorder) GetMonth() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMonth", reflect.TypeOf((*MockEvent)(nil).GetMonth))
 }

@@ -13,26 +13,18 @@ import (
 // LoadEvents for scheduling in an instance of [Cron]
 type LoadEvents func(qb.LimitOffset) ([]Event, int, error)
 
-// ShouldExecute is a check executed before an event is executed with the
-// time that the execution was for based upon the schedule. This is used
-// to prevent duplicate executions by Crons running in a parallel fashion.
-type ShouldExecute func(Event, time.Time) (bool, error)
-
 // New creates a new instance of [Cron] with the specified parameters
-func New(scheduler Scheduler, loadEvents LoadEvents,
-	retryAfter time.Duration, shouldExecute ShouldExecute,
-	maxAttempts uint, logger log.Logger) Cron {
+func New(scheduler Scheduler, loadEvents LoadEvents, logger log.Logger) Cron {
 	return &cron{
-		scheduler:     scheduler,
-		loadEvents:    loadEvents,
-		retryAfter:    retryAfter,
-		maxAttempts:   maxAttempts,
-		logger:        logger,
-		shouldExecute: shouldExecute,
+		scheduler:  scheduler,
+		loadEvents: loadEvents,
+		logger:     logger,
 	}
 }
 
-// Cron is an interface for scheduling events to be executed at a specific time.
+// Cron is an interface for scheduling recurring events to be triggered. When Start is called,
+// a channel will be returned that will be populated with [Execution] objects for each event that is triggered
+// according to its schedule.
 type Cron interface {
 	// Start the cron scheduler
 	Start() (<-chan *Execution, error)
@@ -55,14 +47,11 @@ type eventTimer struct {
 }
 
 type cron struct {
-	scheduler     Scheduler
-	events        *sync.Map
-	loadEvents    LoadEvents
-	complete      chan *Execution
-	shouldExecute ShouldExecute
-	retryAfter    time.Duration
-	maxAttempts   uint
-	logger        log.Logger
+	scheduler  Scheduler
+	events     *sync.Map
+	loadEvents LoadEvents
+	triggered  chan *Execution
+	logger     log.Logger
 }
 
 func (c *cron) load() error {
@@ -75,7 +64,7 @@ func (c *cron) load() error {
 		if err != nil {
 			return err
 		}
-		c.schedule(event, 0, nil)
+		c.schedule(event)
 	}
 	return nil
 }
@@ -85,13 +74,13 @@ func (c *cron) Start() (<-chan *Execution, error) {
 		return nil, errors.Newf("[GAD.CRN.75] cron already started")
 	}
 	c.events = new(sync.Map)
-	c.complete = make(chan *Execution, 1000)
+	c.triggered = make(chan *Execution, 1000)
 	err := c.load()
 	if err != nil {
 		c.Stop()
 		return nil, err
 	}
-	return c.complete, nil
+	return c.triggered, nil
 }
 
 func (c *cron) Stop() {
@@ -106,7 +95,7 @@ func (c *cron) Stop() {
 		timer.Timer.Stop()
 		return true
 	})
-	// leave the complete channel open, we don't want to close it and
+	// leave the triggered channel open, we don't want to close it and
 	// cause a panic by the caller draining it.
 }
 
@@ -137,22 +126,19 @@ func (c *cron) Schedule(event Event) {
 	if ok && eventTimer != nil {
 		eventTimer.Timer.Stop()
 	}
-	c.schedule(event, 0, nil)
+	c.schedule(event)
 }
 
-func (c *cron) schedule(event Event, attempt uint, override *time.Time) {
-	nextExecution := c.scheduler.GetNextExecution(event.GetSchedule())
-	if override != nil && !override.IsZero() {
-		nextExecution = *override
-	}
+func (c *cron) schedule(event Event) {
+	nextExecution := c.scheduler.GetNextExecution(event)
 	c.events.Store(event.GetID(), &eventTimer{
-		Event:    event,
-		Attempts: attempt,
-		Timer:    time.AfterFunc(time.Until(nextExecution), func() { c.execute(event) }),
+		Event:         event,
+		NextExecution: nextExecution,
+		Timer:         time.AfterFunc(time.Until(nextExecution), func() { c.trigger(event) }),
 	})
 }
 
-func (c *cron) execute(event Event) {
+func (c *cron) trigger(event Event) {
 	et, ok := c.loadAndDelete(event.GetID())
 	if !ok {
 		_ = c.logger.Errorf("[GAD.CRN.76] event %s not found, there may be multiple executions",
@@ -161,35 +147,17 @@ func (c *cron) execute(event Event) {
 	} else {
 		et.Timer.Stop()
 	}
-	if ok, err := c.shouldExecute(event, et.NextExecution); err != nil {
-		_ = c.logger.Errorf("[GAD.CRN.125] error checking for execution of '%s' (retry in %s): %s",
-			event.GetID(), c.retryAfter, err)
-		et.Attempts++
-		if et.Attempts >= c.maxAttempts {
-			c.logger.Errorf("[GAD.CRN.126] event %s failed after %d attempts", event.GetID(), et.Attempts)
-		} else {
-			override := time.Now().Add(c.retryAfter)
-			c.schedule(event, et.Attempts, &override)
-			return
-		}
-	} else if ok {
-		execution := &Execution{
-			Event:  event.GetID(),
-			Time:   time.Now().Unix(),
-			Error:  event.Execute(),
-			Result: Success,
-		}
-		if execution.Error != nil {
-			execution.Result = Failure
-		}
-		select {
-		case c.complete <- execution:
-		// noop
-		default:
-			// just log if the channel is full
-			c.logger.Errorf("[GAD.CRN.77] execution channel full: execution %s result %s: %s",
-				execution.Event, execution.Result, execution.Error)
-		}
+	execution := &Execution{
+		Event: event.GetID(),
+		Time:  et.NextExecution.Unix(),
 	}
-	c.schedule(event, 0, nil)
+	select {
+	case c.triggered <- execution:
+	// noop
+	default:
+		// just log if the channel is full
+		c.logger.Errorf("[GAD.CRN.77] triggered channel full: cannot trigger event %s",
+			execution.Event)
+	}
+	c.schedule(event)
 }

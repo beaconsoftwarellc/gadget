@@ -6,8 +6,4 @@ type Execution struct {
 	Event string
 	// Time the event was executed
 	Time int64
-	// Result of the event execution
-	Result Result
-	// Error if any occurred
-	Error error
 }
