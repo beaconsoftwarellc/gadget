@@ -45,13 +45,7 @@ func (s *scheduler) GetNextExecution(schedule Schedule) time.Time {
 	)
 
 	if schedule.GetMonth() > 0 {
-		// the month has already passed
-		if month > time.Month(schedule.GetMonth()) {
-			year = year + 1
-		}
 		month = time.Month(schedule.GetMonth())
-		// if the day of the month is specified, check if it has already passed
-		// IFF the current month is the month specified
 		if schedule.GetDayOfMonth() > 0 {
 			day = int(schedule.GetDayOfMonth())
 		} else {
