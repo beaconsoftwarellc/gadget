@@ -101,3 +101,30 @@ func (e ErrNotImplemented) Error() string {
 func (e ErrNotImplemented) GRPCStatus() *status.Status {
 	return status.New(e.GetCode(), e.Error())
 }
+
+// ErrUnauthorized error for when a user is not authorized to access a resource.
+type ErrUnauthorized struct {
+	Target string
+}
+
+func (e ErrUnauthorized) GetCode() codes.Code {
+	return codes.PermissionDenied
+}
+
+func (e ErrUnauthorized) Error() string {
+	return fmt.Sprintf("user is not authorized to access: %s", e.Target)
+}
+
+func (e ErrUnauthorized) GRPCStatus() *status.Status {
+	return status.New(e.GetCode(), e.Error())
+}
+
+// NewErrUnauthorized creates a new ErrUnauthorized error with the given message.
+func NewErrUnauthorized(target string) ErrUnauthorized {
+	return ErrUnauthorized{Target: target}
+}
+
+// NewErrUnauthorizedResource creates a new ErrUnauthorized error with the given resource type and ID.
+func NewErrUnauthorizedResource(resource, id string) ErrUnauthorized {
+	return ErrUnauthorized{Target: fmt.Sprintf("%s (%s)", resource, id)}
+}
