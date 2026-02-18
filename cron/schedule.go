@@ -1,6 +1,10 @@
 package cron
 
-import "time"
+import (
+	"time"
+
+	"github.com/beaconsoftwarellc/gadget/v2/dateutil"
+)
 
 // Schedule for an Event to be executed on. Negative values indicate that the field is not applicable.
 type Schedule interface {
@@ -63,7 +67,7 @@ func (s *scheduler) GetNextExecution(schedule Schedule) time.Time {
 		}
 		next := time.Date(year, month, day, hour, minute, 0, 0, time.UTC)
 		if now.After(next) || now.Equal(next) {
-			next = next.AddDate(1, 0, 0)
+			next = dateutil.IncrementYear(next, 1)
 		}
 		// we are fully configured
 		return next
@@ -84,7 +88,7 @@ func (s *scheduler) GetNextExecution(schedule Schedule) time.Time {
 		}
 		next := time.Date(year, month, day, hour, minute, 0, 0, time.UTC)
 		if now.After(next) || now.Equal(next) {
-			next = next.AddDate(0, 1, 0)
+			next = dateutil.IncrementMonth(next, 1)
 		}
 		return next
 	}

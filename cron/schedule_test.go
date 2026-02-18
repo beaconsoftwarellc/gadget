@@ -150,6 +150,14 @@ func TestGetNextExecution(t *testing.T) {
 			schedule: mockSchedule{dayOfMonth: 10, hour: -1, minute: -1, dayOfWeek: -1, month: -1},
 			expected: time.Date(2026, time.March, 10, 00, 00, 0, 0, time.UTC),
 		},
+		{
+			name: "Day of month provided, current hour ahead (incongruous month days)",
+			timeNow: func() time.Time {
+				return time.Date(2026, time.January, 31, 05, 40, 0, 0, time.UTC)
+			},
+			schedule: mockSchedule{dayOfMonth: 31, hour: -1, minute: -1, dayOfWeek: -1, month: -1},
+			expected: time.Date(2026, time.February, 28, 00, 00, 0, 0, time.UTC),
+		},
 		// month
 		{
 			name: "Specific month provided, current month behind",
