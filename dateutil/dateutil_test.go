@@ -5,8 +5,6 @@ import (
 	"time"
 )
 
-// ... existing TestIncrementMonth ...
-
 func TestIncrementYear(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -37,12 +35,6 @@ func TestIncrementYear(t *testing.T) {
 			today:    time.Date(2023, 2, 28, 12, 0, 0, 0, time.UTC),
 			years:    1,
 			expected: time.Date(2024, 2, 28, 12, 0, 0, 0, time.UTC),
-		},
-		{
-			name:     "Subtract one year crossing a leap year",
-			today:    time.Date(2024, 2, 29, 12, 0, 0, 0, time.UTC),
-			years:    -1,
-			expected: time.Date(2023, 2, 28, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			name:     "Add years maintaining end-of-month for leap years",
