@@ -1,5 +1,7 @@
 package cron
 
+//go:generate mockgen -package $GOPACKAGE -source $GOFILE -destination mock$GOFILE
+
 import (
 	"sync"
 	"time"
