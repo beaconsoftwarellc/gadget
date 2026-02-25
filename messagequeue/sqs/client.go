@@ -12,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
 	"github.com/beaconsoftwarellc/gadget/v2/log"
 	"github.com/beaconsoftwarellc/gadget/v2/messagequeue"
+	"github.com/beaconsoftwarellc/gadget/v2/stringutil"
 )
 
 const (
@@ -34,6 +35,8 @@ const (
 	RegionUSEast1 = "us-east-1"
 	// LocalRegion is for testing locally with a docker instance running elasticmq
 	LocalRegion = "local"
+
+	unknownErrorMessage = "unknown error occurred"
 )
 
 // New SQS instance located at the passed URL
@@ -118,10 +121,15 @@ func (mq *sdk) enqueueBatch(ctx context.Context,
 	for _, failed := range smbo.Failed {
 		r, ok := results[aws.ToString(failed.Id)]
 		if ok {
+			message := aws.ToString(failed.Message)
+			if stringutil.IsWhiteSpace(message) {
+				message = unknownErrorMessage
+			}
+
 			r.Success = false
 			r.SenderFault = failed.SenderFault
 			r.Error = fmt.Sprintf("%s: %s",
-				aws.ToString(failed.Code), aws.ToString(failed.Message))
+				aws.ToString(failed.Code), message)
 		}
 	}
 }
