@@ -113,7 +113,7 @@ func TestCron_Load(t *testing.T) {
 
 		time.Sleep(2 * time.Hour)
 		execution := <-triggered
-		require.Equal(t, event.GetID(), execution.Event)
+		require.Equal(t, event.GetID(), execution.Event.GetID())
 		cron.Stop()
 	})
 }
@@ -146,11 +146,11 @@ func TestCron_Schedule_New(t *testing.T) {
 		cron.Schedule(event)
 		time.Sleep(2 * time.Hour)
 		execution := <-triggered
-		require.Equal(t, event.GetID(), execution.Event)
+		require.Equal(t, event.GetID(), execution.Event.GetID())
 		require.Empty(t, triggered)
 		time.Sleep(24 * time.Hour)
 		execution = <-triggered
-		require.Equal(t, event.GetID(), execution.Event)
+		require.Equal(t, event.GetID(), execution.Event.GetID())
 		cron.Stop()
 	})
 }
@@ -183,7 +183,7 @@ func TestCron_Schedule_Update(t *testing.T) {
 		cron.Schedule(event)
 		time.Sleep(2 * time.Hour)
 		execution := <-triggered
-		require.Equal(t, event.GetID(), execution.Event)
+		require.Equal(t, event.GetID(), execution.Event.GetID())
 
 		// now update the schedule to the 5th of the month
 		event.hour = -1
@@ -199,7 +199,7 @@ func TestCron_Schedule_Update(t *testing.T) {
 		// wait 5 days and we should have an execution
 		time.Sleep(5 * 24 * time.Hour)
 		execution = <-triggered
-		require.Equal(t, event.GetID(), execution.Event)
+		require.Equal(t, event.GetID(), execution.Event.GetID())
 		cron.Stop()
 	})
 }
@@ -232,7 +232,7 @@ func TestCron_Unschedule(t *testing.T) {
 		cron.Schedule(event)
 		time.Sleep(2 * time.Hour)
 		execution := <-triggered
-		require.Equal(t, event.GetID(), execution.Event)
+		require.Equal(t, event.GetID(), execution.Event.GetID())
 
 		cron.Unschedule(event.GetID())
 		// we should be able to wait a couple of days with no execution
