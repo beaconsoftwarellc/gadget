@@ -397,7 +397,7 @@ func Update(table Table) *UpdateQuery {
 	}
 }
 
-// Delete rows from from the specified tables that match the criteria specified in where.
+// Delete rows from the specified tables that match the criteria specified in where.
 func Delete(rowsIn ...Table) *DeleteQuery {
 	return &DeleteQuery{
 		tables: rowsIn,
