@@ -193,6 +193,7 @@ func (q *SelectQuery) SelectFrom(selectExpressions ...SelectExpression) *SelectQ
 	return query
 }
 
+// GetSelectExpressions on this query
 func (q *SelectQuery) GetSelectExpressions() []SelectExpression {
 	return q.selectExps
 }
