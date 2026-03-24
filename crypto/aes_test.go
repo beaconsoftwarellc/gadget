@@ -24,7 +24,7 @@ func TestNewAES(t *testing.T) {
 
 func TestNewAESPassedKey(t *testing.T) {
 	assert := assert1.New(t)
-	key := AESEncryption{}.GenerateKey()
+	key := (&AESEncryption{}).GenerateKey()
 	encryption, err := NewAES(key)
 	aes := encryption.(*AESEncryption)
 	assert.NoError(err)

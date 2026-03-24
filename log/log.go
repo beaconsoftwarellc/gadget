@@ -20,7 +20,7 @@ import (
 	"sync"
 )
 
-//NOTES: Be cautious regarding threadsafety and performance
+// NOTES: Be cautious regarding thread safety and performance
 
 // Level represents the importance of a message.
 type Level string
@@ -45,26 +45,26 @@ const (
 	FlagFatal, idxFatal
 	// FlagAll has all log level flags set.
 	FlagAll = (FlagFatal - 1) | FlagFatal
-	// MaskDefault is set to only record Access, Error and Fatal messages.
+	// MaskDefault is set to only record Access, Error, and Fatal messages.
 	MaskDefault = FlagAccess | FlagError | FlagFatal
 	// MaskVerbose filters everything not between Info and Fatal
 	MaskVerbose = FlagInfo | FlagWarn | MaskDefault
 	// MaskDebug filters nothing
 	MaskDebug           = FlagAll
 	standardStackOffset = 3
-	// LevelFatal string for identifying message that are Fatal.
+	// LevelFatal string for identifying messages that are Fatal.
 	LevelFatal Level = "FATAL"
-	// LevelError string for identifying message that are Error.
+	// LevelError string for identifying messages that are Error.
 	LevelError Level = "ERROR"
-	// LevelWarn string for identifying message that are Warn.
+	// LevelWarn string for identifying messages that are Warn.
 	LevelWarn Level = "WARN"
-	// LevelAudit string for identifying message that are Audit.
+	// LevelAudit string for identifying messages that are Audit.
 	LevelAudit Level = "AUDIT"
-	// LevelInfo string for identifying message that are Info.
+	// LevelInfo string for identifying messages that are Info.
 	LevelInfo Level = "INFO"
-	// LevelAccess string for identifying message that are Access.
+	// LevelAccess string for identifying messages that are Access.
 	LevelAccess Level = "ACCESS"
-	// LevelDebug string for identifying message that are for Debug.
+	// LevelDebug string for identifying messages that are for Debug.
 	LevelDebug Level = "DEBUG"
 )
 

@@ -11,7 +11,7 @@ import (
 // AES256KeySize for AWS256 Encryption
 const AES256KeySize = 32
 
-// IncompleteDataError  returned when an incomplete ciphertext is passed to decrypt.
+// IncompleteDataError returned when an incomplete ciphertext is passed to decrypt.
 type IncompleteDataError struct{ trace []string }
 
 func (err *IncompleteDataError) Error() string {
@@ -23,7 +23,7 @@ func (err *IncompleteDataError) Trace() []string {
 	return err.trace
 }
 
-// NewIncompleteDataError instantiates a IncompleteDataError with a stack trace
+// NewIncompleteDataError instantiates an IncompleteDataError with a stack trace
 func NewIncompleteDataError() errors.TracerError {
 	return &IncompleteDataError{trace: errors.GetStackTrace()}
 }
@@ -35,7 +35,7 @@ type AESEncryption struct {
 	gcm   cipher.AEAD
 }
 
-// NewAES using the passed key, if nil is passed a new key will be generated.
+// NewAES using the passed key, if nil is passed, a new key will be generated.
 func NewAES(key []byte) (Encryption, error) {
 	a := &AESEncryption{}
 	var err error
@@ -53,7 +53,7 @@ func (a *AESEncryption) GetType() CipherType {
 }
 
 // GenerateKey will create a new key to use with this instance of AES
-func (AESEncryption) GenerateKey() []byte {
+func (*AESEncryption) GenerateKey() []byte {
 	return generator.Bytes(AES256KeySize)
 }
 
@@ -108,11 +108,11 @@ func (a *AESEncryption) Decrypt(ciphertext []byte) (plaintext []byte, err error)
 }
 
 // Sign does nothing with AES
-func (a *AESEncryption) Sign(plaintext []byte) (signature []byte, err error) {
+func (a *AESEncryption) Sign(_ []byte) (signature []byte, err error) {
 	return []byte{}, nil
 }
 
 // Verify does nothing with AES
-func (a *AESEncryption) Verify(plaintext []byte, signature []byte) (err error) {
+func (a *AESEncryption) Verify(_, _ []byte) (err error) {
 	return nil
 }
