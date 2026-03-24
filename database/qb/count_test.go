@@ -43,3 +43,25 @@ func Test_NewCountDistinctExpression(t *testing.T) {
 	assert.Equal(expectedSQL, actualSQL)
 	assert.Nil(values)
 }
+
+func Test_NewCountDistinct(t *testing.T) {
+	assert := assert1.New(t)
+	expression := TableField{
+		Name:  "foo",
+		Table: "bar",
+	}
+	expression2 := TableField{
+		Name:  "baz",
+		Table: "quux",
+	}
+
+	countDistinct := NewCountDistinct([]SelectExpression{expression, expression2})
+
+	expectedName := "COUNT(DISTINCT foo, baz)"
+	assert.Equal(expectedName, countDistinct.GetName())
+
+	expectedSQL := "COUNT(DISTINCT `bar`.`foo`, `quux`.`baz`) as count"
+	actualSQL, values := countDistinct.ParameterizedSQL()
+	assert.Equal(expectedSQL, actualSQL)
+	assert.Nil(values)
+}

@@ -136,11 +136,15 @@ func (d *api) CommitOrRollback(err error) errors.TracerError {
 
 func (db *api) Count(table qb.Table, query *qb.SelectQuery) (int32, error) {
 	var (
-		target []*qb.RowCount
-		err    error
+		target           []*qb.RowCount
+		err              error
+		selectExpression = qb.NewCountExpression(table.GetName())
 	)
+	if query.GetDistinct() {
+		selectExpression = qb.NewCountDistinct(query.GetSelectExpressions())
+	}
 	err = db.Select(&target,
-		query.SelectFrom(qb.NewCountExpression(table.GetName())),
+		query.SelectFrom(selectExpression),
 		qb.NewLimitOffset[int]().SetLimit(1).SetOffset(0),
 	)
 	if err != nil {
