@@ -7,7 +7,7 @@ import (
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
 )
 
-// ValidationFromNotSetError  is set on the query when From has not been called on this query.
+// ValidationFromNotSetError is set on the query when From has not been called on this query.
 type ValidationFromNotSetError struct{ trace []string }
 
 func (err *ValidationFromNotSetError) Error() string {
@@ -24,7 +24,7 @@ func NewValidationFromNotSetError() errors.TracerError {
 	return &ValidationFromNotSetError{trace: errors.GetStackTrace()}
 }
 
-// MissingTablesError is returned when column's are being used from a table that is not part of the query.
+// MissingTablesError is returned when columns are being used from a table that is not part of the query.
 type MissingTablesError struct {
 	Tables []string
 	trace  []string
@@ -81,7 +81,7 @@ const (
 	IsNot Comparison = "IS NOT"
 	// In Comparison Operator
 	In Comparison = "IN"
-	// LIKE Comparison Operator
+	// Like Comparison Operator
 	Like Comparison = "LIKE"
 	// Inner JoinType
 	Inner JoinType = "INNER"
@@ -397,7 +397,7 @@ func Update(table Table) *UpdateQuery {
 	}
 }
 
-// Delete from from the specified tables that match the criteria specified in where.
+// Delete rows from the specified tables that match the criteria specified in where.
 func Delete(rowsIn ...Table) *DeleteQuery {
 	return &DeleteQuery{
 		tables: rowsIn,

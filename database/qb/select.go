@@ -193,9 +193,19 @@ func (q *SelectQuery) SelectFrom(selectExpressions ...SelectExpression) *SelectQ
 	return query
 }
 
+// GetSelectExpressions on this query
+func (q *SelectQuery) GetSelectExpressions() []SelectExpression {
+	return q.selectExps
+}
+
 // GetAlias of the passed table name in this query.
 func (q *SelectQuery) GetAlias(tableName string) string {
 	return tableName
+}
+
+// GetDistinct value on this query
+func (q *SelectQuery) GetDistinct() bool {
+	return q.distinct
 }
 
 // From sets the primary table the query will get values from.

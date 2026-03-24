@@ -2,6 +2,9 @@ package qb
 
 import (
 	"fmt"
+	"strings"
+
+	"github.com/beaconsoftwarellc/gadget/v2/collection"
 )
 
 const (
@@ -42,30 +45,49 @@ func (ce *CountExpression) ParameterizedSQL() (string, []any) {
 	return countSQL, nil
 }
 
-// CountDistinctExpression can be used as the expression in count distinct query's. Requires
+// CountDistinctExpression can be used as the expression in the count distinct query. Requires
 // a [TableField] that exists in the query to bind to for validation.
 type CountDistinctExpression struct {
-	tableField TableField
+	selectExpressions []SelectExpression
 }
 
 // NewCountDistinctExpression of the passed [TableField] for use in a SelectExpression
 func NewCountDistinctExpression(tableField TableField) SelectExpression {
 	return &CountDistinctExpression{
-		tableField: tableField,
+		selectExpressions: []SelectExpression{SelectExpression(tableField)},
+	}
+}
+
+// NewCountDistinct of the passed expressions for use as a [SelectExpression] in a COUNT DISTINCT query.
+func NewCountDistinct(selectExpressions []SelectExpression) SelectExpression {
+	return &CountDistinctExpression{
+		selectExpressions: selectExpressions,
 	}
 }
 
 // GetName of this count distinct expression
 func (cde CountDistinctExpression) GetName() string {
-	return fmt.Sprintf("COUNT(DISTINCT %s)", cde.tableField.GetName())
+	names := make([]string, len(cde.selectExpressions))
+	for i, expression := range cde.selectExpressions {
+		names[i] = expression.GetName()
+	}
+	return fmt.Sprintf("COUNT(DISTINCT %s)", strings.Join(names, ", "))
 }
 
 // GetTables used by this count distinct expression
 func (cde CountDistinctExpression) GetTables() []string {
-	return cde.tableField.GetTables()
+	tableNames := collection.NewSet[string]()
+	for _, expression := range cde.selectExpressions {
+		tableNames.Add(expression.GetTables()...)
+	}
+	return tableNames.Elements()
 }
 
 // ParameterizedSQL that represents this count distinct expression
 func (cde CountDistinctExpression) ParameterizedSQL() (string, []any) {
-	return fmt.Sprintf(countDistinctSQL, cde.tableField.SQL()), nil
+	sql := make([]string, len(cde.selectExpressions))
+	for i, expression := range cde.selectExpressions {
+		sql[i], _ = expression.ParameterizedSQL()
+	}
+	return fmt.Sprintf(countDistinctSQL, strings.Join(sql, ", ")), nil
 }
