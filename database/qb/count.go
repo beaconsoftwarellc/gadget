@@ -69,6 +69,10 @@ func NewCountDistinct(selectExpressions []SelectExpression) SelectExpression {
 func (cde CountDistinctExpression) GetName() string {
 	names := make([]string, len(cde.selectExpressions))
 	for i, expression := range cde.selectExpressions {
+		alias, ok := expression.(alias)
+		if ok {
+			expression = alias.field
+		}
 		names[i] = expression.GetName()
 	}
 	return fmt.Sprintf("COUNT(DISTINCT %s)", strings.Join(names, ", "))
@@ -87,6 +91,10 @@ func (cde CountDistinctExpression) GetTables() []string {
 func (cde CountDistinctExpression) ParameterizedSQL() (string, []any) {
 	sql := make([]string, len(cde.selectExpressions))
 	for i, expression := range cde.selectExpressions {
+		alias, ok := expression.(alias)
+		if ok {
+			expression = alias.field
+		}
 		sql[i], _ = expression.ParameterizedSQL()
 	}
 	return fmt.Sprintf(countDistinctSQL, strings.Join(sql, ", ")), nil

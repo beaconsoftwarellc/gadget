@@ -54,8 +54,9 @@ func Test_NewCountDistinct(t *testing.T) {
 		Name:  "baz",
 		Table: "quux",
 	}
+	alias := Alias(expression2, "monkey")
 
-	countDistinct := NewCountDistinct([]SelectExpression{expression, expression2})
+	countDistinct := NewCountDistinct([]SelectExpression{expression, alias})
 
 	expectedName := "COUNT(DISTINCT foo, baz)"
 	assert.Equal(expectedName, countDistinct.GetName())
