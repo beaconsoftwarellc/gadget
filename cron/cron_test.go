@@ -13,20 +13,22 @@ import (
 )
 
 type mockEvent struct {
-	id         string
-	minute     int32
-	hour       int32
-	dayOfMonth int32
-	dayOfWeek  int32
-	month      int32
+	id           string
+	minute       int32
+	hour         int32
+	dayOfMonth   int32
+	dayOfWeek    int32
+	month        int32
+	everyNMonths int32
 }
 
-func (ms *mockEvent) GetID() string        { return ms.id }
-func (ms *mockEvent) GetMinute() int32     { return ms.minute }
-func (ms *mockEvent) GetDayOfWeek() int32  { return ms.dayOfWeek }
-func (ms *mockEvent) GetDayOfMonth() int32 { return ms.dayOfMonth }
-func (ms *mockEvent) GetMonth() int32      { return ms.month }
-func (ms *mockEvent) GetHour() int32       { return ms.hour }
+func (ms *mockEvent) GetID() string          { return ms.id }
+func (ms *mockEvent) GetMinute() int32       { return ms.minute }
+func (ms *mockEvent) GetDayOfWeek() int32    { return ms.dayOfWeek }
+func (ms *mockEvent) GetDayOfMonth() int32   { return ms.dayOfMonth }
+func (ms *mockEvent) GetMonth() int32        { return ms.month }
+func (ms *mockEvent) GetHour() int32         { return ms.hour }
+func (ms *mockEvent) GetEveryNMonths() int32 { return ms.everyNMonths }
 
 func TestCron_Empty(t *testing.T) {
 	var (
