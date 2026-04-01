@@ -50,6 +50,16 @@ func TestFlatten(t *testing.T) {
 			expectError: false,
 		},
 		{
+			name: "error at the outset",
+			source: func() func(qb.LimitOffset) ([]int, int, error) {
+				return func(qb.LimitOffset) ([]int, int, error) {
+					return nil, 0, errors.New("fetch error")
+				}
+			}(),
+			expected:    []int{},
+			expectError: true,
+		},
+		{
 			name: "batch with error mid-batch",
 			source: func() func(qb.LimitOffset) ([]int, int, error) {
 				batches := [][]int{{1, 2}, nil, {3, 4}}
