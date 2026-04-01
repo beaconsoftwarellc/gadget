@@ -50,13 +50,13 @@ func (s *scheduler) GetNextExecution(schedule Schedule) time.Time {
 // GetNextExecutionFrom determines the next execution time from a given reference time.
 func (s *scheduler) GetNextExecutionFrom(schedule Schedule, from time.Time) time.Time {
 	var (
-		now     = from.UTC()
-		year    = now.Year()
-		month   = now.Month()
-		day     = now.Day()
-		weekday = now.Weekday()
-		hour    = now.Hour()
-		minute  = now.Minute()
+		ref     = from.UTC()
+		year    = ref.Year()
+		month   = ref.Month()
+		day     = ref.Day()
+		weekday = ref.Weekday()
+		hour    = ref.Hour()
+		minute  = ref.Minute()
 	)
 
 	if schedule.GetMonth() > 0 {
@@ -77,7 +77,7 @@ func (s *scheduler) GetNextExecutionFrom(schedule Schedule, from time.Time) time
 			minute = 0
 		}
 		next := time.Date(year, month, day, hour, minute, 0, 0, time.UTC)
-		if now.After(next) || now.Equal(next) {
+		if ref.After(next) || ref.Equal(next) {
 			if schedule.GetEveryNMonths() > 0 {
 				next = dateutil.IncrementMonth(next, int(schedule.GetEveryNMonths()))
 			} else {
@@ -102,7 +102,7 @@ func (s *scheduler) GetNextExecutionFrom(schedule Schedule, from time.Time) time
 			minute = 0
 		}
 		next := time.Date(year, month, day, hour, minute, 0, 0, time.UTC)
-		if now.After(next) || now.Equal(next) {
+		if ref.After(next) || ref.Equal(next) {
 			next = dateutil.IncrementMonth(next, 1)
 		}
 		return next
@@ -121,7 +121,7 @@ func (s *scheduler) GetNextExecutionFrom(schedule Schedule, from time.Time) time
 			minute = 0
 		}
 		next := time.Date(year, month, day, hour, minute, 0, 0, time.UTC)
-		if now.After(next) || now.Equal(next) {
+		if ref.After(next) || ref.Equal(next) {
 			next = next.AddDate(0, 0, 7)
 		}
 		return next
@@ -135,7 +135,7 @@ func (s *scheduler) GetNextExecutionFrom(schedule Schedule, from time.Time) time
 			minute = 0
 		}
 		next := time.Date(year, month, day, hour, minute, 0, 0, time.UTC)
-		if now.After(next) || now.Equal(next) {
+		if ref.After(next) || ref.Equal(next) {
 			next = next.Add(time.Hour * 24)
 		}
 		return next
@@ -144,7 +144,7 @@ func (s *scheduler) GetNextExecutionFrom(schedule Schedule, from time.Time) time
 	if schedule.GetMinute() >= 0 {
 		minute = int(schedule.GetMinute())
 		next := time.Date(year, month, day, hour, minute, 0, 0, time.UTC)
-		if now.After(next) || now.Equal(next) {
+		if ref.After(next) || ref.Equal(next) {
 			next = next.Add(time.Hour)
 		}
 		return next
