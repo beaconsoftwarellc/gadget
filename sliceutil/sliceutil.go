@@ -11,22 +11,32 @@ import (
 // queries.
 func Flatten[T any](limitOffset qb.LimitOffset, source func(limitOffset qb.LimitOffset) ([]T, int, error)) iter.Seq2[T, error] {
 	return func(yield func(T, error) bool) {
-		setter := qb.NewLimitOffset[uint]().SetOffset(limitOffset.Offset()).SetLimit(limitOffset.Limit())
-		for items, total, err := source(setter); err != nil || setter.Offset() < uint(total); setter.SetOffset(setter.Offset() + uint(len(items))) {
+		var (
+			items  []T
+			total  int
+			err    error
+			setter = qb.NewLimitOffset[uint]().SetOffset(limitOffset.Offset()).SetLimit(limitOffset.Limit())
+		)
+		for err == nil {
 			var (
 				item T
 				c    bool
 			)
+			items, total, err = source(setter)
 			if err != nil {
 				c = yield(item, err)
-			}
-			for _, item := range items {
-				c = yield(item, nil)
+			} else {
+				for _, item := range items {
+					c = yield(item, nil)
+				}
 			}
 			if !c {
 				return
 			}
-			items, total, err = source(setter)
+			setter.SetOffset(setter.Offset() + uint(len(items)))
+			if setter.Offset() >= uint(total) {
+				break
+			}
 		}
 	}
 }
