@@ -111,7 +111,7 @@ func (mr *MockTransactionMockRecorder) Implementation() *gomock.Call {
 }
 
 // List mocks base method.
-func (m *MockTransaction) List(arg0 record.Record, arg1 any, 
+func (m *MockTransaction) List(arg0 record.Record, arg1 any,
 	arg2 qb.LimitOffset) errors.TracerError {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "List", arg0, arg1, arg2)

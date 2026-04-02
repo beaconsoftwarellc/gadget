@@ -67,6 +67,20 @@ func (mr *MockEventMockRecorder) GetDayOfWeek() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDayOfWeek", reflect.TypeOf((*MockEvent)(nil).GetDayOfWeek))
 }
 
+// GetEveryNMonths mocks base method.
+func (m *MockEvent) GetEveryNMonths() int32 {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEveryNMonths")
+	ret0, _ := ret[0].(int32)
+	return ret0
+}
+
+// GetEveryNMonths indicates an expected call of GetEveryNMonths.
+func (mr *MockEventMockRecorder) GetEveryNMonths() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEveryNMonths", reflect.TypeOf((*MockEvent)(nil).GetEveryNMonths))
+}
+
 // GetHour mocks base method.
 func (m *MockEvent) GetHour() int32 {
 	m.ctrl.T.Helper()

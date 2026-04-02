@@ -18,6 +18,9 @@ type Schedule interface {
 	GetMonth() int32
 	// GetHour of execution [0,23]
 	GetHour() int32
+	// GetEveryNMonths returns the month interval for recurring schedules.
+	// When combined with Month, enables quarterly (3), semi-annual (6), etc.
+	GetEveryNMonths() int32
 }
 
 // Scheduler determines the next execution time based on the provided schedule.
@@ -25,6 +28,9 @@ type Scheduler interface {
 	// GetNextExecution determines the next execution time based on the provided schedule and returns.
 	// All times are UTC.
 	GetNextExecution(schedule Schedule) time.Time
+	// GetNextExecutionFrom determines the next execution time from a given reference time.
+	// All times are UTC.
+	GetNextExecutionFrom(schedule Schedule, from time.Time) time.Time
 }
 
 // NewScheduler creates a new Scheduler instance.
@@ -38,14 +44,19 @@ type scheduler struct {
 
 // GetNextExecution determines the next execution time based on the provided schedule and returns.
 func (s *scheduler) GetNextExecution(schedule Schedule) time.Time {
+	return s.GetNextExecutionFrom(schedule, s.timeNow())
+}
+
+// GetNextExecutionFrom determines the next execution time from a given reference time.
+func (s *scheduler) GetNextExecutionFrom(schedule Schedule, from time.Time) time.Time {
 	var (
-		now     = s.timeNow().UTC()
-		year    = now.Year()
-		month   = now.Month()
-		day     = now.Day()
-		weekday = now.Weekday()
-		hour    = now.Hour()
-		minute  = now.Minute()
+		ref     = from.UTC()
+		year    = ref.Year()
+		month   = ref.Month()
+		day     = ref.Day()
+		weekday = ref.Weekday()
+		hour    = ref.Hour()
+		minute  = ref.Minute()
 	)
 
 	if schedule.GetMonth() > 0 {
@@ -66,8 +77,12 @@ func (s *scheduler) GetNextExecution(schedule Schedule) time.Time {
 			minute = 0
 		}
 		next := time.Date(year, month, day, hour, minute, 0, 0, time.UTC)
-		if now.After(next) || now.Equal(next) {
-			next = dateutil.IncrementYear(next, 1)
+		if ref.After(next) || ref.Equal(next) {
+			if schedule.GetEveryNMonths() > 0 {
+				next = dateutil.IncrementMonth(next, int(schedule.GetEveryNMonths()))
+			} else {
+				next = dateutil.IncrementYear(next, 1)
+			}
 		}
 		// we are fully configured
 		return next
@@ -87,7 +102,7 @@ func (s *scheduler) GetNextExecution(schedule Schedule) time.Time {
 			minute = 0
 		}
 		next := time.Date(year, month, day, hour, minute, 0, 0, time.UTC)
-		if now.After(next) || now.Equal(next) {
+		if ref.After(next) || ref.Equal(next) {
 			next = dateutil.IncrementMonth(next, 1)
 		}
 		return next
@@ -106,7 +121,7 @@ func (s *scheduler) GetNextExecution(schedule Schedule) time.Time {
 			minute = 0
 		}
 		next := time.Date(year, month, day, hour, minute, 0, 0, time.UTC)
-		if now.After(next) || now.Equal(next) {
+		if ref.After(next) || ref.Equal(next) {
 			next = next.AddDate(0, 0, 7)
 		}
 		return next
@@ -120,7 +135,7 @@ func (s *scheduler) GetNextExecution(schedule Schedule) time.Time {
 			minute = 0
 		}
 		next := time.Date(year, month, day, hour, minute, 0, 0, time.UTC)
-		if now.After(next) || now.Equal(next) {
+		if ref.After(next) || ref.Equal(next) {
 			next = next.Add(time.Hour * 24)
 		}
 		return next
@@ -129,7 +144,7 @@ func (s *scheduler) GetNextExecution(schedule Schedule) time.Time {
 	if schedule.GetMinute() >= 0 {
 		minute = int(schedule.GetMinute())
 		next := time.Date(year, month, day, hour, minute, 0, 0, time.UTC)
-		if now.After(next) || now.Equal(next) {
+		if ref.After(next) || ref.Equal(next) {
 			next = next.Add(time.Hour)
 		}
 		return next
