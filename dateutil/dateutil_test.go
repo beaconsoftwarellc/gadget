@@ -144,3 +144,67 @@ func TestIncrementMonth(t *testing.T) {
 		})
 	}
 }
+
+func TestEndOfDay(t *testing.T) {
+	tests := []struct {
+		name     string
+		now      time.Time
+		expected time.Time
+	}{
+		{
+			name:     "Start of day",
+			now:      time.Date(2023, 2, 1, 0, 0, 0, 0, time.UTC),
+			expected: time.Date(2023, 2, 1, 23, 59, 59, 999999999, time.UTC),
+		},
+		{
+			name:     "Middle of day",
+			now:      time.Date(2023, 11, 11, 20, 03, 28, 0, time.Local),
+			expected: time.Date(2023, 11, 11, 23, 59, 59, 999999999, time.Local),
+		},
+		{
+			name:     "End of day",
+			now:      time.Date(2023, 5, 15, 23, 59, 59, 999999999, time.UTC),
+			expected: time.Date(2023, 5, 15, 23, 59, 59, 999999999, time.UTC),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := EndOfDay(tt.now)
+			if !result.Equal(tt.expected) {
+				t.Errorf("EndOfDay(%v) = %v, want %v", tt.now, result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestStartOfDay(t *testing.T) {
+	tests := []struct {
+		name     string
+		now      time.Time
+		expected time.Time
+	}{
+		{
+			name:     "Start of day",
+			now:      time.Date(2023, 2, 1, 0, 0, 0, 0, time.UTC),
+			expected: time.Date(2023, 2, 1, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			name:     "Middle of day",
+			now:      time.Date(2023, 11, 11, 20, 03, 28, 0, time.Local),
+			expected: time.Date(2023, 11, 11, 0, 0, 0, 0, time.Local),
+		},
+		{
+			name:     "End of day",
+			now:      time.Date(2023, 5, 15, 23, 59, 59, 999999999, time.UTC),
+			expected: time.Date(2023, 5, 15, 0, 0, 0, 0, time.UTC),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := StartOfDay(tt.now)
+			if !result.Equal(tt.expected) {
+				t.Errorf("StartOfDay(%v) = %v, want %v", tt.now, result, tt.expected)
+			}
+		})
+	}
+}
