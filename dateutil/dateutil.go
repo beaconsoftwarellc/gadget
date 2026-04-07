@@ -24,3 +24,13 @@ func IncrementMonth(t time.Time, months int) time.Time {
 func IncrementYear(t time.Time, years int) time.Time {
 	return IncrementMonth(t, years*12)
 }
+
+// EndOfDay returns the end of the day for a given time.Time, maintaining the same timezone
+func EndOfDay(t time.Time) time.Time {
+	return time.Date(t.Year(), t.Month(), t.Day(), 23, 59, 59, 999999999, t.Location())
+}
+
+// StartOfDay returns the start of the day for a given time.Time, maintaining the same timezone
+func StartOfDay(t time.Time) time.Time {
+	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
+}
