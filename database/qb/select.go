@@ -175,6 +175,7 @@ type SelectQuery struct {
 	groupBy    []TableField
 	where      *whereCondition
 	Seperator  string
+	outfile    string
 	err        error
 }
 
@@ -233,6 +234,13 @@ func (q *SelectQuery) OrderBy(field TableField, direction OrderDirection) *Selec
 // GroupBy the passed table field.
 func (q *SelectQuery) GroupBy(tableFields ...TableField) *SelectQuery {
 	q.groupBy = append(q.groupBy, tableFields...)
+	return q
+}
+
+// IntoOutfile sets an output file path, causing the query to write results
+// to that file using MySQL's INTO OUTFILE syntax.
+func (q *SelectQuery) IntoOutfile(path string) *SelectQuery {
+	q.outfile = path
 	return q
 }
 
@@ -315,6 +323,11 @@ func (q *SelectQuery) SQL(options LimitOffset) (string, []any, error) {
 	// SELECT
 	selectExpressionsSQL, values := q.selectExpressionsSQL()
 	lines := []string{selectExpressionsSQL}
+
+	// INTO OUTFILE
+	if q.outfile != "" {
+		lines = append(lines, fmt.Sprintf("INTO OUTFILE '%s'", strings.ReplaceAll(q.outfile, "'", "\\'")))
+	}
 
 	// FROM
 	from := fmt.Sprintf("FROM `%s` AS `%s`",
