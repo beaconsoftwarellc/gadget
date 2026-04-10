@@ -326,7 +326,7 @@ func (q *SelectQuery) SQL(options LimitOffset) (string, []any, error) {
 
 	// INTO OUTFILE
 	if q.outfile != "" {
-		lines = append(lines, fmt.Sprintf("INTO OUTFILE '%s'", strings.ReplaceAll(q.outfile, "'", "\\'")))
+		lines = append(lines, fmt.Sprintf("INTO OUTFILE '%s'", strings.ReplaceAll(q.outfile, "'", `\'`)))
 	}
 
 	// FROM
