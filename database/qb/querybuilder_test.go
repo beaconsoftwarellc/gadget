@@ -463,3 +463,37 @@ func TestUpdateBitwise(t *testing.T) {
 	assert.Equal(values, []any{"5"})
 	assert.Equal("UPDATE `person` SET  `person`.`address_id` = `person`.`address_id` &~ ?", actual)
 }
+
+func TestQueryBuilderIntoOutfile(t *testing.T) {
+	assert := assert1.New(t)
+	query := Select(Person.ID, Person.Name).From(Person).IntoOutfile("/files/export.csv")
+	actual, values, err := query.SQL(nil)
+	assert.NoError(err)
+	assert.Empty(values)
+	expected := "SELECT `person`.`id`, `person`.`name` INTO OUTFILE S3 '/files/export.csv' FROM `person` AS `person`"
+	assert.Equal(expected, actual)
+}
+
+func TestQueryBuilderIntoOutfile_WithWhere(t *testing.T) {
+	assert := assert1.New(t)
+	query := Select(Person.ID, Person.Name).
+		From(Person).
+		IntoOutfile("/files/export.csv").
+		Where(Person.Age.GreaterThan(18))
+	actual, values, err := query.SQL(nil)
+	assert.NoError(err)
+	assert.Equal([]any{18}, values)
+	expected := "SELECT `person`.`id`, `person`.`name` INTO OUTFILE S3 '/files/export.csv'" +
+		" FROM `person` AS `person` WHERE `person`.`age` > ?"
+	assert.Equal(expected, actual)
+}
+
+func TestQueryBuilderIntoOutfile_EscapesSingleQuote(t *testing.T) {
+	assert := assert1.New(t)
+	query := Select(Person.ID).From(Person).IntoOutfile("/it's here/export.csv")
+	actual, values, err := query.SQL(nil)
+	assert.NoError(err)
+	assert.Empty(values)
+	expected := "SELECT `person`.`id` INTO OUTFILE S3 '/it\\'s here/export.csv' FROM `person` AS `person`"
+	assert.Equal(expected, actual)
+}
