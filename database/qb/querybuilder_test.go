@@ -470,7 +470,7 @@ func TestQueryBuilderIntoOutfile(t *testing.T) {
 	actual, values, err := query.SQL(nil)
 	assert.NoError(err)
 	assert.Empty(values)
-	expected := "SELECT `person`.`id`, `person`.`name` INTO OUTFILE '/files/export.csv' FROM `person` AS `person`"
+	expected := "SELECT `person`.`id`, `person`.`name` INTO OUTFILE S3 '/files/export.csv' FROM `person` AS `person`"
 	assert.Equal(expected, actual)
 }
 
@@ -483,7 +483,7 @@ func TestQueryBuilderIntoOutfile_WithWhere(t *testing.T) {
 	actual, values, err := query.SQL(nil)
 	assert.NoError(err)
 	assert.Equal([]any{18}, values)
-	expected := "SELECT `person`.`id`, `person`.`name` INTO OUTFILE '/files/export.csv'" +
+	expected := "SELECT `person`.`id`, `person`.`name` INTO OUTFILE S3 '/files/export.csv'" +
 		" FROM `person` AS `person` WHERE `person`.`age` > ?"
 	assert.Equal(expected, actual)
 }
@@ -494,6 +494,6 @@ func TestQueryBuilderIntoOutfile_EscapesSingleQuote(t *testing.T) {
 	actual, values, err := query.SQL(nil)
 	assert.NoError(err)
 	assert.Empty(values)
-	expected := "SELECT `person`.`id` INTO OUTFILE '/it\\'s here/export.csv' FROM `person` AS `person`"
+	expected := "SELECT `person`.`id` INTO OUTFILE S3 '/it\\'s here/export.csv' FROM `person` AS `person`"
 	assert.Equal(expected, actual)
 }
