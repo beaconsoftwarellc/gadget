@@ -57,3 +57,22 @@ func Flatten[T any](limitOffset qb.LimitOffset, source func(limitOffset qb.Limit
 		}
 	}
 }
+
+// Exhaust all calls to flatten using the passed iterator function, note that this will exit after the first error
+// encountered and not return any results.
+func Exhaust[T any](f func(limitOffset qb.LimitOffset) ([]T, int, error)) ([]T, error) {
+	var (
+		records     []T
+		limitOffset = qb.NewLimitOffset[int]().SetLimit(0).SetOffset(0)
+		record      T
+		err         error
+	)
+
+	for record, err = range Flatten(limitOffset, f) {
+		if err != nil {
+			return nil, err
+		}
+		records = append(records, record)
+	}
+	return records, err
+}
