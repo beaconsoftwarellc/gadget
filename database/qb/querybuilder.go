@@ -79,8 +79,10 @@ const (
 	Is Comparison = "IS"
 	// IsNot Comparison Operator
 	IsNot Comparison = "IS NOT"
-	// In Comparison Operator
+	// In comparison operator
 	In Comparison = "IN"
+	// NotIn comparison operator
+	NotIn Comparison = "NOT IN"
 	// Like Comparison Operator
 	Like Comparison = "LIKE"
 	// Inner JoinType
@@ -112,19 +114,19 @@ const (
 type BitwiseOperator string
 
 const (
-	// Binary and expression conjunction
+	// BitwiseAnd and expression conjunction
 	BitwiseAnd BitwiseOperator = "&"
-	// Bitwise or expression conjunction
+	// BitwiseOr or expression conjunction
 	BitwiseOr BitwiseOperator = "|"
-	// Bitwise xor expression conjunction
+	// BitwiseXor expression conjunction
 	BitwiseXor BitwiseOperator = "^"
-	// Bitwise negation expression conjunction
+	// BitwiseNegation expression conjunction
 	BitwiseNegation BitwiseOperator = "~"
-	// Bitwise and negation expression conjunction
+	// BitwiseAndNegation expression conjunction
 	BitwiseAndNegation BitwiseOperator = "&~"
-	// Bitwise or negation expression conjunction
+	// BitwiseOrNegation expression conjunction
 	BitwiseOrNegation BitwiseOperator = "|~"
-	// Bitwise xor negation expression conjunction
+	// BitwiseXorNegation expression conjunction
 	BitwiseXorNegation BitwiseOperator = "^~"
 )
 
@@ -221,6 +223,11 @@ func (tf TableField) NullSafeEqual(obj any) *ConditionExpression {
 // In returns a condition expression for this table field in to the passed objs.
 func (tf TableField) In(objs ...any) *ConditionExpression {
 	return FieldIn(tf, objs...)
+}
+
+// NotIn returns a condition expression for this table field in to the passed objs.
+func (tf TableField) NotIn(objs ...any) *ConditionExpression {
+	return FieldNotIn(tf, objs...)
 }
 
 // Like returns a condition expression for this table field Like to the passed obj.
