@@ -63,7 +63,7 @@ func Flatten[T any](limitOffset qb.LimitOffset, source func(limitOffset qb.Limit
 func Exhaust[T any](f func(limitOffset qb.LimitOffset) ([]T, int, error)) ([]T, error) {
 	var (
 		records     []T
-		limitOffset = qb.NewLimitOffset[int]().SetLimit(0).SetOffset(0)
+		limitOffset = qb.NewLimitOffset[int]().SetLimit(100).SetOffset(0)
 		record      T
 		err         error
 	)
