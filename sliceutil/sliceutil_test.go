@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/beaconsoftwarellc/gadget/v2/database/qb"
+	"github.com/stretchr/testify/require"
 )
 
 func TestFlatten(t *testing.T) {
@@ -255,4 +256,17 @@ func TestExhaust(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestExhaustLargeDataset(t *testing.T) {
+	dataset := make([]int, 1000)
+	for i := range dataset {
+		dataset[i] = i
+	}
+	source := func(lo qb.LimitOffset) ([]int, int, error) {
+		return dataset[lo.Offset() : lo.Offset()+lo.Limit()], len(dataset), nil
+	}
+	result, err := Exhaust(source)
+	require.NoError(t, err)
+	require.Equal(t, dataset, result)
 }

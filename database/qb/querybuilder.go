@@ -225,7 +225,7 @@ func (tf TableField) In(objs ...any) *ConditionExpression {
 	return FieldIn(tf, objs...)
 }
 
-// NotIn returns a condition expression for this table field in to the passed objs.
+// NotIn returns a condition expression for this table field not in to the passed objs.
 func (tf TableField) NotIn(objs ...any) *ConditionExpression {
 	return FieldNotIn(tf, objs...)
 }
