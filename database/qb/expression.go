@@ -157,17 +157,29 @@ func FieldComparison(left TableField, comparison Comparison, right any) *Conditi
 
 // FieldIn a series of TableFields and/or values
 func FieldIn(left TableField, in ...any) *ConditionExpression {
+	return fieldCollectionComparison(left, In, in...)
+}
+
+// FieldNotIn a series of TableFields and/or values
+func FieldNotIn(left TableField, notIn ...any) *ConditionExpression {
+	return fieldCollectionComparison(left, NotIn, notIn...)
+}
+
+func fieldCollectionComparison(left TableField, comparison Comparison, collection ...any) *ConditionExpression {
 	// swap any 'nils' for sql null
-	rightValues := make([]any, len(in))
-	for i, value := range in {
+	rightValues := make([]any, len(collection))
+	for i, value := range collection {
 		if nil == value {
 			value = SQLNull
 		}
 		rightValues[i] = value
 	}
-	comparison := In
 	if len(rightValues) == 1 {
-		comparison = Equal
+		if comparison == In {
+			comparison = Equal
+		} else if comparison == NotIn {
+			comparison = NotEqual
+		}
 	}
 	return &ConditionExpression{binary: &binaryExpression{left: left, comparison: comparison, right: newUnion(rightValues...)}}
 }

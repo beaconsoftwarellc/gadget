@@ -194,6 +194,9 @@ func TestQueryBuilderSelectQuery_WhereAllConditions(t *testing.T) {
 		And(Person.ID.GreaterThanEqual(4)).
 		And(Person.ID.NullSafeEqual(Person.Name)).
 		And(Person.ID.In(Person.Name)).
+		And(Person.ID.In(Person.Name, "foo")).
+		And(Person.ID.NotIn(Person.Name)).
+		And(Person.ID.NotIn(Person.Name, "foo")).
 		And(Person.ID.Like(Person.Name)).
 		And(Person.AddressID.IsNull()).
 		And(Person.ID.IsNotNull()))
@@ -201,18 +204,23 @@ func TestQueryBuilderSelectQuery_WhereAllConditions(t *testing.T) {
 	actual, values, err := query.SQL(NewLimitOffset[int]().SetLimit(NoLimit).SetOffset(0))
 	assert.NotEmpty(values)
 	assert.NoError(err)
-	assert.Equal("SELECT `person`.`id`, `person`.`name` FROM `person` AS `person` "+
-		"WHERE ((((((((((`person`.`id` = `person`.`name` "+
-		"AND `person`.`id` != `person`.`address_id`) "+
-		"AND `person`.`id` < ?) "+
-		"AND `person`.`id` <= ?) "+
-		"AND `person`.`id` > ?) "+
-		"AND `person`.`id` >= ?) "+
-		"AND `person`.`id` <=> `person`.`name`) "+
-		"AND `person`.`id` = `person`.`name`) "+
-		"AND `person`.`id` LIKE `person`.`name`) "+
-		"AND `person`.`address_id` IS NULL) "+
-		"AND `person`.`id` IS NOT NULL)", actual)
+	assert.Equal("SELECT `person`.`id`, "+
+		"`person`.`name` "+
+		"FROM `person` AS `person` WHERE ((((((((((((("+
+		"`person`.`id` = `person`.`name` AND "+
+		"`person`.`id` != `person`.`address_id`) AND "+
+		"`person`.`id` < ?) AND "+
+		"`person`.`id` <= ?) AND "+
+		"`person`.`id` > ?) AND "+
+		"`person`.`id` >= ?) AND "+
+		"`person`.`id` <=> `person`.`name`) AND "+
+		"`person`.`id` = `person`.`name`) AND "+
+		"`person`.`id` IN (`person`.`name`, ?)) AND "+
+		"`person`.`id` != `person`.`name`) AND "+
+		"`person`.`id` NOT IN (`person`.`name`, ?)) AND "+
+		"`person`.`id` LIKE `person`.`name`) AND "+
+		"`person`.`address_id` IS NULL) AND "+
+		"`person`.`id` IS NOT NULL)", actual)
 }
 
 func TestQueryBuilderSelectQuery_WhereError(t *testing.T) {
