@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -45,6 +46,29 @@ func New(region string, queueLocator *url.URL) messagequeue.MessageQueue {
 		region:   region,
 		queueUrl: queueLocator,
 	}
+}
+
+// NewFromURL returns an SQS instance located at queueLocator with the AWS
+// region derived from the queue URL. Standard SQS URLs of the form
+// https://sqs.{region}.amazonaws.com/... yield {region}; non-standard URLs
+// (e.g. LocalStack) yield an empty region so the SDK falls back to its
+// default credential-chain region.
+func NewFromURL(queueLocator *url.URL) messagequeue.MessageQueue {
+	return New(RegionFromURL(queueLocator), queueLocator)
+}
+
+// RegionFromURL parses the AWS region from a standard SQS queue URL
+// (https://sqs.{region}.amazonaws.com/...). Returns empty string for
+// non-standard URLs.
+func RegionFromURL(queueLocator *url.URL) string {
+	if queueLocator == nil {
+		return ""
+	}
+	parts := strings.SplitN(queueLocator.Hostname(), ".", 4)
+	if len(parts) >= 4 && parts[0] == "sqs" && parts[2] == "amazonaws" {
+		return parts[1]
+	}
+	return ""
 }
 
 type sdk struct {
