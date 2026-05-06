@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
+	"github.com/beaconsoftwarellc/gadget/v2/errors"
 	"github.com/beaconsoftwarellc/gadget/v2/log"
 	"github.com/beaconsoftwarellc/gadget/v2/messagequeue"
 	"github.com/beaconsoftwarellc/gadget/v2/stringutil"
@@ -45,6 +47,37 @@ func New(region string, queueLocator *url.URL) messagequeue.MessageQueue {
 		region:   region,
 		queueUrl: queueLocator,
 	}
+}
+
+// NewFromURL returns a [messagequeue.MessageQueue] instance located at 'queueLocator' with the AWS
+// region derived from the queue URL. Standard SQS URLs of the form
+// https://sqs.{region}.amazonaws.com/... yield {region}; URLs whose host
+// is 'localhost' yield [LocalRegion] for local testing against an
+// elasticmq/LocalStack instance.
+func NewFromURL(queueLocator *url.URL) (messagequeue.MessageQueue, error) {
+	region, err := RegionFromURL(queueLocator)
+	if err != nil {
+		return nil, err
+	}
+	return New(region, queueLocator), nil
+}
+
+// RegionFromURL parses the AWS region from a standard SQS queue URL
+// (https://sqs.{region}.amazonaws.com/...). For URLs whose host is
+// 'localhost' it returns [LocalRegion].
+func RegionFromURL(queueLocator *url.URL) (string, error) {
+	if queueLocator == nil {
+		return "", errors.New("queueLocator cannot be nil")
+	}
+	host := queueLocator.Hostname()
+	if host == "localhost" {
+		return LocalRegion, nil
+	}
+	parts := strings.SplitN(host, ".", 4)
+	if len(parts) >= 4 && parts[0] == "sqs" && parts[2] == "amazonaws" {
+		return parts[1], nil
+	}
+	return "", errors.Newf("unrecognized SQS queue URL host: %q", host)
 }
 
 type sdk struct {
