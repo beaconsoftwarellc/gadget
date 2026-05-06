@@ -143,9 +143,10 @@ func initialize(t *testing.T) (context.Context, *assert.Assertions, *MockAPI, *s
 func Test_SQS_RegionFromURL(t *testing.T) {
 	assert := assert.New(t)
 	tests := []struct {
-		name     string
-		raw      string
-		expected string
+		name        string
+		raw         string
+		expected    string
+		expectError bool
 	}{
 		{
 			name:     "standard SQS URL",
@@ -158,40 +159,71 @@ func Test_SQS_RegionFromURL(t *testing.T) {
 			expected: "eu-west-2",
 		},
 		{
-			name:     "LocalStack-style URL",
+			name:     "localhost URL maps to LocalRegion",
 			raw:      "http://localhost:4566/000000000000/queue",
-			expected: "",
+			expected: LocalRegion,
 		},
 		{
-			name:     "non-amazonaws host",
-			raw:      "https://sqs.us-east-1.example.com/queue",
-			expected: "",
+			name:        "non-amazonaws host",
+			raw:         "https://sqs.us-east-1.example.com/queue",
+			expectError: true,
 		},
 		{
-			name:     "missing sqs prefix",
-			raw:      "https://us-east-1.amazonaws.com/queue",
-			expected: "",
+			name:        "missing sqs prefix",
+			raw:         "https://us-east-1.amazonaws.com/queue",
+			expectError: true,
 		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			parsed, err := url.Parse(tc.raw)
 			assert.NoError(err)
-			assert.Equal(tc.expected, RegionFromURL(parsed))
+			region, err := RegionFromURL(parsed)
+			if tc.expectError {
+				assert.Error(err)
+				assert.Equal("", region)
+			} else {
+				assert.NoError(err)
+				assert.Equal(tc.expected, region)
+			}
 		})
 	}
-	assert.Equal("", RegionFromURL(nil))
+	region, err := RegionFromURL(nil)
+	assert.Error(err)
+	assert.Equal("", region)
 }
 
 func Test_SQS_NewFromURL(t *testing.T) {
 	assert := assert.New(t)
 	parsed, err := url.Parse("https://sqs.us-east-1.amazonaws.com/123456789012/queue")
 	assert.NoError(err)
-	mq := NewFromURL(parsed)
+	mq, err := NewFromURL(parsed)
+	assert.NoError(err)
 	sdk, ok := mq.(*sdk)
 	assert.True(ok)
 	assert.Equal("us-east-1", sdk.region)
 	assert.Equal(parsed, sdk.queueUrl)
+}
+
+func Test_SQS_NewFromURL_Localhost(t *testing.T) {
+	assert := assert.New(t)
+	parsed, err := url.Parse("http://localhost:4566/000000000000/queue")
+	assert.NoError(err)
+	mq, err := NewFromURL(parsed)
+	assert.NoError(err)
+	sdk, ok := mq.(*sdk)
+	assert.True(ok)
+	assert.Equal(LocalRegion, sdk.region)
+	assert.Equal(parsed, sdk.queueUrl)
+}
+
+func Test_SQS_NewFromURL_Error(t *testing.T) {
+	assert := assert.New(t)
+	parsed, err := url.Parse("https://sqs.us-east-1.example.com/queue")
+	assert.NoError(err)
+	mq, err := NewFromURL(parsed)
+	assert.Error(err)
+	assert.Nil(mq)
 }
 
 func Test_SQS_EnqueueBatch(t *testing.T) {
