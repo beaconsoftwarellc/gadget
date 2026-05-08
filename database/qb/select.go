@@ -167,16 +167,17 @@ func Coalesce(expression SelectExpression, defaultValue any, alias string) Selec
 
 // SelectQuery for retrieving data from a database table.
 type SelectQuery struct {
-	distinct   bool
-	from       Table
-	selectExps []SelectExpression
-	joins      []*Join
-	orderBy    *orderBy
-	groupBy    []TableField
-	where      *whereCondition
-	Seperator  string
-	outfile    string
-	err        error
+	distinct       bool
+	from           Table
+	selectExps     []SelectExpression
+	joins          []*Join
+	orderBy        *orderBy
+	groupBy        []TableField
+	where          *whereCondition
+	Seperator      string
+	outfile        string
+	outfileOptions *OutfileOptions
+	err            error
 }
 
 // SelectFrom this query but with different select expressions, not a deep copy
@@ -249,8 +250,9 @@ func (q *SelectQuery) GroupBy(tableFields ...TableField) *SelectQuery {
 
 // IntoOutfile sets an output file path, causing the query to write results
 // to that file using MySQL's INTO OUTFILE syntax.
-func (q *SelectQuery) IntoOutfile(path string) *SelectQuery {
+func (q *SelectQuery) IntoOutfile(path string, options *OutfileOptions) *SelectQuery {
 	q.outfile = path
+	q.outfileOptions = options
 	return q
 }
 
@@ -337,6 +339,9 @@ func (q *SelectQuery) SQL(options LimitOffset) (string, []any, error) {
 	// INTO OUTFILE
 	if q.outfile != "" {
 		lines = append(lines, fmt.Sprintf("INTO OUTFILE S3 '%s'", strings.ReplaceAll(q.outfile, "'", `\'`)))
+	}
+	if q.outfileOptions != nil {
+		lines = append(lines, q.outfileOptions.SQL())
 	}
 
 	// FROM
