@@ -38,6 +38,10 @@ const (
 	// LocalRegion is for testing locally with a docker instance running elasticmq
 	LocalRegion = "local"
 
+	// localhostHost is the hostname used to identify a local SQS endpoint
+	// (e.g. elasticmq or LocalStack) when parsing a queue URL.
+	localhostHost = "localhost"
+
 	unknownErrorMessage = "unknown error occurred"
 )
 
@@ -70,7 +74,7 @@ func RegionFromURL(queueLocator *url.URL) (string, error) {
 		return "", errors.New("queueLocator cannot be nil")
 	}
 	host := queueLocator.Hostname()
-	if host == "localhost" {
+	if host == localhostHost {
 		return LocalRegion, nil
 	}
 	parts := strings.SplitN(host, ".", 4)
