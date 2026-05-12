@@ -474,7 +474,7 @@ func TestUpdateBitwise(t *testing.T) {
 
 func TestQueryBuilderIntoOutfile(t *testing.T) {
 	assert := assert1.New(t)
-	query := Select(Person.ID, Person.Name).From(Person).IntoOutfile("/files/export.csv")
+	query := Select(Person.ID, Person.Name).From(Person).IntoOutfile("/files/export.csv", nil)
 	actual, values, err := query.SQL(nil)
 	assert.NoError(err)
 	assert.Empty(values)
@@ -486,19 +486,28 @@ func TestQueryBuilderIntoOutfile_WithWhere(t *testing.T) {
 	assert := assert1.New(t)
 	query := Select(Person.ID, Person.Name).
 		From(Person).
-		IntoOutfile("/files/export.csv").
+		IntoOutfile("/files/export.csv", &OutfileOptions{
+			Header:            true,
+			Format:            "CSV",
+			TerminatedBy:      ",",
+			EnclosedBy:        "\"",
+			EscapedBy:         "\\",
+			LinesStartingBy:   ">",
+			LinesTerminatedBy: "\\n",
+		}).
 		Where(Person.Age.GreaterThan(18))
 	actual, values, err := query.SQL(nil)
 	assert.NoError(err)
 	assert.Equal([]any{18}, values)
-	expected := "SELECT `person`.`id`, `person`.`name` INTO OUTFILE S3 '/files/export.csv'" +
-		" FROM `person` AS `person` WHERE `person`.`age` > ?"
+	expected := "SELECT `person`.`id`, `person`.`name` INTO OUTFILE S3 '/files/export.csv' FORMAT " +
+		"CSV HEADER FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' ESCAPED BY '\\' LINES " +
+		"STARTING BY '>' TERMINATED BY '\\n' FROM `person` AS `person` WHERE `person`.`age` > ?"
 	assert.Equal(expected, actual)
 }
 
 func TestQueryBuilderIntoOutfile_EscapesSingleQuote(t *testing.T) {
 	assert := assert1.New(t)
-	query := Select(Person.ID).From(Person).IntoOutfile("/it's here/export.csv")
+	query := Select(Person.ID).From(Person).IntoOutfile("/it's here/export.csv", nil)
 	actual, values, err := query.SQL(nil)
 	assert.NoError(err)
 	assert.Empty(values)
