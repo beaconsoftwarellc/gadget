@@ -390,27 +390,22 @@ func TestQueryBuilderCoalesce(t *testing.T) {
 
 func TestQueryBuilderIfFieldCondition(t *testing.T) {
 	assert := assert1.New(t)
-	require := require.New(t)
-	query := Select(Person.ID, If(Person.Name.Equal(Person.ID), "1", "0", "has_robot_name")).From(Person)
+	query := Select(Person.ID, If(Person.Name.Equal(Person.ID), Person.Name, Person.AddressID, "robot_name")).From(Person)
 	actual, values, err := query.SQL(NewLimitOffset[int]().SetLimit(NoLimit).SetOffset(10))
 	assert.NoError(err)
-	require.Len(values, 2)
-	assert.Equal("1", values[0])
-	assert.Equal("0", values[1])
-	assert.Equal("SELECT `person`.`id`, IF(`person`.`name` = `person`.`id`, ?, ?) AS `has_robot_name` FROM `person` AS `person` OFFSET 10", actual)
+	assert.Empty(values)
+	assert.Equal("SELECT `person`.`id`, IF(`person`.`name` = `person`.`id`, `person`.`name`, `person`.`address_id`) AS `robot_name` FROM `person` AS `person` OFFSET 10", actual)
 }
 
 func TestQueryBuilderIfStringCondition(t *testing.T) {
 	assert := assert1.New(t)
 	require := require.New(t)
-	query := Select(Person.ID, If(Person.Name.Equal("Joe"), "1", "0", "is_joe")).From(Person)
+	query := Select(Person.ID, If(Person.Name.Equal("Joe"), Person.Name, Person.AddressID, "joe_name")).From(Person)
 	actual, values, err := query.SQL(NewLimitOffset[int]().SetLimit(NoLimit).SetOffset(10))
 	assert.NoError(err)
-	require.Len(values, 3)
+	require.Len(values, 1)
 	assert.Equal("Joe", values[0])
-	assert.Equal("1", values[1])
-	assert.Equal("0", values[2])
-	assert.Equal("SELECT `person`.`id`, IF(`person`.`name` = ?, ?, ?) AS `is_joe` FROM `person` AS `person` OFFSET 10", actual)
+	assert.Equal("SELECT `person`.`id`, IF(`person`.`name` = ?, `person`.`name`, `person`.`address_id`) AS `joe_name` FROM `person` AS `person` OFFSET 10", actual)
 }
 
 func TestQueryBuilderGroupBy(t *testing.T) {
