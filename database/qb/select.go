@@ -43,8 +43,8 @@ func Alias(tableField TableField, aliasName string) SelectExpression {
 // IF (condition, true, false) AS alias
 type ifStatement struct {
 	condition  *ConditionExpression
-	trueValue  string
-	falseValue string
+	trueValue  SelectExpression
+	falseValue SelectExpression
 	alias      string
 }
 
@@ -53,16 +53,29 @@ func (i ifStatement) GetName() string {
 }
 
 func (i ifStatement) GetTables() []string {
-	return i.condition.Tables()
+	tables := i.condition.Tables()
+	tables = append(tables, i.trueValue.GetTables()...)
+	tables = append(tables, i.falseValue.GetTables()...)
+	return tables
 }
 
 func (i ifStatement) ParameterizedSQL() (string, []any) {
 	conditionSQL, values := i.condition.SQL()
-	return fmt.Sprintf("IF(%s, ?, ?) AS `%s`", conditionSQL, i.alias), append(values, i.trueValue, i.falseValue)
+	trueSQL, trueValues := i.trueValue.ParameterizedSQL()
+	falseSQL, falseValues := i.falseValue.ParameterizedSQL()
+	values = append(values, trueValues...)
+	values = append(values, falseValues...)
+	sql := fmt.Sprintf("IF(%s, %s, %s)", conditionSQL, trueSQL, falseSQL)
+	if !stringutil.IsWhiteSpace(i.alias) {
+		sql += fmt.Sprintf(" AS `%s`", i.alias)
+	}
+	return sql, values
 }
 
-// If creates a SQL IF statement that can be used as a SelectExpression
-func If(condition *ConditionExpression, trueValue, falseValue, alias string) SelectExpression {
+// If creates a SQL IF statement that can be used as a [SelectExpression]. Pass
+// an empty alias to embed the result inside another [SelectExpression] (e.g.
+// [Sum]), or a non-empty alias when using as a top-level column.
+func If(condition *ConditionExpression, trueValue, falseValue SelectExpression, alias string) SelectExpression {
 	return ifStatement{condition: condition, trueValue: trueValue, falseValue: falseValue, alias: alias}
 }
 
