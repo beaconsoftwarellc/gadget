@@ -165,6 +165,26 @@ func (c coalesce) GetTables() []string {
 }
 
 func (c coalesce) ParameterizedSQL() (string, []any) {
+	switch c.value.(type) {
+	case SelectExpression:
+		return c.tableFieldSQL()
+	default:
+		return c.parameterizedSQL()
+	}
+}
+
+func (c coalesce) tableFieldSQL() (string, []any) {
+	expressionSQL, values := c.expression.ParameterizedSQL()
+	defaultExpression, _ := c.value.(SelectExpression)
+	defaultExpressionSQL, defaultExpressionValues := defaultExpression.ParameterizedSQL()
+	sql := "COALESCE(%s, %s)"
+	if !stringutil.IsWhiteSpace(c.name) {
+		sql += fmt.Sprintf(" AS `%s`", c.name)
+	}
+	return fmt.Sprintf(sql, expressionSQL, defaultExpressionSQL), append(values, defaultExpressionValues...)
+}
+
+func (c coalesce) parameterizedSQL() (string, []any) {
 	expressionSQL, values := c.expression.ParameterizedSQL()
 	sql := "COALESCE(%s, ?)"
 	if !stringutil.IsWhiteSpace(c.name) {
