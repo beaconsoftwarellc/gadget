@@ -6,6 +6,7 @@ import (
 
 	"github.com/beaconsoftwarellc/gadget/v2/generator"
 	"github.com/stretchr/testify/assert"
+	_require "github.com/stretchr/testify/require"
 )
 
 func Test_NewIf(t *testing.T) {
@@ -76,4 +77,38 @@ func Test_If_ComposesInsideSum(t *testing.T) {
 		actualSQL,
 	)
 	assert.Equal(t, conditionValues, actualParams)
+}
+
+func Test_Coalesce(t *testing.T) {
+	var (
+		require = _require.New(t)
+	)
+
+	reset := func(t *testing.T) {
+		require = _require.New(t)
+	}
+
+	t.Run("TableField default", func(t *testing.T) {
+		reset(t)
+
+		selectField := TableField{Name: generator.String(20), Table: generator.String(20)}
+		defaultField := TableField{Name: generator.String(20), Table: generator.String(20)}
+
+		expression := Coalesce(selectField, defaultField, "")
+		actualSQL, actualParams := expression.ParameterizedSQL()
+		require.Equal(fmt.Sprintf("COALESCE(%s, %s)", selectField.SQL(), defaultField.SQL()), actualSQL)
+		require.Empty(actualParams)
+	})
+
+	t.Run("string default", func(t *testing.T) {
+		reset(t)
+
+		selectField := TableField{Name: generator.String(20), Table: generator.String(20)}
+		defaultField := generator.String(20)
+
+		expression := Coalesce(selectField, defaultField, "")
+		actualSQL, actualParams := expression.ParameterizedSQL()
+		require.Equal(fmt.Sprintf("COALESCE(%s, ?)", selectField.SQL()), actualSQL)
+		require.Equal([]any{defaultField}, actualParams)
+	})
 }
