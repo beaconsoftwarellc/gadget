@@ -5,6 +5,7 @@
 //
 //	mockgen -source=implementation.go -package transaction -destination implementation.mock.gen.go
 //
+
 // Package transaction is a generated GoMock package.
 package transaction
 
@@ -20,6 +21,7 @@ import (
 type MockImplementation struct {
 	ctrl     *gomock.Controller
 	recorder *MockImplementationMockRecorder
+	isgomock struct{}
 }
 
 // MockImplementationMockRecorder is the mock recorder for MockImplementation.

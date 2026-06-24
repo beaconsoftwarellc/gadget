@@ -87,3 +87,25 @@ func TestUpdateQueryWhereOrderByLimit(t *testing.T) {
 	}
 	assert.Equal("UPDATE `person` SET  `person`.`name` = ? WHERE `person`.`address_id` = ? ORDER BY `person`.`name` DESC LIMIT 10", sql)
 }
+
+func TestUpdateQueryIgnore(t *testing.T) {
+	assert := assert1.New(t)
+	expectedName := generator.String(20)
+	query := Update(Person).Set(Person.Name, expectedName)
+	query.SetIgnore(true)
+	sql, values, err := query.SQL(NoLimit)
+	assert.NoError(err)
+	if assert.Equal(1, len(values)) {
+		assert.Equal(expectedName, values[0])
+	}
+	assert.Equal("UPDATE IGNORE `person` SET  `person`.`name` = ?", sql)
+}
+
+func TestUpdateQueryIgnoreParameterized(t *testing.T) {
+	assert := assert1.New(t)
+	query := Update(Person).SetParam(Person.Name).Where(Person.ID.Equal(":" + Person.ID.GetName()))
+	query.SetIgnore(true)
+	sql, err := query.ParameterizedSQL(NoLimit)
+	assert.NoError(err)
+	assert.Equal("UPDATE IGNORE `person` SET  `person`.`name` = :name WHERE `person`.`id` = :id", sql)
+}

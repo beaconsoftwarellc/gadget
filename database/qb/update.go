@@ -32,6 +32,7 @@ type UpdateQuery struct {
 	assignments    []comparisonExpression
 	where          *whereCondition
 	orderBy        *orderBy
+	ignore         bool
 	err            error
 }
 
@@ -62,6 +63,14 @@ func (q *UpdateQuery) SetParam(field TableField) *UpdateQuery {
 	return q
 }
 
+// SetIgnore keyword for the update query.
+func (q *UpdateQuery) SetIgnore(ignore bool) {
+	if q == nil {
+		return
+	}
+	q.ignore = ignore
+}
+
 // Where determines the conditions by which the assignments in this query apply
 func (q *UpdateQuery) Where(condition *ConditionExpression) *UpdateQuery {
 	q.where.expression = condition
@@ -74,6 +83,15 @@ func (q *UpdateQuery) OrderBy(field TableField, direction OrderDirection) *Updat
 	return q
 }
 
+func (q *UpdateQuery) getUpdateStmt() []string {
+	sql := []string{"UPDATE"}
+	if q.ignore {
+		sql = append(sql, "IGNORE")
+	}
+	sql = append(sql, fmt.Sprintf("`%s` SET ", q.tableReference.GetName()))
+	return sql
+}
+
 // SQL representation of this query.
 func (q *UpdateQuery) SQL(limit int) (string, []any, error) {
 	if nil != q.err {
@@ -82,7 +100,7 @@ func (q *UpdateQuery) SQL(limit int) (string, []any, error) {
 	if len(q.assignments) == 0 {
 		return "", nil, errors.New("no assignments in update query")
 	}
-	sql := []string{fmt.Sprintf("UPDATE `%s` SET ", q.tableReference.GetName())}
+	sql := q.getUpdateStmt()
 	alines := []string{}
 	values := []any{}
 	for _, assignment := range q.assignments {
@@ -115,7 +133,7 @@ func (q *UpdateQuery) ParameterizedSQL(limit int) (string, error) {
 	if len(q.assignments) == 0 {
 		return "", errors.New("no assignments in update query")
 	}
-	sql := []string{fmt.Sprintf("UPDATE `%s` SET ", q.tableReference.GetName())}
+	sql := q.getUpdateStmt()
 	alines := []string{}
 	for _, assignment := range q.assignments {
 		s, _ := assignment.SQL()
