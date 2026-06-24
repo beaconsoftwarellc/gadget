@@ -50,6 +50,9 @@ type API interface {
 	// UpdateWhere updates fields for the Record based on a supplied where clause
 	UpdateWhere(obj record.Record, where *qb.ConditionExpression,
 		fields ...qb.FieldValue) (int64, errors.TracerError)
+	// UpdateIgnoreWhere updates fields for the Record based on a supplied where clause in a transaction,
+	// continuing on any ignorable errors.
+	UpdateIgnoreWhere(record.Record, *qb.ConditionExpression, ...qb.FieldValue) (int64, errors.TracerError)
 	// Delete removes a row from the database
 	Delete(obj record.Record) errors.TracerError
 	// DeleteWhere removes row(s) from the database based on a supplied where
@@ -230,6 +233,20 @@ func (d *api) UpdateWhere(obj record.Record, where *qb.ConditionExpression,
 	)
 	err = d.runInTransaction(func(tx transaction.Transaction) errors.TracerError {
 		total, err = tx.UpdateWhere(obj, where, fields...)
+		return err
+	})
+
+	return total, err
+}
+
+func (d *api) UpdateIgnoreWhere(obj record.Record, where *qb.ConditionExpression,
+	fields ...qb.FieldValue) (int64, errors.TracerError) {
+	var (
+		total int64
+		err   errors.TracerError
+	)
+	err = d.runInTransaction(func(tx transaction.Transaction) errors.TracerError {
+		total, err = tx.UpdateIgnoreWhere(obj, where, fields...)
 		return err
 	})
 

@@ -5,6 +5,7 @@
 //
 //	mockgen -source=configuration.go -package mocks -destination mocks/configuration.mock.gen.go
 //
+
 // Package mocks is a generated GoMock package.
 package mocks
 
@@ -20,6 +21,7 @@ import (
 type MockConfiguration struct {
 	ctrl     *gomock.Controller
 	recorder *MockConfigurationMockRecorder
+	isgomock struct{}
 }
 
 // MockConfigurationMockRecorder is the mock recorder for MockConfiguration.
