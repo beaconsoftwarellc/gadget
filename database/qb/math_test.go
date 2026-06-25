@@ -53,6 +53,21 @@ func Test_NewDivide(t *testing.T) {
 	assert.Empty(t, actualParams)
 }
 
+func Test_NewDivideConstant(t *testing.T) {
+	expectedField1 := TableField{Name: generator.String(20), Table: generator.String(20)}
+	expectedField2 := Literal(10)
+	expectedAlias := generator.String(20)
+	expectedField2SQL, expectedParams := expectedField2.ParameterizedSQL()
+
+	expression := Divide([]SelectExpression{expectedField1, expectedField2}, expectedAlias)
+
+	assert.Equal(t, expectedAlias, expression.GetName())
+	assert.Contains(t, expression.GetTables(), expectedField1.Table)
+	actualSql, actualParams := expression.ParameterizedSQL()
+	assert.Equal(t, fmt.Sprintf("%s / %s AS `%s`", expectedField1.SQL(), expectedField2SQL, expectedAlias), actualSql)
+	assert.Equal(t, expectedParams, actualParams)
+}
+
 func Test_NewMultiply(t *testing.T) {
 	expectedField1 := TableField{Name: generator.String(20), Table: generator.String(20)}
 	expectedField2 := TableField{Name: generator.String(20), Table: generator.String(20)}
