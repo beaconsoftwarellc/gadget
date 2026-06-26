@@ -5,6 +5,7 @@
 //
 //	mockgen -source=bulkcreate.go -package mocks -destination mocks/bulkcreate.mock.gen.go
 //
+
 // Package mocks is a generated GoMock package.
 package mocks
 
@@ -21,6 +22,7 @@ import (
 type MockBulkCreate[T record.Record] struct {
 	ctrl     *gomock.Controller
 	recorder *MockBulkCreateMockRecorder[T]
+	isgomock struct{}
 }
 
 // MockBulkCreateMockRecorder is the mock recorder for MockBulkCreate.

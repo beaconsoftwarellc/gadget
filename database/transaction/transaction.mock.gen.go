@@ -5,6 +5,7 @@
 //
 //	mockgen -source=transaction.go -package transaction -destination transaction.mock.gen.go
 //
+
 // Package transaction is a generated GoMock package.
 package transaction
 
@@ -21,6 +22,7 @@ import (
 type MockTransaction struct {
 	ctrl     *gomock.Controller
 	recorder *MockTransactionMockRecorder
+	isgomock struct{}
 }
 
 // MockTransactionMockRecorder is the mock recorder for MockTransaction.
@@ -111,8 +113,7 @@ func (mr *MockTransactionMockRecorder) Implementation() *gomock.Call {
 }
 
 // List mocks base method.
-func (m *MockTransaction) List(arg0 record.Record, arg1 any,
-	arg2 qb.LimitOffset) errors.TracerError {
+func (m *MockTransaction) List(arg0 record.Record, arg1 any, arg2 qb.LimitOffset) errors.TracerError {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "List", arg0, arg1, arg2)
 	ret0, _ := ret[0].(errors.TracerError)
@@ -222,6 +223,26 @@ func (m *MockTransaction) Update(arg0 record.Record) errors.TracerError {
 func (mr *MockTransactionMockRecorder) Update(arg0 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockTransaction)(nil).Update), arg0)
+}
+
+// UpdateIgnoreWhere mocks base method.
+func (m *MockTransaction) UpdateIgnoreWhere(arg0 record.Record, arg1 *qb.ConditionExpression, arg2 ...qb.FieldValue) (int64, errors.TracerError) {
+	m.ctrl.T.Helper()
+	varargs := []any{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "UpdateIgnoreWhere", varargs...)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(errors.TracerError)
+	return ret0, ret1
+}
+
+// UpdateIgnoreWhere indicates an expected call of UpdateIgnoreWhere.
+func (mr *MockTransactionMockRecorder) UpdateIgnoreWhere(arg0, arg1 any, arg2 ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateIgnoreWhere", reflect.TypeOf((*MockTransaction)(nil).UpdateIgnoreWhere), varargs...)
 }
 
 // UpdateWhere mocks base method.

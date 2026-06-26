@@ -47,6 +47,9 @@ type Transaction interface {
 	Update(record.Record) errors.TracerError
 	// UpdateWhere updates fields for the Record based on a supplied where clause in a transaction
 	UpdateWhere(record.Record, *qb.ConditionExpression, ...qb.FieldValue) (int64, errors.TracerError)
+	// UpdateIgnoreWhere updates fields for the Record based on a supplied where clause in a transaction,
+	// continuing on any ignorable errors.
+	UpdateIgnoreWhere(record.Record, *qb.ConditionExpression, ...qb.FieldValue) (int64, errors.TracerError)
 	// Delete removes a row from the database
 	Delete(record.Record) errors.TracerError
 	// DeleteWhere removes row(s) from the database based on a supplied where clause
@@ -251,7 +254,18 @@ func (tx *transaction) DeleteWhere(obj record.Record,
 
 func (tx *transaction) UpdateWhere(obj record.Record,
 	where *qb.ConditionExpression, fields ...qb.FieldValue) (int64, errors.TracerError) {
+	return tx.updateWhere(obj, where, false, fields...)
+}
+
+func (tx *transaction) UpdateIgnoreWhere(obj record.Record,
+	where *qb.ConditionExpression, fields ...qb.FieldValue) (int64, errors.TracerError) {
+	return tx.updateWhere(obj, where, true, fields...)
+}
+
+func (tx *transaction) updateWhere(obj record.Record,
+	where *qb.ConditionExpression, ignore bool, fields ...qb.FieldValue) (int64, errors.TracerError) {
 	query := qb.Update(obj.Meta())
+	query.SetIgnore(ignore)
 
 	for _, f := range fields {
 		query = query.Set(f.Field, f.Value)

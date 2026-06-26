@@ -5,6 +5,7 @@
 //
 //	mockgen -source=connection.go -package database -destination connection.mock.gen.go
 //
+
 // Package database is a generated GoMock package.
 package database
 
@@ -19,6 +20,7 @@ import (
 type MockClient struct {
 	ctrl     *gomock.Controller
 	recorder *MockClientMockRecorder
+	isgomock struct{}
 }
 
 // MockClientMockRecorder is the mock recorder for MockClient.
@@ -90,6 +92,7 @@ func (mr *MockClientMockRecorder) Select(dest, query any, args ...any) *gomock.C
 type MockConnection struct {
 	ctrl     *gomock.Controller
 	recorder *MockConnectionMockRecorder
+	isgomock struct{}
 }
 
 // MockConnectionMockRecorder is the mock recorder for MockConnection.

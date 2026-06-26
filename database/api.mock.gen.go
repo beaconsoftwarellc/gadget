@@ -5,6 +5,7 @@
 //
 //	mockgen -source=api.go -package database -destination api.mock.gen.go
 //
+
 // Package database is a generated GoMock package.
 package database
 
@@ -22,6 +23,7 @@ import (
 type MockAPI struct {
 	ctrl     *gomock.Controller
 	recorder *MockAPIMockRecorder
+	isgomock struct{}
 }
 
 // MockAPIMockRecorder is the mock recorder for MockAPI.
@@ -266,6 +268,26 @@ func (m *MockAPI) Update(obj record.Record) errors.TracerError {
 func (mr *MockAPIMockRecorder) Update(obj any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockAPI)(nil).Update), obj)
+}
+
+// UpdateIgnoreWhere mocks base method.
+func (m *MockAPI) UpdateIgnoreWhere(arg0 record.Record, arg1 *qb.ConditionExpression, arg2 ...qb.FieldValue) (int64, errors.TracerError) {
+	m.ctrl.T.Helper()
+	varargs := []any{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "UpdateIgnoreWhere", varargs...)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(errors.TracerError)
+	return ret0, ret1
+}
+
+// UpdateIgnoreWhere indicates an expected call of UpdateIgnoreWhere.
+func (mr *MockAPIMockRecorder) UpdateIgnoreWhere(arg0, arg1 any, arg2 ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateIgnoreWhere", reflect.TypeOf((*MockAPI)(nil).UpdateIgnoreWhere), varargs...)
 }
 
 // UpdateWhere mocks base method.
