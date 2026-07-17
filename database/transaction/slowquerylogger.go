@@ -2,6 +2,7 @@ package transaction
 
 import (
 	"database/sql"
+	"sync"
 
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
 	"github.com/beaconsoftwarellc/gadget/v2/log"
@@ -16,7 +17,7 @@ type slowQueryLoggerTx struct {
 	slow           time.Duration
 	log            log.Logger
 	id             string
-	loggedQueries  map[string]time.Duration
+	loggedQueries  *sync.Map
 }
 
 func (tx *slowQueryLoggerTx) NamedQuery(query string, arg interface{}) (*sqlx.Rows, error) {
@@ -75,13 +76,18 @@ func (tx *slowQueryLoggerTx) logSlow(query string, elapsed time.Duration) {
 	}
 
 	// do not log the slow query if it has already been logged with a slower time
-	logged, ok := tx.loggedQueries[query]
-	if ok && logged >= elapsed {
-		return
+	obj, ok := tx.loggedQueries.Load(query)
+	if ok {
+		logged, ok := obj.(time.Duration)
+		if ok && logged <= elapsed {
+			return
+		}
+		if !ok {
+			tx.log.Errorf("invalid type for logged query: %T", obj)
+		}
 	}
-
 	err := errors.Newf(
 		"[%s] query execution time: %s query: %s", tx.id, elapsed, query)
 	_ = tx.log.Error(err)
-	tx.loggedQueries[query] = elapsed
+	tx.loggedQueries.Store(query, elapsed)
 }

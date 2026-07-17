@@ -3,6 +3,7 @@ package database
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/beaconsoftwarellc/gadget/v2/log"
@@ -32,7 +33,7 @@ type Configuration interface {
 	// SlowQueryThreshold for logging slow queries
 	SlowQueryThreshold() time.Duration
 	// LoggedSlowQueries is a map of queries that have been logged as slow
-	LoggedSlowQueries() map[string]time.Duration
+	LoggedSlowQueries() *sync.Map
 }
 
 // InstanceConfig is a simple struct that satisfies the Config interface
@@ -57,7 +58,7 @@ type InstanceConfig struct {
 	SlowQuery time.Duration
 	// Log for this instance
 	Log           log.Logger
-	loggedQueries map[string]time.Duration
+	loggedQueries *sync.Map
 }
 
 // DatabaseDialect indicates the type of SQL this database uses
@@ -134,9 +135,9 @@ func (config *InstanceConfig) Logger() log.Logger {
 }
 
 // LoggedSlowQueries is a map of queries that have been logged as slow
-func (config *InstanceConfig) LoggedSlowQueries() map[string]time.Duration {
+func (config *InstanceConfig) LoggedSlowQueries() *sync.Map {
 	if config.loggedQueries == nil {
-		config.loggedQueries = make(map[string]time.Duration)
+		config.loggedQueries = &sync.Map{}
 	}
 	return config.loggedQueries
 }
