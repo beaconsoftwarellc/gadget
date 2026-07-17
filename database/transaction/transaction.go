@@ -3,6 +3,7 @@ package transaction
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	dberrors "github.com/beaconsoftwarellc/gadget/v2/database/errors"
@@ -64,7 +65,7 @@ type Transaction interface {
 // New transaction that will log query executions that are slower than the passed
 // duration
 func New(db Begin, logger log.Logger, slow time.Duration,
-	loggedQueries map[string]time.Duration) (Transaction, error) {
+	loggedQueries *sync.Map) (Transaction, error) {
 	tx, err := db.Begin()
 	if nil != err {
 		return nil, err
