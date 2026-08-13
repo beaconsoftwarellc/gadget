@@ -19,7 +19,7 @@ func Test_NewAdd(t *testing.T) {
 	assert.Contains(t, expression.GetTables(), expectedField1.Table)
 	assert.Contains(t, expression.GetTables(), expectedField2.Table)
 	actualSql, actualParams := expression.ParameterizedSQL()
-	assert.Equal(t, fmt.Sprintf("%s + %s AS `%s`", expectedField1.SQL(), expectedField2.SQL(), expectedAlias), actualSql)
+	assert.Equal(t, fmt.Sprintf("(%s + %s) AS `%s`", expectedField1.SQL(), expectedField2.SQL(), expectedAlias), actualSql)
 	assert.Empty(t, actualParams)
 }
 
@@ -34,7 +34,7 @@ func Test_NewSubtract(t *testing.T) {
 	assert.Contains(t, expression.GetTables(), expectedField1.Table)
 	assert.Contains(t, expression.GetTables(), expectedField2.Table)
 	actualSql, actualParams := expression.ParameterizedSQL()
-	assert.Equal(t, fmt.Sprintf("%s - %s AS `%s`", expectedField1.SQL(), expectedField2.SQL(), expectedAlias), actualSql)
+	assert.Equal(t, fmt.Sprintf("(%s - %s) AS `%s`", expectedField1.SQL(), expectedField2.SQL(), expectedAlias), actualSql)
 	assert.Empty(t, actualParams)
 }
 
@@ -49,7 +49,7 @@ func Test_NewDivide(t *testing.T) {
 	assert.Contains(t, expression.GetTables(), expectedField1.Table)
 	assert.Contains(t, expression.GetTables(), expectedField2.Table)
 	actualSql, actualParams := expression.ParameterizedSQL()
-	assert.Equal(t, fmt.Sprintf("%s / %s AS `%s`", expectedField1.SQL(), expectedField2.SQL(), expectedAlias), actualSql)
+	assert.Equal(t, fmt.Sprintf("(%s / %s) AS `%s`", expectedField1.SQL(), expectedField2.SQL(), expectedAlias), actualSql)
 	assert.Empty(t, actualParams)
 }
 
@@ -64,7 +64,7 @@ func Test_NewDivideConstant(t *testing.T) {
 	assert.Equal(t, expectedAlias, expression.GetName())
 	assert.Contains(t, expression.GetTables(), expectedField1.Table)
 	actualSql, actualParams := expression.ParameterizedSQL()
-	assert.Equal(t, fmt.Sprintf("%s / %s AS `%s`", expectedField1.SQL(), expectedField2SQL, expectedAlias), actualSql)
+	assert.Equal(t, fmt.Sprintf("(%s / %s) AS `%s`", expectedField1.SQL(), expectedField2SQL, expectedAlias), actualSql)
 	assert.Equal(t, expectedParams, actualParams)
 }
 
@@ -79,7 +79,7 @@ func Test_NewMultiply(t *testing.T) {
 	assert.Contains(t, expression.GetTables(), expectedField1.Table)
 	assert.Contains(t, expression.GetTables(), expectedField2.Table)
 	actualSql, actualParams := expression.ParameterizedSQL()
-	assert.Equal(t, fmt.Sprintf("%s * %s AS `%s`", expectedField1.SQL(), expectedField2.SQL(), expectedAlias), actualSql)
+	assert.Equal(t, fmt.Sprintf("(%s * %s) AS `%s`", expectedField1.SQL(), expectedField2.SQL(), expectedAlias), actualSql)
 	assert.Empty(t, actualParams)
 }
 
@@ -91,7 +91,7 @@ func Test_Multiply_EmptyAliasOmitsAsClause(t *testing.T) {
 
 	assert.Empty(t, expression.GetName())
 	actualSql, actualParams := expression.ParameterizedSQL()
-	assert.Equal(t, fmt.Sprintf("%s * %s", expectedField1.SQL(), expectedField2.SQL()), actualSql)
+	assert.Equal(t, fmt.Sprintf("(%s * %s)", expectedField1.SQL(), expectedField2.SQL()), actualSql)
 	assert.Empty(t, actualParams)
 }
 
@@ -103,6 +103,6 @@ func Test_Multiply_ComposesInsideSum(t *testing.T) {
 	expression := Sum(Multiply([]SelectExpression{expectedField1, expectedField2}, ""), expectedAlias)
 
 	actualSql, actualParams := expression.ParameterizedSQL()
-	assert.Equal(t, fmt.Sprintf("SUM(%s * %s) AS `%s`", expectedField1.SQL(), expectedField2.SQL(), expectedAlias), actualSql)
+	assert.Equal(t, fmt.Sprintf("SUM((%s * %s)) AS `%s`", expectedField1.SQL(), expectedField2.SQL(), expectedAlias), actualSql)
 	assert.Empty(t, actualParams)
 }

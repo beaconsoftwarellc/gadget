@@ -42,7 +42,7 @@ func (a math) ParameterizedSQL() (string, []any) {
 		parts[i] = sql
 		values = append(values, expValues...)
 	}
-	sql := strings.Join(parts, string(a.operator))
+	sql := "(" + strings.Join(parts, string(a.operator)) + ")"
 	if !stringutil.IsWhiteSpace(a.alias) {
 		sql = fmt.Sprintf("%s AS `%s`", sql, a.alias)
 	}
