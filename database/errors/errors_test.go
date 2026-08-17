@@ -60,10 +60,20 @@ func TestNewDataTooLongError(t *testing.T) {
 	assert.Contains(err.Error(), err.message)
 }
 
-func TestNewInvalidForeignKeyError(t *testing.T) {
+func TestNewInvalidForeignKeyErrorCreate(t *testing.T) {
 	assert := assert1.New(t)
 	err := NewInvalidForeignKeyError(Insert, "bar", errors.New("foo")).(*InvalidForeignKeyError)
 	err2 := NewInvalidForeignKeyError(Insert, "bar", errors.New("foo")).(*InvalidForeignKeyError)
+	assert.True(strings.HasPrefix(err.ReferenceID, dbErrPrefix))
+	assert.NotEqual(err.ReferenceID, err2.ReferenceID)
+	assert.Contains(err.Error(), err.ReferenceID)
+	assert.Contains(err.Error(), err.message)
+}
+
+func TestNewInvalidForeignKeyErrorDelete(t *testing.T) {
+	assert := assert1.New(t)
+	err := NewInvalidForeignKeyError(Delete, "bar", errors.New("foo")).(*InvalidForeignKeyError)
+	err2 := NewInvalidForeignKeyError(Delete, "bar", errors.New("foo")).(*InvalidForeignKeyError)
 	assert.True(strings.HasPrefix(err.ReferenceID, dbErrPrefix))
 	assert.NotEqual(err.ReferenceID, err2.ReferenceID)
 	assert.Contains(err.Error(), err.ReferenceID)
@@ -80,7 +90,8 @@ func TestTranslateError(t *testing.T) {
 		{err: &mysql.MySQLError{Number: mysqlDuplicateEntry, Message: "foo ... " + primaryKeyConstraintCheck}, expected: &DuplicateRecordError{}},
 		{err: &mysql.MySQLError{Number: mysqlDuplicateEntry}, expected: &UniqueConstraintError{}},
 		{err: &mysql.MySQLError{Number: mysqlDataTooLong}, expected: &DataTooLongError{}},
-		{err: &mysql.MySQLError{Number: mysqlInvalidForeignKey}, expected: &InvalidForeignKeyError{}},
+		{err: &mysql.MySQLError{Number: mysqlInvalidForeignKeyCreate}, expected: &InvalidForeignKeyError{}},
+		{err: &mysql.MySQLError{Number: mysqlInvalidForeignKeyDelete}, expected: &InvalidForeignKeyError{}},
 		{err: &mysql.MySQLError{}, expected: &SQLExecutionError{}},
 		{err: errors.New("foo"), expected: &SQLSystemError{}},
 	}
@@ -91,7 +102,7 @@ func TestTranslateError(t *testing.T) {
 
 func Test_getLogPrefix(t *testing.T) {
 	assert := assert1.New(t)
-	expected := "[DAT.ERR.95]"
+	expected := "[DAT.ERR.106]"
 	actual := getLogPrefix(1)
 	assert.Equal(expected, actual)
 }
