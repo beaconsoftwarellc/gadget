@@ -33,14 +33,15 @@ const (
 )
 
 const (
-	dbErrPrefix               = "dberr"
-	invalidForeignKeyMsg      = "invalid reference"
-	dataTooLongMsg            = "data too long"
-	duplicateRecordMsg        = "already exists"
-	mysqlDuplicateEntry       = 1062
-	mysqlDataTooLong          = 1406
-	mysqlInvalidForeignKey    = 1452
-	primaryKeyConstraintCheck = "for key 'PRIMARY'"
+	dbErrPrefix                  = "dberr"
+	invalidForeignKeyMsg         = "invalid reference"
+	dataTooLongMsg               = "data too long"
+	duplicateRecordMsg           = "already exists"
+	mysqlDuplicateEntry          = 1062
+	mysqlDataTooLong             = 1406
+	mysqlInvalidForeignKeyDelete = 1451
+	mysqlInvalidForeignKeyCreate = 1452
+	primaryKeyConstraintCheck    = "for key 'PRIMARY'"
 )
 
 // IsNotFoundError returns a boolean indicating that the passed error (can be nil) is of
@@ -93,7 +94,7 @@ func TranslateError(err error, action SQLQueryType, stmt string) errors.TracerEr
 	case mysqlDataTooLong:
 		return NewDataTooLongError(action, stmt, err)
 	// Invalid foreign key
-	case mysqlInvalidForeignKey:
+	case mysqlInvalidForeignKeyCreate, mysqlInvalidForeignKeyDelete:
 		return NewInvalidForeignKeyError(action, stmt, err)
 	default:
 		return NewExecutionError(action, stmt, err)
