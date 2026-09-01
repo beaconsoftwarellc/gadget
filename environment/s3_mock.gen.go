@@ -5,6 +5,7 @@
 //
 //	mockgen -source=s3.go -package environment -destination s3_mock.gen.go
 //
+
 // Package environment is a generated GoMock package.
 package environment
 
@@ -22,6 +23,7 @@ import (
 type Mocks3Client struct {
 	ctrl     *gomock.Controller
 	recorder *Mocks3ClientMockRecorder
+	isgomock struct{}
 }
 
 // Mocks3ClientMockRecorder is the mock recorder for Mocks3Client.

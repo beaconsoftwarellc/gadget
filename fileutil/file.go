@@ -15,11 +15,10 @@ import (
 // FileExists exists and is accessible and the specified path.
 func FileExists(path string) bool {
 	stat, err := os.Stat(path)
-	r := true
 	if os.IsNotExist(err) || err != nil || stat.IsDir() {
-		r = false
+		return false
 	}
-	return r
+	return true
 }
 
 // EnsureDir at the specified path with the specified mode.
@@ -82,7 +81,7 @@ func ReadLines(filepath string) ([]string, error) {
 			prefix = ""
 		}
 	}
-	file.Close()
+	_ = file.Close()
 	return lines, err
 }
 
@@ -93,7 +92,9 @@ func DownloadToMemory(url string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
 	contents, err = io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err

@@ -1,12 +1,11 @@
 module github.com/beaconsoftwarellc/gadget/v2
 
-go 1.23.6
+go 1.25
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.40.1
 	github.com/aws/aws-sdk-go-v2/config v1.29.7
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.17.63
-	github.com/aws/aws-sdk-go-v2/service/kinesis v1.42.7
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.77.1
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.37.15
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.56.13

@@ -132,7 +132,7 @@ func (list *linkedList[T]) InsertNext(element *ListElement[T], data T) *ListElem
 	defer list.mutex.Unlock()
 	newElement := &ListElement[T]{data: data}
 	if nil == element {
-		if 0 == list.size {
+		if list.size == 0 {
 			list.tail = newElement
 		}
 		newElement.next = list.head
@@ -154,14 +154,14 @@ func (list *linkedList[T]) RemoveNext(element *ListElement[T]) (data T, err erro
 	list.mutex.Lock()
 	defer list.mutex.Unlock()
 
-	if 0 == list.size {
+	if list.size == 0 {
 		return data, NewEmptyListError()
 	}
 
 	if nil == element {
 		data = list.head.data
 		list.head = list.head.next
-		if 1 == list.size {
+		if list.size == 1 {
 			list.tail = nil
 		}
 	} else {

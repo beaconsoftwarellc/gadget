@@ -211,6 +211,20 @@ func (mr *MockTransactionMockRecorder) Select(arg0, arg1, arg2 any) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Select", reflect.TypeOf((*MockTransaction)(nil).Select), arg0, arg1, arg2)
 }
 
+// SelectOne mocks base method.
+func (m *MockTransaction) SelectOne(arg0 record.Record, arg1 *qb.SelectQuery) errors.TracerError {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SelectOne", arg0, arg1)
+	ret0, _ := ret[0].(errors.TracerError)
+	return ret0
+}
+
+// SelectOne indicates an expected call of SelectOne.
+func (mr *MockTransactionMockRecorder) SelectOne(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SelectOne", reflect.TypeOf((*MockTransaction)(nil).SelectOne), arg0, arg1)
+}
+
 // Update mocks base method.
 func (m *MockTransaction) Update(arg0 record.Record) errors.TracerError {
 	m.ctrl.T.Helper()

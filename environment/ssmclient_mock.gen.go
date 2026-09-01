@@ -5,6 +5,7 @@
 //
 //	mockgen -source=ssm.go -package environment -destination ssmclient_mock.gen.go
 //
+
 // Package environment is a generated GoMock package.
 package environment
 
@@ -20,6 +21,7 @@ import (
 type MockssmClient struct {
 	ctrl     *gomock.Controller
 	recorder *MockssmClientMockRecorder
+	isgomock struct{}
 }
 
 // MockssmClientMockRecorder is the mock recorder for MockssmClient.

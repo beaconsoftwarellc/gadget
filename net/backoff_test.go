@@ -78,22 +78,22 @@ func TestCalculateBackoffMillis(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	result1 := CalculateBackoff(r, 1, time.Millisecond, time.Second,
 		10*time.Millisecond)
-	s1 := fmt.Sprintf("%s", result1)
+	s1 := result1.String()
 	assert.NotEmpty(s1)
 	assert.GreaterOrEqual(time.Second, result1)
 	result2 := CalculateBackoff(r, 2, time.Millisecond, time.Second,
 		10*time.Millisecond)
-	s2 := fmt.Sprintf("%s", result2)
+	s2 := result2.String()
 	assert.NotEmpty(s2)
 	assert.GreaterOrEqual(time.Second, result2)
 	result3 := CalculateBackoff(r, 3, time.Millisecond, time.Second,
 		10*time.Millisecond)
-	s3 := fmt.Sprintf("%s", result3)
+	s3 := result3.String()
 	assert.NotEmpty(s3)
 	assert.GreaterOrEqual(time.Second, result3)
 	result4 := CalculateBackoff(r, 4, time.Millisecond, time.Second,
 		10*time.Millisecond)
-	s4 := fmt.Sprintf("%s", result4)
+	s4 := result4.String()
 	assert.NotEmpty(s4)
 	assert.GreaterOrEqual(time.Second, result4)
 }

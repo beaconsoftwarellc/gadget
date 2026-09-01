@@ -43,8 +43,8 @@ func camelCase(s string, upper bool) string {
 	output := []rune{}
 	done := false
 	for i, r := range runes {
-		if 0 == i {
-			// do nothing, and finish up, the first character was already lowercase
+		if i == 0 {
+			// do nothing and finish up. the first character was already lowercase
 			if !upper {
 				if unicode.IsLower(r) {
 					done = true

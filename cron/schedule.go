@@ -56,7 +56,7 @@ func (s *scheduler) GetNextExecutionFrom(schedule Schedule, from time.Time) time
 		day     = ref.Day()
 		weekday = ref.Weekday()
 		hour    = ref.Hour()
-		minute  = ref.Minute()
+		minute  int
 	)
 
 	if schedule.GetMonth() > 0 {

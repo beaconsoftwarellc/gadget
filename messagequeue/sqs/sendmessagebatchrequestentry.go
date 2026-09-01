@@ -19,27 +19,27 @@ func (smbi *smbreWrapper) SetQueueUrl(value string) {
 
 func (smbi *smbreWrapper) SetMessageBody(value string) {
 	if nil != smbi && nil != smbi.SendMessageBatchRequestEntry {
-		smbi.SendMessageBatchRequestEntry.MessageBody = aws.String(value)
+		smbi.MessageBody = aws.String(value)
 	}
 }
 
 func (smbi *smbreWrapper) SetDelaySeconds(value int32) {
 	if nil != smbi && nil != smbi.SendMessageBatchRequestEntry {
-		smbi.SendMessageBatchRequestEntry.DelaySeconds = value
+		smbi.DelaySeconds = value
 	}
 }
 
 func (smbi *smbreWrapper) SetMessageAttributes(
 	value map[string]types.MessageAttributeValue) {
 	if nil != smbi && nil != smbi.SendMessageBatchRequestEntry {
-		smbi.SendMessageBatchRequestEntry.MessageAttributes = value
+		smbi.MessageAttributes = value
 	}
 }
 
 func (smbi *smbreWrapper) SetMessageSystemAttributes(
 	value map[string]types.MessageSystemAttributeValue) {
 	if nil != smbi && nil != smbi.SendMessageBatchRequestEntry {
-		smbi.SendMessageBatchRequestEntry.MessageSystemAttributes = value
+		smbi.MessageSystemAttributes = value
 	}
 }
 
@@ -50,7 +50,7 @@ func sendMessageBatchRequestEntryFromMessage(message *messagequeue.Message) (
 	// ID is required and is used to match up request with response messages
 	// it must be in (azAZ09_-), less than 80 characters, and unique
 	// within the batch. We can just use generator.
-	wrapper.SendMessageBatchRequestEntry.Id = aws.String(generator.String(32))
+	wrapper.Id = aws.String(generator.String(32))
 	return wrapper.SendMessageBatchRequestEntry,
 		updateEnqueueFromMessage(wrapper, message)
 }

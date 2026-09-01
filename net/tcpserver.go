@@ -123,7 +123,7 @@ func (server *TCPServer) Listen() (chan bool, error) {
 				server.idleTicker.Stop()
 			case <-done:
 				server.Dispatcher.Quit(true)
-				listener.Close()
+				_ = listener.Close()
 				return
 			case conn := <-connections:
 				task, err := server.implementation.GetTask(conn)

@@ -44,6 +44,8 @@ type Transaction interface {
 	// TODO: [COR-586] we can expand the Record interface to return a collection
 	// 		 of its type so we don't have to pass this clumsily
 	Select(any, *qb.SelectQuery, qb.LimitOffset) errors.TracerError
+	// SelectOne populates a Record from a custom query
+	SelectOne(record.Record, *qb.SelectQuery) errors.TracerError
 	// Update replaces an entry in the database for the Record
 	Update(record.Record) errors.TracerError
 	// UpdateWhere updates fields for the Record based on a supplied where clause in a transaction
@@ -209,6 +211,18 @@ func (tx *transaction) Select(target interface{}, query *qb.SelectQuery,
 
 	if err = tx.implementation.Select(target, stmt, values...); nil != err {
 		return dberrors.TranslateError(err, dberrors.Select, stmt)
+	}
+	return nil
+}
+
+func (tx *transaction) SelectOne(obj record.Record, query *qb.SelectQuery) errors.TracerError {
+	options := qb.NewLimitOffset[int]().SetLimit(1).SetOffset(0)
+	stmt, args, err := query.SQL(options)
+	if nil != err {
+		return errors.Wrap(err)
+	}
+	if err = tx.implementation.QueryRowx(stmt, args...).StructScan(obj); nil != err {
+		return dberrors.TranslateError(err, dberrors.Select, fmt.Sprintf("%s %% %v", stmt, args))
 	}
 	return nil
 }

@@ -64,7 +64,9 @@ func getLock(client database.Client) func() error {
 
 func execute(config database.InstanceConfig, connection database.Connection,
 	schema string, deltas []*Delta) errors.TracerError {
-	defer connection.Close()
+	defer func(connection database.Connection) {
+		_ = connection.Close()
+	}(connection)
 	var err error
 
 	log.Infof("executing %d deltas on %s", len(deltas), schema)

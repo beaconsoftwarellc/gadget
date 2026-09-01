@@ -175,9 +175,10 @@ func fieldCollectionComparison(left TableField, comparison Comparison, collectio
 		rightValues[i] = value
 	}
 	if len(rightValues) == 1 {
-		if comparison == In {
+		switch comparison {
+		case In:
 			comparison = Equal
-		} else if comparison == NotIn {
+		case NotIn:
 			comparison = NotEqual
 		}
 	}

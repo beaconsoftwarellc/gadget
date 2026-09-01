@@ -16,9 +16,9 @@ func Test_convert(t *testing.T) {
 		id       string
 		external string
 		body     string
-		service  string = missing
-		method   string = missing
-		deadline        = time.Now().Add(time.Second)
+		service  = missing
+		method   = missing
+		deadline = time.Now().Add(time.Second)
 	)
 	message := &types.Message{
 		MessageAttributes: make(map[string]types.MessageAttributeValue),
