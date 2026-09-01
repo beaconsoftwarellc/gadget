@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	_assert "github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	_require "github.com/stretchr/testify/require"
 )
 
@@ -66,7 +65,7 @@ func TestListIsHead(t *testing.T) {
 	assert.True(list.IsHead(elm1))
 	assert.False(list.IsHead(elm))
 	_, err := list.RemoveNext(nil)
-	require.NoError(t, err)
+	_require.NoError(t, err)
 	assert.True(list.IsHead(elm))
 }
 

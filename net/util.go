@@ -72,7 +72,7 @@ func RandomizeIPArray(a []nnet.IP) []nnet.IP {
 
 // GetIntValue attempts to retrieve the value from url.Values, otherwise returns the default
 func GetIntValue(values url.Values, key string, def int) int {
-	if 64 == strconv.IntSize {
+	if strconv.IntSize == 64 {
 		return int(GetInt64Value(values, key, int64(def)))
 	}
 	return int(GetInt32Value(values, key, int32(def)))
@@ -132,7 +132,7 @@ func GetInt8Value(values url.Values, key string, def int8) int8 {
 
 // GetUintValue attempts to retrieve the value from url.Values, otherwise returns the default
 func GetUintValue(values url.Values, key string, def uint) uint {
-	if 64 == strconv.IntSize {
+	if strconv.IntSize == 64 {
 		return uint(GetUint64Value(values, key, uint64(def)))
 	}
 	return uint(GetUint32Value(values, key, uint32(def)))

@@ -38,7 +38,7 @@ func (l *StackLogger) AddOutput(output Output) {
 
 // IsEmpty checks if the stack has no messages
 func (l *StackLogger) IsEmpty() bool {
-	return 0 == l.messages.Size()
+	return l.messages.Size() == 0
 }
 
 // Pop returns the last message from the message stack

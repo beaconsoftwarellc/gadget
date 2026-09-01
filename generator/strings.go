@@ -65,17 +65,17 @@ const Base32IDSizeBytes = 18
 // MaxPrefix is the maximum ID prefix length
 const MaxPrefix = 8
 
-// ID creates a random id starting with prefix to idSize length
+// ID creates a random id starting with "prefix" to idSize length
 func ID(prefix IDPrefix) string {
 	if len(prefix) > MaxPrefix {
 		panic(fmt.Sprintf("%s is too long of a prefix ID", prefix))
 	}
 	n := IDSizeBytes - len(prefix) - 1
-	s := base64.StdEncoding.EncodeToString([]byte(strings.Replace(uuid.New().String(), "-", "", -1)))
+	s := base64.StdEncoding.EncodeToString([]byte(strings.ReplaceAll(uuid.New().String(), "-", "")))
 	return fmt.Sprintf("%s_%s", prefix, s[:n])
 }
 
-// Base32ID creates a random id starting with prefix to idSize length
+// Base32ID creates a random id starting with "prefix" to idSize length
 func Base32ID(prefix IDPrefix) string {
 	if len(prefix) > MaxPrefix {
 		panic(fmt.Sprintf("%s is too long of a prefix ID", prefix))

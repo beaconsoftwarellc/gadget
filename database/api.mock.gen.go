@@ -241,6 +241,20 @@ func (mr *MockAPIMockRecorder) Select(target, query, options any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Select", reflect.TypeOf((*MockAPI)(nil).Select), target, query, options)
 }
 
+// SelectOne mocks base method.
+func (m *MockAPI) SelectOne(obj record.Record, query *qb.SelectQuery) errors.TracerError {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SelectOne", obj, query)
+	ret0, _ := ret[0].(errors.TracerError)
+	return ret0
+}
+
+// SelectOne indicates an expected call of SelectOne.
+func (mr *MockAPIMockRecorder) SelectOne(obj, query any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SelectOne", reflect.TypeOf((*MockAPI)(nil).SelectOne), obj, query)
+}
+
 // Sum mocks base method.
 func (m *MockAPI) Sum(arg0 qb.TableField, arg1 *qb.SelectQuery) (int32, error) {
 	m.ctrl.T.Helper()

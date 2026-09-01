@@ -42,6 +42,8 @@ type API interface {
 	ReadOneWhere(obj record.Record, condition *qb.ConditionExpression) errors.TracerError
 	// Select executes a given select query and populates the target
 	Select(target interface{}, query *qb.SelectQuery, options qb.LimitOffset) errors.TracerError
+	// SelectOne populates a Record from a custom query
+	SelectOne(obj record.Record, query *qb.SelectQuery) errors.TracerError
 	// ListWhere populates target with a list of records from the database
 	ListWhere(meta record.Record, target interface{},
 		condition *qb.ConditionExpression, options qb.LimitOffset) errors.TracerError
@@ -208,6 +210,12 @@ func (d *api) Select(target any, query *qb.SelectQuery,
 	options = d.enforceLimits(options)
 	return d.runInTransaction(func(tx transaction.Transaction) errors.TracerError {
 		return tx.Select(target, query, options)
+	})
+}
+
+func (d *api) SelectOne(obj record.Record, query *qb.SelectQuery) errors.TracerError {
+	return d.runInTransaction(func(tx transaction.Transaction) errors.TracerError {
+		return tx.SelectOne(obj, query)
 	})
 }
 

@@ -58,7 +58,7 @@ func (element DListElement[T]) Data() T { return element.data }
 
 // DList is an implementation of a doubly linked list data structure.
 type DList[T any] interface {
-	// Size of the this dlist as a count of the elements in it.
+	// Size of this dlist as a count of the elements in it.
 	Size() int
 	// Head of the list.
 	Head() *DListElement[T]
@@ -78,8 +78,8 @@ type DList[T any] interface {
 	Remove(element *DListElement[T]) (data T, err error)
 }
 
-// dlinkedList is a threadsafe implementation of a doubly linked list
-type dlinkedList[T any] struct {
+// dLinkedList is a threadsafe implementation of a doubly linked list
+type dLinkedList[T any] struct {
 	mutex *sync.Mutex
 	head  *DListElement[T]
 	tail  *DListElement[T]
@@ -88,35 +88,36 @@ type dlinkedList[T any] struct {
 
 // NewDList returns a new initialized empty DList
 func NewDList[T any]() DList[T] {
-	return &dlinkedList[T]{mutex: &sync.Mutex{}}
+	return &dLinkedList[T]{mutex: &sync.Mutex{}}
 }
 
 // Size of the this dlist as a count of the elements in it.
-func (list dlinkedList[T]) Size() int { return list.size }
+func (list *dLinkedList[T]) Size() int { return list.size }
 
 // Head of the list.
-func (list dlinkedList[T]) Head() *DListElement[T] { return list.head }
+func (list *dLinkedList[T]) Head() *DListElement[T] { return list.head }
 
 // IsHead of the list.
-func (list dlinkedList[T]) IsHead(element *DListElement[T]) bool { return element == list.head }
+func (list *dLinkedList[T]) IsHead(element *DListElement[T]) bool { return element == list.head }
 
 // Tail of the list.
-func (list dlinkedList[T]) Tail() *DListElement[T] { return list.tail }
+func (list *dLinkedList[T]) Tail() *DListElement[T] { return list.tail }
 
 // IsTail of the list.
-func (list dlinkedList[T]) IsTail(element *DListElement[T]) bool { return element == list.tail }
+func (list *dLinkedList[T]) IsTail(element *DListElement[T]) bool { return element == list.tail }
 
-// InsertNext inserts the passed data after the passed element. If the list is empty a 'nil' element is allowed
+// InsertNext inserts the passed data after the passed element.
+// If the list is empty, a 'nil' element is allowed,
 // otherwise an error will be returned.
-func (list *dlinkedList[T]) InsertNext(element *DListElement[T], data T) (newElement *DListElement[T], err error) {
+func (list *dLinkedList[T]) InsertNext(element *DListElement[T], data T) (newElement *DListElement[T], err error) {
 	list.mutex.Lock()
 	defer list.mutex.Unlock()
-	if 0 != list.Size() && nil == element {
+	if list.Size() != 0 && nil == element {
 		err = NewListNonEmptyError()
 		return
 	}
 	newElement = &DListElement[T]{data: data}
-	if 0 == list.Size() {
+	if list.Size() == 0 {
 		list.head = newElement
 		list.tail = newElement
 	} else {
@@ -133,17 +134,18 @@ func (list *dlinkedList[T]) InsertNext(element *DListElement[T], data T) (newEle
 	return
 }
 
-// InsertPrevious inserts the passed data before the passed element in the list. If the list is empty a 'nil' element
-// is allowed, otherwise an error will be returned.
-func (list *dlinkedList[T]) InsertPrevious(element *DListElement[T], data T) (newElement *DListElement[T], err error) {
+// InsertPrevious inserts the passed data before the passed element in the list.
+// If the list is empty, a 'nil' element is allowed,
+// otherwise an error will be returned.
+func (list *dLinkedList[T]) InsertPrevious(element *DListElement[T], data T) (newElement *DListElement[T], err error) {
 	list.mutex.Lock()
 	defer list.mutex.Unlock()
-	if 0 != list.Size() && nil == element {
+	if list.Size() != 0 && nil == element {
 		err = NewListNonEmptyError()
 		return
 	}
 	newElement = &DListElement[T]{data: data}
-	if 0 == list.Size() {
+	if list.Size() == 0 {
 		list.head = newElement
 		list.tail = newElement
 	} else {
@@ -161,10 +163,10 @@ func (list *dlinkedList[T]) InsertPrevious(element *DListElement[T], data T) (ne
 }
 
 // Remove the element from the list.
-func (list *dlinkedList[T]) Remove(element *DListElement[T]) (data T, err error) {
+func (list *dLinkedList[T]) Remove(element *DListElement[T]) (data T, err error) {
 	list.mutex.Lock()
 	defer list.mutex.Unlock()
-	if 0 == list.size {
+	if list.size == 0 {
 		err = NewEmptyListError()
 		return
 	}

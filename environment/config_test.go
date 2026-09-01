@@ -51,16 +51,16 @@ func TestValidConfig(t *testing.T) {
 	os.Clearenv()
 
 	expectedStringField := "life, the universe and everything"
-	os.Setenv("STRING_FIELD", expectedStringField)
+	_ = os.Setenv("STRING_FIELD", expectedStringField)
 
 	expectedIntField := 42
-	os.Setenv("INT_FIELD", strconv.Itoa(expectedIntField))
+	_ = os.Setenv("INT_FIELD", strconv.Itoa(expectedIntField))
 
 	interval := time.Duration(int64(generator.Int16()))
-	os.Setenv("INTERVAL", interval.String())
+	_ = os.Setenv("INTERVAL", interval.String())
 
 	expectedBoolField := true
-	os.Setenv("BOOL_FIELD", strconv.FormatBool(expectedBoolField))
+	_ = os.Setenv("BOOL_FIELD", strconv.FormatBool(expectedBoolField))
 
 	expectedNotEnvironmentField := "How many roads must a man walk down?"
 	config := &specification{NotEnvironmentField: expectedNotEnvironmentField}
@@ -80,10 +80,10 @@ func TestProcessNonPointerFails(t *testing.T) {
 	os.Clearenv()
 
 	expectedStringField := "life, the universe and everything"
-	os.Setenv("STRING_FIELD", expectedStringField)
+	_ = os.Setenv("STRING_FIELD", expectedStringField)
 
 	expectedIntField := 42
-	os.Setenv("INT_FIELD", strconv.Itoa(expectedIntField))
+	_ = os.Setenv("INT_FIELD", strconv.Itoa(expectedIntField))
 
 	expectedNotEnvironmentField := "How many roads must a man walk down?"
 	config := specification{NotEnvironmentField: expectedNotEnvironmentField}
@@ -98,7 +98,7 @@ func TestMissingEnviroment(t *testing.T) {
 	os.Clearenv()
 
 	expectedStringField := "life, the universe and everything"
-	os.Setenv("STRING_FIELD", expectedStringField)
+	_ = os.Setenv("STRING_FIELD", expectedStringField)
 
 	expectedNotEnvironmentField := "How many roads must a man walk down?"
 	config := &specification{NotEnvironmentField: expectedNotEnvironmentField}
@@ -114,7 +114,7 @@ func TestNotImplementedType(t *testing.T) {
 	assert := assert1.New(t)
 	os.Clearenv()
 
-	os.Setenv("FLOAT64_FIELD", "20.12")
+	_ = os.Setenv("FLOAT64_FIELD", "20.12")
 
 	config := &unsupportedTypeSpecification{}
 	err := Process(config, log.NewStackLogger())
@@ -128,9 +128,9 @@ func TestInvalidConfigValue(t *testing.T) {
 	os.Clearenv()
 
 	expectedStringField := "life, the universe and everything"
-	os.Setenv("STRING_FIELD", expectedStringField)
+	_ = os.Setenv("STRING_FIELD", expectedStringField)
 
-	os.Setenv("INT_FIELD", "j")
+	_ = os.Setenv("INT_FIELD", "j")
 
 	expectedNotEnvironmentField := "How many roads must a man walk down?"
 	config := &specification{NotEnvironmentField: expectedNotEnvironmentField}

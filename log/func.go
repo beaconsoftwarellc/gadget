@@ -41,12 +41,12 @@ func DefaultOutput(m Message) {
 	if flag&(FlagInfo|FlagAudit|FlagWarn) > 0 {
 		m.Stack = []string{}
 	}
-	os.Stderr.Write([]byte(m.TTYString()))
+	_, _ = os.Stderr.Write([]byte(m.TTYString()))
 }
 
 // JSONOutput formats the log map into Json and then outputs to stderr (appropriate for aws production services)
 func JSONOutput(m Message) {
-	os.Stderr.Write([]byte(m.JSONString() + "\n"))
+	_, _ = os.Stderr.Write([]byte(m.JSONString() + "\n"))
 }
 
 // ExitOnError will exit if an error is returned

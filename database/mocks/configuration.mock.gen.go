@@ -11,6 +11,7 @@ package mocks
 
 import (
 	reflect "reflect"
+	sync "sync"
 	time "time"
 
 	log "github.com/beaconsoftwarellc/gadget/v2/log"
@@ -70,10 +71,10 @@ func (mr *MockConfigurationMockRecorder) DatabaseDialect() *gomock.Call {
 }
 
 // LoggedSlowQueries mocks base method.
-func (m *MockConfiguration) LoggedSlowQueries() map[string]time.Duration {
+func (m *MockConfiguration) LoggedSlowQueries() *sync.Map {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "LoggedSlowQueries")
-	ret0, _ := ret[0].(map[string]time.Duration)
+	ret0, _ := ret[0].(*sync.Map)
 	return ret0
 }
 

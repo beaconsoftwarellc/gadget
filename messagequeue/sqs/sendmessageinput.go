@@ -13,31 +13,31 @@ type smiWrapper struct {
 
 func (smi *smiWrapper) SetQueueUrl(value string) {
 	if nil != smi && nil != smi.SendMessageInput {
-		smi.SendMessageInput.QueueUrl = aws.String(value)
+		smi.QueueUrl = aws.String(value)
 	}
 }
 
 func (smi *smiWrapper) SetMessageBody(value string) {
 	if nil != smi && nil != smi.SendMessageInput {
-		smi.SendMessageInput.MessageBody = aws.String(value)
+		smi.MessageBody = aws.String(value)
 	}
 }
 
 func (smi *smiWrapper) SetDelaySeconds(value int32) {
 	if nil != smi && nil != smi.SendMessageInput {
-		smi.SendMessageInput.DelaySeconds = value
+		smi.DelaySeconds = value
 	}
 }
 
 func (smi *smiWrapper) SetMessageAttributes(value map[string]types.MessageAttributeValue) {
 	if nil != smi && nil != smi.SendMessageInput {
-		smi.SendMessageInput.MessageAttributes = value
+		smi.MessageAttributes = value
 	}
 }
 
 func (smi *smiWrapper) SetMessageSystemAttributes(value map[string]types.MessageSystemAttributeValue) {
 	if nil != smi && nil != smi.SendMessageInput {
-		smi.SendMessageInput.MessageSystemAttributes = value
+		smi.MessageSystemAttributes = value
 	}
 }
 

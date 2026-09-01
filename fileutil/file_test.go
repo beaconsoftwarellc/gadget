@@ -52,7 +52,7 @@ func TestEnsureDirectory(t *testing.T) {
 	if err == nil {
 		t.Error("File in subtree should fail.")
 	}
-	os.Remove(dirname)
+	_ = os.Remove(dirname)
 }
 
 func TestFileExists(t *testing.T) {

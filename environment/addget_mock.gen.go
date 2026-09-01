@@ -5,6 +5,7 @@
 //
 //	mockgen -source=addget.go -package environment -destination addget_mock.gen.go
 //
+
 // Package environment is a generated GoMock package.
 package environment
 
@@ -18,6 +19,7 @@ import (
 type MockAddGet struct {
 	ctrl     *gomock.Controller
 	recorder *MockAddGetMockRecorder
+	isgomock struct{}
 }
 
 // MockAddGetMockRecorder is the mock recorder for MockAddGet.

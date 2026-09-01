@@ -14,11 +14,11 @@ import (
 	"github.com/beaconsoftwarellc/gadget/v2/errors"
 	"github.com/beaconsoftwarellc/gadget/v2/generator"
 	"github.com/beaconsoftwarellc/gadget/v2/messagequeue"
-	"github.com/stretchr/testify/assert"
+	_assert "github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
 
-func NewMatcher(assert *assert.Assertions,
+func NewMatcher(assert *_assert.Assertions,
 	messages ...*messagequeue.Message) *MessageMatches {
 	return &MessageMatches{assert: assert,
 		messages: messages, smbo: &sqs.SendMessageBatchOutput{
@@ -28,7 +28,7 @@ func NewMatcher(assert *assert.Assertions,
 
 type MessageMatches struct {
 	smbo     *sqs.SendMessageBatchOutput
-	assert   *assert.Assertions
+	assert   *_assert.Assertions
 	messages []*messagequeue.Message
 }
 
@@ -128,8 +128,8 @@ func (mm *MessageMatches) String() string {
 	return fmt.Sprintf("MessageMatches(%s)", "*mm.message")
 }
 
-func initialize(t *testing.T) (context.Context, *assert.Assertions, *MockAPI, *sdk) {
-	assert := assert.New(t)
+func initialize(t *testing.T) (context.Context, *_assert.Assertions, *MockAPI, *sdk) {
+	assert := _assert.New(t)
 	context := context.Background()
 	ctrl := gomock.NewController(t)
 	apiMock := NewMockAPI(ctrl)
@@ -141,7 +141,7 @@ func initialize(t *testing.T) (context.Context, *assert.Assertions, *MockAPI, *s
 }
 
 func Test_SQS_RegionFromURL(t *testing.T) {
-	assert := assert.New(t)
+	assert := _assert.New(t)
 	tests := []struct {
 		name        string
 		raw         string
@@ -194,7 +194,7 @@ func Test_SQS_RegionFromURL(t *testing.T) {
 }
 
 func Test_SQS_NewFromURL(t *testing.T) {
-	assert := assert.New(t)
+	assert := _assert.New(t)
 	parsed, err := url.Parse("https://sqs.us-east-1.amazonaws.com/123456789012/queue")
 	assert.NoError(err)
 	mq, err := NewFromURL(parsed)
@@ -206,7 +206,7 @@ func Test_SQS_NewFromURL(t *testing.T) {
 }
 
 func Test_SQS_NewFromURL_Localhost(t *testing.T) {
-	assert := assert.New(t)
+	assert := _assert.New(t)
 	parsed, err := url.Parse("http://localhost:4566/000000000000/queue")
 	assert.NoError(err)
 	mq, err := NewFromURL(parsed)
@@ -218,7 +218,7 @@ func Test_SQS_NewFromURL_Localhost(t *testing.T) {
 }
 
 func Test_SQS_NewFromURL_Error(t *testing.T) {
-	assert := assert.New(t)
+	assert := _assert.New(t)
 	parsed, err := url.Parse("https://sqs.us-east-1.example.com/queue")
 	assert.NoError(err)
 	mq, err := NewFromURL(parsed)
@@ -336,7 +336,7 @@ func Test_SQS_Dequeue(t *testing.T) {
 	var (
 		wait              time.Duration = 0
 		visibilityTimeout time.Duration = 0
-		count             int           = 0
+		count                           = 0
 	)
 	locator, _ := url.Parse(fmt.Sprintf("http://%s.com",
 		strings.ToLower(generator.String(20))))

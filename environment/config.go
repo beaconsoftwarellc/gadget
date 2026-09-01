@@ -51,7 +51,7 @@ func ProcessMap(config interface{}, envVars map[string]string, logger log.Logger
 	bucket := NewNoopAddGet()
 	ssm := NewNoopAddGet()
 
-	if val.Kind() != reflect.Ptr {
+	if val.Kind() != reflect.Pointer {
 		return NewInvalidSpecificationError()
 	}
 	val = val.Elem()
@@ -190,7 +190,7 @@ func setValueFieldString(valueField reflect.Value, structField reflect.StructFie
 func Push(config interface{}) error {
 	val := reflect.ValueOf(config)
 
-	if val.Kind() != reflect.Ptr {
+	if val.Kind() != reflect.Pointer {
 		return NewInvalidSpecificationError()
 	}
 	val = val.Elem()
@@ -218,14 +218,14 @@ func Push(config interface{}) error {
 		default:
 			return UnsupportedDataTypeError{Type: typ.Type.Kind(), Field: typ.Name}
 		}
-		os.Setenv(envTag, value)
+		_ = os.Setenv(envTag, value)
 	}
 	return nil
 }
 
 // GetEnvMap returns a map of all environment variables to their values
 func GetEnvMap() map[string]string {
-	raw := os.Environ() //format "key=val"
+	raw := os.Environ() // format "key=val"
 	filtered := make(map[string]string, len(raw))
 	for _, keyval := range raw {
 		parts := strings.SplitN(keyval, "=", 2)

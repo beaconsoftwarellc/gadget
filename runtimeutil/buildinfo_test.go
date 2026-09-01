@@ -11,7 +11,7 @@ func TestBuildInfo(t *testing.T) {
 	b := NewBuildInfo()
 	assert.NotEmpty(t, b.GoVersion)
 
-	b.BuildInfo.Settings = append(b.BuildInfo.Settings,
+	b.Settings = append(b.Settings,
 		debug.BuildSetting{Key: string(BuildInfoRevision), Value: "hash"},
 		debug.BuildSetting{Key: string(BuildInfoTime), Value: ""},
 	)
