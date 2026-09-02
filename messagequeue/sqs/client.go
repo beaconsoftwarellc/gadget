@@ -268,3 +268,56 @@ func (mq *sdk) Delete(ctx context.Context, msg *messagequeue.Message) error {
 	_, err = api.DeleteMessage(ctx, dmi)
 	return err
 }
+
+func (mq *sdk) Redrive(ctx context.Context, msg *messagequeue.Message) error {
+	var (
+		api API
+		err error
+	)
+
+	api, err = mq.API(ctx)
+	if nil != err {
+		return err
+	}
+
+	// need the queueUrl from the DLQ
+	queueUrlInput := &sqs.ListDeadLetterSourceQueuesInput{QueueUrl: aws.String(mq.queueUrl.String())}
+	queueUrlOutput, err := api.ListDeadLetterSourceQueues(ctx, queueUrlInput)
+	if nil != err {
+		return err
+	}
+
+	// for each queue URL in the queueUrlOutput.QueueUrls slice, take one and filter by service name
+	for _, queueURL := range queueUrlOutput.QueueUrls {
+		// need the queueUrl from the AWS
+		attributesInput := &sqs.GetQueueAttributesInput{QueueUrl: aws.String(queueURL)}
+		// to get attributions from particular queue
+		attributesOutput, err := api.GetQueueAttributes(ctx, attributesInput)
+		if err != nil {
+			return err
+		}
+		// get the service attribute from original queue
+		service := attributesOutput.Attributes["service"]
+
+		// if service and the message's service are equal, send the message back to the queueURL
+		if service == msg.Service {
+			// send message back to the original queue
+			toSend := &sqs.SendMessageInput{QueueUrl: aws.String(queueURL), MessageBody: aws.String(msg.Body)}
+			_, err = api.SendMessage(ctx, toSend)
+			if err != nil {
+				return err
+			}
+
+			// delete message from DLQ
+			err = mq.Delete(ctx, msg)
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+
+	}
+
+	// if there was no matching service found
+	return fmt.Errorf("no matching service found for message")
+}
