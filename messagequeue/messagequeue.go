@@ -18,4 +18,5 @@ type MessageQueue interface {
 	// other workers
 	// TODO: [COR-553] Batch delete messages
 	Delete(context.Context, *Message) error
+	Redrive(context.Context, *Message) error
 }

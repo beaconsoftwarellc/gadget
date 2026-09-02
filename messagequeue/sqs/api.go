@@ -210,4 +210,10 @@ type API interface {
 	// See also, https://docs.aws.amazon.com/goto/WebAPI/sqs-2012-11-05/DeleteMessage
 	DeleteMessage(ctx context.Context, params *sqs.DeleteMessageInput,
 		optFns ...func(*sqs.Options)) (*sqs.DeleteMessageOutput, error)
+
+	ListDeadLetterSourceQueues(context.Context, *sqs.ListDeadLetterSourceQueuesInput,
+		...func(*sqs.Options)) (*sqs.ListDeadLetterSourceQueuesOutput, error)
+
+	GetQueueAttributes(ctx context.Context, params *sqs.GetQueueAttributesInput,
+		optFns ...func(*sqs.Options)) (*sqs.GetQueueAttributesOutput, error)
 }
