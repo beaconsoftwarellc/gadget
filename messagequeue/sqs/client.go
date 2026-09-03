@@ -53,6 +53,13 @@ func New(region string, queueLocator *url.URL) messagequeue.MessageQueue {
 	}
 }
 
+func NewDeadLetterMessageQueue(region string, queueLocator *url.URL) messagequeue.DeadLetterMessageQueue {
+	return &sdk{
+		region:   region,
+		queueUrl: queueLocator,
+	}
+}
+
 // NewFromURL returns a [messagequeue.MessageQueue] instance located at 'queueLocator' with the AWS
 // region derived from the queue URL. Standard SQS URLs of the form
 // https://sqs.{region}.amazonaws.com/... yield {region}; URLs whose host
@@ -85,9 +92,10 @@ func RegionFromURL(queueLocator *url.URL) (string, error) {
 }
 
 type sdk struct {
-	region   string
-	queueUrl *url.URL
-	api      API
+	region       string
+	queueUrl     *url.URL
+	api          API
+	sourceQueues map[string]string
 }
 
 func (mq *sdk) API(context context.Context) (API, error) {
@@ -280,6 +288,62 @@ func (mq *sdk) Redrive(ctx context.Context, msg *messagequeue.Message) error {
 		return err
 	}
 
+	queueURL, found, err := mq.GetQueueURLForService(ctx, msg.Service)
+	if err != nil {
+		return err
+	}
+
+	if !found {
+		return fmt.Errorf("no matching service found for message")
+	}
+
+	// send message back to the original queue
+	toSend := &sqs.SendMessageInput{QueueUrl: aws.String(queueURL), MessageBody: aws.String(msg.Body)}
+	_, err = api.SendMessage(ctx, toSend)
+	if err != nil {
+		return err
+	}
+
+	// delete message from DLQ
+	err = mq.Delete(ctx, msg)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (mq *sdk) GetQueueURLForService(ctx context.Context, service string) (string, bool, error) {
+	err := mq.populateSourcesMap(ctx)
+	// if something went wrong
+	if err != nil {
+		return "", false, err
+	}
+
+	// if the service was found
+	if queueURL, ok := mq.sourceQueues[service]; ok {
+		return queueURL, true, nil
+	}
+
+	// if the service was not found
+	return "", false, nil
+}
+
+func (mq *sdk) populateSourcesMap(ctx context.Context) error {
+	var (
+		api API
+		err error
+	)
+
+	// Check if the map is nil or has not been populated yet
+	if mq.sourceQueues != nil {
+		return nil
+	}
+
+	api, err = mq.API(ctx)
+	if nil != err {
+		return err
+	}
+
 	// need the queueUrl from the DLQ
 	queueUrlInput := &sqs.ListDeadLetterSourceQueuesInput{QueueUrl: aws.String(mq.queueUrl.String())}
 	queueUrlOutput, err := api.ListDeadLetterSourceQueues(ctx, queueUrlInput)
@@ -287,37 +351,31 @@ func (mq *sdk) Redrive(ctx context.Context, msg *messagequeue.Message) error {
 		return err
 	}
 
+	// initialize sourceQueues map
+	mq.sourceQueues = make(map[string]string)
+
 	// for each queue URL in the queueUrlOutput.QueueUrls slice, take one and filter by service name
 	for _, queueURL := range queueUrlOutput.QueueUrls {
-		// need the queueUrl from the AWS
-		attributesInput := &sqs.GetQueueAttributesInput{QueueUrl: aws.String(queueURL)}
-		// to get attributions from particular queue
-		attributesOutput, err := api.GetQueueAttributes(ctx, attributesInput)
-		if err != nil {
-			return err
+		// 1. Get the last segment after the final forward slash
+		lastSlashIdx := strings.LastIndex(queueURL, "/")
+		if lastSlashIdx == -1 {
+			return errors.New("Invalid URL patter")
 		}
-		// get the service attribute from original queue
-		service := attributesOutput.Attributes["service"]
+		// gets the last part of the url
+		segment := queueURL[lastSlashIdx+1:]
 
-		// if service and the message's service are equal, send the message back to the queueURL
-		if service == msg.Service {
-			// send message back to the original queue
-			toSend := &sqs.SendMessageInput{QueueUrl: aws.String(queueURL), MessageBody: aws.String(msg.Body)}
-			_, err = api.SendMessage(ctx, toSend)
-			if err != nil {
-				return err
-			}
+		// splits by hyphens
+		parts := strings.Split(segment, "-")
 
-			// delete message from DLQ
-			err = mq.Delete(ctx, msg)
-			if err != nil {
-				return err
-			}
-			return nil
+		// Ensure we have enough parts
+		if len(parts) >= 2 {
+			service := parts[0]
+			// save the service into the map
+			mq.sourceQueues[service] = queueURL
+		} else {
+			return errors.New("Could not parse service from segment")
 		}
-
 	}
-
-	// if there was no matching service found
-	return fmt.Errorf("no matching service found for message")
+	// Return the already populated map if it was valid
+	return nil
 }

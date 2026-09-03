@@ -213,7 +213,4 @@ type API interface {
 
 	ListDeadLetterSourceQueues(context.Context, *sqs.ListDeadLetterSourceQueuesInput,
 		...func(*sqs.Options)) (*sqs.ListDeadLetterSourceQueuesOutput, error)
-
-	GetQueueAttributes(ctx context.Context, params *sqs.GetQueueAttributesInput,
-		optFns ...func(*sqs.Options)) (*sqs.GetQueueAttributesOutput, error)
 }
