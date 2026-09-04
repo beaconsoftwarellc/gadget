@@ -61,6 +61,26 @@ func (mr *MockAPIMockRecorder) DeleteMessage(ctx, params any, optFns ...any) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteMessage", reflect.TypeOf((*MockAPI)(nil).DeleteMessage), varargs...)
 }
 
+// ListDeadLetterSourceQueues mocks base method.
+func (m *MockAPI) ListDeadLetterSourceQueues(arg0 context.Context, arg1 *sqs.ListDeadLetterSourceQueuesInput, arg2 ...func(*sqs.Options)) (*sqs.ListDeadLetterSourceQueuesOutput, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ListDeadLetterSourceQueues", varargs...)
+	ret0, _ := ret[0].(*sqs.ListDeadLetterSourceQueuesOutput)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListDeadLetterSourceQueues indicates an expected call of ListDeadLetterSourceQueues.
+func (mr *MockAPIMockRecorder) ListDeadLetterSourceQueues(arg0, arg1 any, arg2 ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListDeadLetterSourceQueues", reflect.TypeOf((*MockAPI)(nil).ListDeadLetterSourceQueues), varargs...)
+}
+
 // ReceiveMessage mocks base method.
 func (m *MockAPI) ReceiveMessage(arg0 context.Context, arg1 *sqs.ReceiveMessageInput, arg2 ...func(*sqs.Options)) (*sqs.ReceiveMessageOutput, error) {
 	m.ctrl.T.Helper()

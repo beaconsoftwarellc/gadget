@@ -379,3 +379,180 @@ func Test_SQS_Delete(t *testing.T) {
 		Return(nil, errors.New(expected))
 	assert.EqualError(sdk.Delete(ctx, message), expected)
 }
+
+func Test_SQS_Redrive(t *testing.T) {
+	t.Run("no matching queue", func(t *testing.T) {
+		ctx, assert, _, sdk := initialize(t)
+		message := &messagequeue.Message{
+			Service: generator.String(32),
+		}
+
+		sdk.sourceQueues = map[string]string{
+			"someQueueUrl": generator.String(32),
+		}
+
+		err := sdk.Redrive(ctx, message)
+		assert.ErrorContains(err, "no matching queue found")
+	})
+
+	t.Run("send message error", func(t *testing.T) {
+		ctx, assert, apiMock, sdk := initialize(t)
+
+		message := &messagequeue.Message{
+			Service: generator.String(32),
+		}
+		expected := generator.String(32)
+
+		sdk.sourceQueues = map[string]string{
+			message.Service: generator.String(32),
+		}
+		apiMock.EXPECT().SendMessage(ctx, gomock.Any(), gomock.Any()).Return(nil, errors.New(expected))
+		assert.EqualError(sdk.Redrive(ctx, message), expected)
+	})
+
+	t.Run("delete message error", func(t *testing.T) {
+		ctx, assert, apiMock, sdk := initialize(t)
+		message := &messagequeue.Message{
+			Service:  generator.String(32),
+			External: generator.String(32),
+		}
+
+		expected := generator.String(32)
+
+		sdk.sourceQueues = map[string]string{
+			message.Service: generator.String(32),
+		}
+
+		messageToDelete := &sqs.DeleteMessageInput{
+			QueueUrl:      aws.String(sdk.queueUrl.String()),
+			ReceiptHandle: aws.String(message.External),
+		}
+
+		apiMock.EXPECT().SendMessage(ctx, gomock.Any(), gomock.Any()).Return(&sqs.SendMessageOutput{}, nil)
+		apiMock.EXPECT().DeleteMessage(ctx, messageToDelete, gomock.Any()).Return(nil, errors.New(expected))
+		assert.EqualError(sdk.Redrive(ctx, message), expected)
+	})
+
+	t.Run("success", func(t *testing.T) {
+		ctx, assert, apiMock, sdk := initialize(t)
+
+		message := &messagequeue.Message{
+			Service:  generator.String(32),
+			External: generator.String(32),
+		}
+
+		sdk.sourceQueues = map[string]string{
+			message.Service: generator.String(32),
+		}
+
+		messageToDelete := &sqs.DeleteMessageInput{
+			QueueUrl:      aws.String(sdk.queueUrl.String()),
+			ReceiptHandle: aws.String(message.External),
+		}
+
+		apiMock.EXPECT().SendMessage(ctx, gomock.Any(), gomock.Any()).Return(&sqs.SendMessageOutput{}, nil)
+		apiMock.EXPECT().DeleteMessage(ctx, messageToDelete, gomock.Any()).Return(&sqs.DeleteMessageOutput{}, nil)
+		err := sdk.Redrive(ctx, message)
+		assert.NoError(err)
+	})
+
+}
+
+func Test_SQS_PopulatedSourcesMap(t *testing.T) {
+	t.Run("already populated", func(t *testing.T) {
+		ctx, assert, _, sdk := initialize(t)
+		sdk.sourceQueues = map[string]string{
+			"service": generator.String(32),
+		}
+		err := sdk.populateSourcesMap(ctx)
+		assert.NoError(err)
+	})
+
+	t.Run("populate sources map success", func(t *testing.T) {
+		ctx, assert, apiMock, sdk := initialize(t)
+
+		queueURL := "https://sqs.region.amazonaws.com/12345678/intg-connect-billing-" +
+			"SQS-01134abc-ServiceQueue-01134abc"
+
+		apiMock.EXPECT().ListDeadLetterSourceQueues(ctx, gomock.Any()).Return(&sqs.ListDeadLetterSourceQueuesOutput{
+			QueueUrls: []string{queueURL},
+		}, nil)
+
+		err := sdk.populateSourcesMap(ctx)
+		assert.NoError(err)
+		assert.Equal(queueURL, sdk.sourceQueues["billing"])
+	})
+
+	t.Run("list source queues error", func(t *testing.T) {
+		ctx, assert, apiMock, sdk := initialize(t)
+
+		expected := generator.String(32)
+
+		apiMock.EXPECT().ListDeadLetterSourceQueues(ctx, gomock.Any()).Return(nil, errors.New(expected))
+
+		err := sdk.populateSourcesMap(ctx)
+		assert.EqualError(err, expected)
+	})
+
+	t.Run("parse queue URL error", func(t *testing.T) {
+		ctx, assert, apiMock, sdk := initialize(t)
+
+		queueURL := "invalid-url"
+
+		apiMock.EXPECT().ListDeadLetterSourceQueues(ctx, gomock.Any()).Return(&sqs.ListDeadLetterSourceQueuesOutput{
+			QueueUrls: []string{queueURL},
+		}, nil)
+
+		err := sdk.populateSourcesMap(ctx)
+		assert.Error(err)
+	})
+}
+
+func Test_GetServiceFromQueueURL(t *testing.T) {
+	tcs := []struct {
+		name    string
+		input   string // queueURL
+		service string
+		err     error
+	}{
+		{
+			name: "valid",
+			input: "https://sqs.region.amazonaws.com/12345678/intg-connect-billing-" +
+				"SQS-01134abc-ServiceQueue-01134abc",
+			service: "billing",
+			err:     nil,
+		},
+		{
+			name:    "no queue name",
+			input:   "https://sqs.region.amazonaws.com/12345678/",
+			service: "",
+			err: errors.New("[MQ.SQS.381] queue URL 'https://sqs.region.amazonaws.com/" +
+				"12345678/' does not match expected pattern"),
+		},
+		{
+			name:    "no slashes",
+			input:   "intg-connect-billing-SQS-01134abc-ServiceQueue-01134abc",
+			service: "",
+			err: errors.New("[MQ.SQS.377] queue URL 'intg-connect-billing-SQS-" +
+				"01134abc-ServiceQueue-01134abc' does not match expected pattern"),
+		},
+		{
+			name:    "missing service",
+			input:   "https://sqs.region.amazonaws.com/12345678/intg-connect",
+			service: "",
+			err:     errors.New("[MQ.SQS.392] could not parse service from segment 'intg-connect'"),
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			service, err := getServiceFromQueueURL(tc.input)
+			if tc.err != nil {
+				assert.EqualError(t, err, tc.err.Error())
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equal(t, tc.service, service)
+		})
+	}
+}

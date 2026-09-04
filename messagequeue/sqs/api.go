@@ -211,6 +211,7 @@ type API interface {
 	DeleteMessage(ctx context.Context, params *sqs.DeleteMessageInput,
 		optFns ...func(*sqs.Options)) (*sqs.DeleteMessageOutput, error)
 
+	// ListDeadLetterSourceQueues returns a list of queues that have the given queue as a dead letter queue
 	ListDeadLetterSourceQueues(context.Context, *sqs.ListDeadLetterSourceQueuesInput,
 		...func(*sqs.Options)) (*sqs.ListDeadLetterSourceQueuesOutput, error)
 }

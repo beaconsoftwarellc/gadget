@@ -20,6 +20,7 @@ type MessageQueue interface {
 	Delete(context.Context, *Message) error
 }
 
+// DeadLetterMessageQueue for redriving messages to the originating queue
 type DeadLetterMessageQueue interface {
 	MessageQueue
 	// Redrive the passed message to the originating queue
