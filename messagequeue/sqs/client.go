@@ -277,6 +277,7 @@ func (mq *sdk) Delete(ctx context.Context, msg *messagequeue.Message) error {
 	return err
 }
 
+// Redrive sends a message back to the originating queue
 func (mq *sdk) Redrive(ctx context.Context, msg *messagequeue.Message) error {
 	var (
 		api API
@@ -294,7 +295,7 @@ func (mq *sdk) Redrive(ctx context.Context, msg *messagequeue.Message) error {
 	}
 
 	if !found {
-		return fmt.Errorf("no matching service found for message")
+		return fmt.Errorf("[MQ.SQS.297] no matching queue found for service '%s' on message]", msg.Service)
 	}
 
 	// send message back to the original queue
@@ -312,6 +313,7 @@ func (mq *sdk) Redrive(ctx context.Context, msg *messagequeue.Message) error {
 	return nil
 }
 
+// GetQueueURLForService returns the queue URL for a given service
 func (mq *sdk) GetQueueURLForService(ctx context.Context, service string) (string, bool, error) {
 	err := mq.populateSourcesMap(ctx)
 	// if something went wrong
@@ -356,26 +358,40 @@ func (mq *sdk) populateSourcesMap(ctx context.Context) error {
 
 	// for each queue URL in the queueUrlOutput.QueueUrls slice, take one and filter by service name
 	for _, queueURL := range queueUrlOutput.QueueUrls {
-		// 1. Get the last segment after the final forward slash
-		lastSlashIdx := strings.LastIndex(queueURL, "/")
-		if lastSlashIdx == -1 {
-			return errors.New("Invalid URL patter")
+		service, err := getServiceFromQueueURL(queueURL)
+		if nil != err {
+			return err
 		}
-		// gets the last part of the url
-		segment := queueURL[lastSlashIdx+1:]
 
-		// splits by hyphens
-		parts := strings.Split(segment, "-")
-
-		// Ensure we have enough parts
-		if len(parts) >= 2 {
-			service := parts[0]
-			// save the service into the map
-			mq.sourceQueues[service] = queueURL
-		} else {
-			return errors.New("Could not parse service from segment")
-		}
+		// save the service into the map
+		mq.sourceQueues[service] = queueURL
 	}
 	// Return the already populated map if it was valid
 	return nil
+}
+
+func getServiceFromQueueURL(queueURL string) (string, error) {
+	// Get the last segment after the final forward slash
+	lastSlashIdx := strings.LastIndex(queueURL, "/")
+	if lastSlashIdx == -1 {
+		return "", fmt.Errorf("[MQ.SQS.377] queue URL '%s' does not match expected pattern", queueURL)
+	}
+
+	if lastSlashIdx == len(queueURL)-1 {
+		return "", fmt.Errorf("[MQ.SQS.381] queue URL '%s' does not match expected pattern", queueURL)
+	}
+
+	// gets the last part of the url
+	segment := queueURL[lastSlashIdx+1:]
+
+	// splits by hyphens
+	parts := strings.Split(segment, "-")
+
+	// Ensure we have enough parts
+	if len(parts) < 3 {
+		return "", fmt.Errorf("[MQ.SQS.392] could not parse service from segment '%s'", segment)
+
+	}
+
+	return parts[2], nil
 }
