@@ -11,3 +11,8 @@ func Future(duration time.Duration) time.Time {
 func Past(duration time.Duration) time.Time {
 	return time.Now().UTC().Add(-1 * duration)
 }
+
+// Today returns the current date rounded down to midnight UTC
+func Today() time.Time {
+	return time.Now().UTC().Truncate(24 * time.Hour)
+}
