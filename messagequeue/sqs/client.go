@@ -53,6 +53,7 @@ func New(region string, queueLocator *url.URL) messagequeue.MessageQueue {
 	}
 }
 
+// NewDeadLetterMessageQueue creates a dead letter message queue for the provided AWS region and queue locator
 func NewDeadLetterMessageQueue(region string, queueLocator *url.URL) messagequeue.DeadLetterMessageQueue {
 	return &sdk{
 		region:   region,
@@ -285,7 +286,7 @@ func (mq *sdk) Redrive(ctx context.Context, msg *messagequeue.Message) error {
 	)
 
 	api, err = mq.API(ctx)
-	if nil != err {
+	if err != nil {
 		return err
 	}
 
@@ -295,7 +296,8 @@ func (mq *sdk) Redrive(ctx context.Context, msg *messagequeue.Message) error {
 	}
 
 	if !found {
-		return fmt.Errorf("[MQ.SQS.297] no matching queue found for service '%s' on message]", msg.Service)
+		return fmt.Errorf("[MQ.SQS.297] no matching queue found for service '%s' on message]",
+			msg.Service)
 	}
 
 	// send message back to the original queue
@@ -306,14 +308,10 @@ func (mq *sdk) Redrive(ctx context.Context, msg *messagequeue.Message) error {
 	}
 
 	// delete message from DLQ
-	err = mq.Delete(ctx, msg)
-	if err != nil {
-		return err
-	}
-	return nil
+	return mq.Delete(ctx, msg)
 }
 
-// GetQueueURLForService returns the queue URL for a given service
+// GetQueueURLForService from this dead letter queues list of sources. Returns a boolean indicating success or failure.
 func (mq *sdk) GetQueueURLForService(ctx context.Context, service string) (string, bool, error) {
 	err := mq.populateSourcesMap(ctx)
 	// if something went wrong
@@ -321,13 +319,8 @@ func (mq *sdk) GetQueueURLForService(ctx context.Context, service string) (strin
 		return "", false, err
 	}
 
-	// if the service was found
-	if queueURL, ok := mq.sourceQueues[service]; ok {
-		return queueURL, true, nil
-	}
-
-	// if the service was not found
-	return "", false, nil
+	queueURL, ok := mq.sourceQueues[service]
+	return queueURL, ok, nil
 }
 
 func (mq *sdk) populateSourcesMap(ctx context.Context) error {
@@ -354,18 +347,21 @@ func (mq *sdk) populateSourcesMap(ctx context.Context) error {
 	}
 
 	// initialize sourceQueues map
-	mq.sourceQueues = make(map[string]string)
+	sourceQueues := make(map[string]string)
 
 	// for each queue URL in the queueUrlOutput.QueueUrls slice, take one and filter by service name
 	for _, queueURL := range queueUrlOutput.QueueUrls {
 		service, err := getServiceFromQueueURL(queueURL)
-		if nil != err {
-			return err
+		if err != nil {
+			log.Errorf("[MQ.SQS.355] failed to get service from queue URL '%s': %v", queueURL, err)
+			continue
 		}
 
 		// save the service into the map
-		mq.sourceQueues[service] = queueURL
+		sourceQueues[service] = queueURL
 	}
+	// assign only once the operation has completed successfully
+	mq.sourceQueues = sourceQueues
 	// Return the already populated map if it was valid
 	return nil
 }
