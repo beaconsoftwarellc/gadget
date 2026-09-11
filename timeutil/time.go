@@ -14,5 +14,13 @@ func Past(duration time.Duration) time.Time {
 
 // Today returns the current date rounded down to midnight UTC
 func Today() time.Time {
-	return time.Now().UTC().Truncate(24 * time.Hour)
+	return Date(time.Now())
+}
+
+// Date returns the given time rounded down to midnight UTC
+func Date(t time.Time) time.Time {
+	if t.IsZero() {
+		return time.Time{}
+	}
+	return t.UTC().Truncate(24 * time.Hour)
 }
