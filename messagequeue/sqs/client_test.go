@@ -548,11 +548,11 @@ func Test_GetServiceFromQueueURL(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			service, err := getServiceFromQueueURL(tc.input)
 			if tc.err != nil {
-				assert.EqualError(t, err, tc.err.Error())
+				_assert.EqualError(t, err, tc.err.Error())
 			} else {
-				assert.NoError(t, err)
+				_assert.NoError(t, err)
 			}
-			assert.Equal(t, tc.service, service)
+			_assert.Equal(t, tc.service, service)
 		})
 	}
 }
