@@ -301,7 +301,11 @@ func (mq *sdk) Redrive(ctx context.Context, msg *messagequeue.Message) error {
 	}
 
 	// send message back to the original queue
-	toSend := &sqs.SendMessageInput{QueueUrl: aws.String(queueURL), MessageBody: aws.String(msg.Body)}
+	toSend, err := sendMessageInputFromMessage(msg)
+	if err != nil {
+		return err
+	}
+	toSend.QueueUrl = aws.String(queueURL)
 	_, err = api.SendMessage(ctx, toSend)
 	if err != nil {
 		return err
