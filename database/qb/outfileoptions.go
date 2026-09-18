@@ -14,11 +14,20 @@ const (
 	FormatCSV OutfileFormat = "CSV"
 	// FormatTEXT specifies an outfile of text.
 	FormatTEXT OutfileFormat = "TEXT"
+
+	// LocationTypeS3 specifies outputing to S3
+	LocationTypeS3 = "S3"
+	// LocationTypeLocal specifies outputing to the local filesystem
+	LocationTypeLocal = "LOCAL"
 )
 
 // OutfileOptions for the query.
 // See: https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraMySQL.Integrating.SaveIntoS3.html
 type OutfileOptions struct {
+	// LocationType of the outfile (S3 | LOCAL)
+	LocationType string
+	// Location specifies the location of the outfile
+	Location string
 	// Header indicates whether the first row of the query results should be treated as a header row.
 	Header bool
 	// Format is the format of the output file (CSV | TEXT)
@@ -33,6 +42,8 @@ type OutfileOptions struct {
 	LinesStartingBy string
 	// LinesTerminatedBy specifies the character sequence used to terminate a line in the output file.
 	LinesTerminatedBy string
+	// Overwrite specifies whether to overwrite the outfile if it already exists (S3 Only).
+	Overwrite bool
 }
 
 // SQL representation of the passed OutfileOptions.
@@ -40,7 +51,24 @@ func (oo *OutfileOptions) SQL() string {
 	if oo == nil {
 		return ""
 	}
+	if stringutil.IsEmpty(oo.Location) {
+		return ""
+	}
+
 	var sql []string
+	if oo.LocationType == LocationTypeS3 {
+		sql = append(sql,
+			fmt.Sprintf("INTO OUTFILE S3 '%s'",
+				strings.ReplaceAll(oo.Location, "'", `\'`),
+			),
+		)
+	} else {
+		sql = append(sql,
+			fmt.Sprintf("INTO OUTFILE '%s'",
+				strings.ReplaceAll(oo.Location, "'", `\'`),
+			),
+		)
+	}
 	if !stringutil.IsEmpty(string(oo.Format)) {
 		s := fmt.Sprintf("FORMAT %s", oo.Format)
 		if oo.Header {
@@ -71,6 +99,9 @@ func (oo *OutfileOptions) SQL() string {
 			s = fmt.Sprintf("%s TERMINATED BY '%s'", s, oo.LinesTerminatedBy)
 		}
 		sql = append(sql, s)
+	}
+	if oo.Overwrite && oo.LocationType == LocationTypeS3 {
+		sql = append(sql, "OVERWRITE ON")
 	}
 	return strings.Join(sql, " ")
 }

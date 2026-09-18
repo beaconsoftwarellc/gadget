@@ -208,7 +208,6 @@ type SelectQuery struct {
 	groupBy        []TableField
 	where          *whereCondition
 	Seperator      string
-	outfile        string
 	outfileOptions *OutfileOptions
 	err            error
 }
@@ -283,8 +282,7 @@ func (q *SelectQuery) GroupBy(tableFields ...TableField) *SelectQuery {
 
 // IntoOutfile sets an output file path, causing the query to write results
 // to that file using MySQL's INTO OUTFILE syntax.
-func (q *SelectQuery) IntoOutfile(path string, options *OutfileOptions) *SelectQuery {
-	q.outfile = path
+func (q *SelectQuery) IntoOutfile(options *OutfileOptions) *SelectQuery {
 	q.outfileOptions = options
 	return q
 }
@@ -369,10 +367,6 @@ func (q *SelectQuery) SQL(options LimitOffset) (string, []any, error) {
 	selectExpressionsSQL, values := q.selectExpressionsSQL()
 	lines := []string{selectExpressionsSQL}
 
-	// INTO OUTFILE
-	if q.outfile != "" {
-		lines = append(lines, fmt.Sprintf("INTO OUTFILE S3 '%s'", strings.ReplaceAll(q.outfile, "'", `\'`)))
-	}
 	if q.outfileOptions != nil {
 		lines = append(lines, q.outfileOptions.SQL())
 	}
