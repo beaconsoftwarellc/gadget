@@ -56,19 +56,15 @@ func (oo *OutfileOptions) SQL() string {
 	}
 
 	var sql []string
+	sql = append(sql, "INTO OUTFILE")
 	if oo.LocationType == LocationTypeS3 {
-		sql = append(sql,
-			fmt.Sprintf("INTO OUTFILE S3 '%s'",
-				strings.ReplaceAll(oo.Location, "'", `\'`),
-			),
-		)
-	} else {
-		sql = append(sql,
-			fmt.Sprintf("INTO OUTFILE '%s'",
-				strings.ReplaceAll(oo.Location, "'", `\'`),
-			),
-		)
+		sql = append(sql, "S3")
 	}
+	sql = append(sql,
+		fmt.Sprintf("'%s'",
+			strings.ReplaceAll(oo.Location, "'", `\'`),
+		),
+	)
 	if !stringutil.IsEmpty(string(oo.Format)) {
 		s := fmt.Sprintf("FORMAT %s", oo.Format)
 		if oo.Header {
