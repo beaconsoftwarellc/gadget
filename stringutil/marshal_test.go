@@ -5,6 +5,7 @@ import (
 
 	"time"
 
+	"github.com/beaconsoftwarellc/gadget/v2/messagequeue"
 	assert1 "github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -141,6 +142,66 @@ func TestDecodeMessage(t *testing.T) {
 			if IsWhiteSpace(tc.expectedError) {
 				assert.NoError(actualError)
 				assert.Equal(tc.expected, actual)
+			} else {
+				assert.EqualError(actualError, tc.expectedError)
+			}
+		})
+	}
+}
+
+func TestDebugDecode(t *testing.T) {
+	var tests = []struct {
+		name           string
+		message        *messagequeue.Message
+		expectedResult string
+		expectedOk     bool
+		expectedError  string
+	}{
+		{
+			name:           "plain text body",
+			message:        &messagequeue.Message{Body: "plain text body"},
+			expectedResult: "plain text body",
+			expectedOk:     false,
+			expectedError:  "",
+		},
+		{
+			name:           "invalid JSON",
+			message:        &messagequeue.Message{Body: "aW52YWxpZCBqc29u"},
+			expectedResult: "",
+			expectedOk:     false,
+			expectedError:  "invalid character 'i' looking for beginning of value",
+		},
+		{
+			name:           "nil payload",
+			message:        &messagequeue.Message{Body: "eyB9"},
+			expectedResult: "{\n\t\"Payload\": \"nil\"\n}",
+			expectedOk:     true,
+			expectedError:  "",
+		},
+		{
+			name:           "base64 encoded payload",
+			message:        &messagequeue.Message{Body: "eyJQYXlsb2FkIjoiZEdWemRBPT0ifQ=="},
+			expectedResult: "{\n\t\"Payload\": \"test\"\n}",
+			expectedOk:     true,
+			expectedError:  "",
+		},
+		{
+			name:           "plain text payload",
+			message:        &messagequeue.Message{Body: "eyJQYXlsb2FkIjogIlNvbWV0aGluZyB0aGF0IHdpbGwgbm90IGRlY29kZSJ9"},
+			expectedResult: "{\n\t\"Payload\": \"Something that will not decode\"\n}",
+			expectedOk:     true,
+			expectedError:  "",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert := assert1.New(t)
+			actualResult, actualOk, actualError := DebugDecode(tc.message)
+			assert.Equal(tc.expectedOk, actualOk)
+			if IsWhiteSpace(tc.expectedError) {
+				assert.NoError(actualError)
+				assert.Equal(tc.expectedResult, actualResult)
 			} else {
 				assert.EqualError(actualError, tc.expectedError)
 			}
