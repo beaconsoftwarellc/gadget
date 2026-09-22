@@ -469,11 +469,11 @@ func TestUpdateBitwise(t *testing.T) {
 
 func TestQueryBuilderIntoOutfile(t *testing.T) {
 	assert := assert1.New(t)
-	query := Select(Person.ID, Person.Name).From(Person).IntoOutfile("/files/export.csv", nil)
+	query := Select(Person.ID, Person.Name).From(Person).IntoOutfile(&OutfileOptions{Location: "/files/export.csv"})
 	actual, values, err := query.SQL(nil)
 	assert.NoError(err)
 	assert.Empty(values)
-	expected := "SELECT `person`.`id`, `person`.`name` INTO OUTFILE S3 '/files/export.csv' FROM `person` AS `person`"
+	expected := "SELECT `person`.`id`, `person`.`name` INTO OUTFILE '/files/export.csv' FROM `person` AS `person`"
 	assert.Equal(expected, actual)
 }
 
@@ -481,7 +481,9 @@ func TestQueryBuilderIntoOutfile_WithWhere(t *testing.T) {
 	assert := assert1.New(t)
 	query := Select(Person.ID, Person.Name).
 		From(Person).
-		IntoOutfile("/files/export.csv", &OutfileOptions{
+		IntoOutfile(&OutfileOptions{
+			Location:          "/files/export.csv",
+			LocationType:      LocationTypeS3,
 			Header:            true,
 			Format:            "CSV",
 			TerminatedBy:      ",",
@@ -502,10 +504,10 @@ func TestQueryBuilderIntoOutfile_WithWhere(t *testing.T) {
 
 func TestQueryBuilderIntoOutfile_EscapesSingleQuote(t *testing.T) {
 	assert := assert1.New(t)
-	query := Select(Person.ID).From(Person).IntoOutfile("/it's here/export.csv", nil)
+	query := Select(Person.ID).From(Person).IntoOutfile(&OutfileOptions{Location: "/it's here/export.csv"})
 	actual, values, err := query.SQL(nil)
 	assert.NoError(err)
 	assert.Empty(values)
-	expected := "SELECT `person`.`id` INTO OUTFILE S3 '/it\\'s here/export.csv' FROM `person` AS `person`"
+	expected := "SELECT `person`.`id` INTO OUTFILE '/it\\'s here/export.csv' FROM `person` AS `person`"
 	assert.Equal(expected, actual)
 }
