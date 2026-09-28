@@ -33,7 +33,7 @@ func (f format) ParameterizedSQL() (string, []any) {
 	if f.languageTag != language.Und {
 		parts = append(parts, ", ", f.locale())
 	}
-	parts = append(parts, ")", " AS `", f.GetName(), "`")
+	parts = append(parts, ")")
 	return strings.Join(parts, ""), expValues
 }
 

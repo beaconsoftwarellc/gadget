@@ -18,12 +18,12 @@ func TestFormat(t *testing.T) {
 	assert.Equal(t, expectedField.GetName(), expression.GetName())
 	assert.Contains(t, expression.GetTables(), expectedField.Table)
 	actualSql, actualParams := expression.ParameterizedSQL()
-	assert.Equal(t, fmt.Sprintf("FORMAT(%s, %d, \"ja_JP\") AS `%s`", expectedField.SQL(), expectedDecimals, expectedField.GetName()), actualSql)
+	assert.Equal(t, fmt.Sprintf("FORMAT(%s, %d, \"ja_JP\")", expectedField.SQL(), expectedDecimals), actualSql)
 	assert.Empty(t, actualParams)
 
 	expression = Format(expectedField, expectedDecimals, language.Und)
 	assert.Contains(t, expression.GetTables(), expectedField.Table)
 	actualSql, actualParams = expression.ParameterizedSQL()
-	assert.Equal(t, fmt.Sprintf("FORMAT(%s, %d) AS `%s`", expectedField.SQL(), expectedDecimals, expectedField.GetName()), actualSql)
+	assert.Equal(t, fmt.Sprintf("FORMAT(%s, %d)", expectedField.SQL(), expectedDecimals), actualSql)
 	assert.Empty(t, actualParams)
 }
