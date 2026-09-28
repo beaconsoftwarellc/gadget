@@ -1,21 +1,21 @@
 package qb
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
-	"github.com/beaconsoftwarellc/gadget/v2/stringutil"
+	"golang.org/x/text/language"
 )
 
 type format struct {
 	expression    SelectExpression
 	decimalPlaces int
-	locale        string
-	alias         string
+	languageTag   language.Tag
 }
 
 func (f format) GetName() string {
-	return f.alias
+	return f.expression.GetName()
 }
 
 func (f format) GetTables() []string {
@@ -30,18 +30,26 @@ func (f format) ParameterizedSQL() (string, []any) {
 		", ",
 		strconv.Itoa(f.decimalPlaces),
 	}
-	if !stringutil.IsEmpty(f.locale) {
-		parts = append(parts, ", ", f.locale)
+	if f.languageTag != language.Und {
+		parts = append(parts, ", ", f.locale())
 	}
-	parts = append(parts, ")")
-	if !stringutil.IsEmpty(f.alias) {
-		parts = append(parts, " AS `", f.alias, "`")
-	}
+	parts = append(parts, ")", " AS `", f.GetName(), "`")
 	return strings.Join(parts, ""), expValues
+}
+
+func (f format) locale() string {
+	var (
+		base, _   = f.languageTag.Base()
+		region, _ = f.languageTag.Region()
+	)
+	return fmt.Sprintf("\"%s_%s\"", base, region)
 }
 
 // Format the Select expression to the specified decimal places leverage the
 // optional locale and alias
-func Format(expression SelectExpression, decimalPlaces int, locale, alias string) SelectExpression {
-	return format{expression: expression, decimalPlaces: decimalPlaces, locale: locale, alias: alias}
+func Format(expression SelectExpression, decimalPlaces int, languageTag language.Tag) SelectExpression {
+	return format{expression: expression,
+		decimalPlaces: decimalPlaces,
+		languageTag:   languageTag,
+	}
 }
