@@ -315,6 +315,23 @@ func (mq *sdk) Redrive(ctx context.Context, msg *messagequeue.Message) error {
 	return mq.Delete(ctx, msg)
 }
 
+// Enqueue sends a message to SQS synchronously
+func (mq *sdk) Enqueue(ctx context.Context, msg *messagequeue.Message) error {
+	input, err := sendMessageInputFromMessage(msg)
+	if err != nil {
+		return err
+	}
+
+	input.QueueUrl = aws.String(mq.queueUrl.String())
+
+	api, err := mq.API(ctx)
+	if err != nil {
+		return err
+	}
+	_, err = api.SendMessage(ctx, input)
+	return err
+}
+
 // GetQueueURLForService from this dead letter queues list of sources. Returns a boolean indicating success or failure.
 func (mq *sdk) GetQueueURLForService(ctx context.Context, service string) (string, bool, error) {
 	err := mq.populateSourcesMap(ctx)

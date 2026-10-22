@@ -400,6 +400,8 @@ func Test_SQS_Redrive(t *testing.T) {
 
 		message := &messagequeue.Message{
 			Service: generator.String(32),
+			Method:  generator.String(32),
+			Body:    generator.String(32),
 		}
 		expected := generator.String(32)
 
@@ -414,6 +416,8 @@ func Test_SQS_Redrive(t *testing.T) {
 		ctx, assert, apiMock, sdk := initialize(t)
 		message := &messagequeue.Message{
 			Service:  generator.String(32),
+			Method:   generator.String(32),
+			Body:     generator.String(32),
 			External: generator.String(32),
 		}
 
@@ -438,6 +442,8 @@ func Test_SQS_Redrive(t *testing.T) {
 
 		message := &messagequeue.Message{
 			Service:  generator.String(32),
+			Method:   generator.String(32),
+			Body:     generator.String(32),
 			External: generator.String(32),
 		}
 
@@ -504,7 +510,9 @@ func Test_SQS_PopulatedSourcesMap(t *testing.T) {
 		}, nil)
 
 		err := sdk.populateSourcesMap(ctx)
-		assert.Error(err)
+		assert.NoError(err)
+		// should not have populated the map
+		assert.Empty(sdk.sourceQueues)
 	})
 }
 
@@ -555,4 +563,48 @@ func Test_GetServiceFromQueueURL(t *testing.T) {
 			_assert.Equal(t, tc.service, service)
 		})
 	}
+}
+
+func Test_SQS_Enqueue(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		ctx, assert, apiMock, sdk := initialize(t)
+		message := &messagequeue.Message{
+			Service: generator.String(32),
+			Method:  generator.String(32),
+			Body:    generator.String(32),
+		}
+
+		expected := generator.String(32)
+
+		apiMock.EXPECT().SendMessage(ctx, NewMatcher(assert, message), gomock.Any()).
+			Return(&sqs.SendMessageOutput{MessageId: &expected}, nil)
+
+		err := sdk.Enqueue(ctx, message)
+		assert.NoError(err)
+	})
+
+	t.Run("failure to send message", func(t *testing.T) {
+		ctx, assert, apiMock, sdk := initialize(t)
+		message := &messagequeue.Message{
+			Service: generator.String(32),
+			Method:  generator.String(32),
+			Body:    generator.String(32),
+		}
+
+		expected := errors.New(generator.String(32))
+
+		apiMock.EXPECT().SendMessage(ctx, NewMatcher(assert, message), gomock.Any()).
+			Return(nil, expected)
+
+		err := sdk.Enqueue(ctx, message)
+		assert.EqualError(err, expected.Error())
+	})
+
+	t.Run("invalid message", func(t *testing.T) {
+		ctx, assert, _, sdk := initialize(t)
+		message := &messagequeue.Message{}
+
+		err := sdk.Enqueue(ctx, message)
+		assert.Error(err)
+	})
 }

@@ -70,6 +70,20 @@ func (mr *MockMessageQueueMockRecorder) Dequeue(ctx, count, wait, visibilityTime
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Dequeue", reflect.TypeOf((*MockMessageQueue)(nil).Dequeue), ctx, count, wait, visibilityTimeout)
 }
 
+// Enqueue mocks base method.
+func (m *MockMessageQueue) Enqueue(arg0 context.Context, arg1 *Message) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Enqueue", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Enqueue indicates an expected call of Enqueue.
+func (mr *MockMessageQueueMockRecorder) Enqueue(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Enqueue", reflect.TypeOf((*MockMessageQueue)(nil).Enqueue), arg0, arg1)
+}
+
 // EnqueueBatch mocks base method.
 func (m *MockMessageQueue) EnqueueBatch(arg0 context.Context, arg1 []*Message) ([]*EnqueueMessageResult, error) {
 	m.ctrl.T.Helper()
@@ -83,4 +97,100 @@ func (m *MockMessageQueue) EnqueueBatch(arg0 context.Context, arg1 []*Message) (
 func (mr *MockMessageQueueMockRecorder) EnqueueBatch(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnqueueBatch", reflect.TypeOf((*MockMessageQueue)(nil).EnqueueBatch), arg0, arg1)
+}
+
+// MockDeadLetterMessageQueue is a mock of DeadLetterMessageQueue interface.
+type MockDeadLetterMessageQueue struct {
+	ctrl     *gomock.Controller
+	recorder *MockDeadLetterMessageQueueMockRecorder
+	isgomock struct{}
+}
+
+// MockDeadLetterMessageQueueMockRecorder is the mock recorder for MockDeadLetterMessageQueue.
+type MockDeadLetterMessageQueueMockRecorder struct {
+	mock *MockDeadLetterMessageQueue
+}
+
+// NewMockDeadLetterMessageQueue creates a new mock instance.
+func NewMockDeadLetterMessageQueue(ctrl *gomock.Controller) *MockDeadLetterMessageQueue {
+	mock := &MockDeadLetterMessageQueue{ctrl: ctrl}
+	mock.recorder = &MockDeadLetterMessageQueueMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockDeadLetterMessageQueue) EXPECT() *MockDeadLetterMessageQueueMockRecorder {
+	return m.recorder
+}
+
+// Delete mocks base method.
+func (m *MockDeadLetterMessageQueue) Delete(arg0 context.Context, arg1 *Message) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Delete", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Delete indicates an expected call of Delete.
+func (mr *MockDeadLetterMessageQueueMockRecorder) Delete(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockDeadLetterMessageQueue)(nil).Delete), arg0, arg1)
+}
+
+// Dequeue mocks base method.
+func (m *MockDeadLetterMessageQueue) Dequeue(ctx context.Context, count int, wait, visibilityTimeout time.Duration) ([]*Message, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Dequeue", ctx, count, wait, visibilityTimeout)
+	ret0, _ := ret[0].([]*Message)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Dequeue indicates an expected call of Dequeue.
+func (mr *MockDeadLetterMessageQueueMockRecorder) Dequeue(ctx, count, wait, visibilityTimeout any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Dequeue", reflect.TypeOf((*MockDeadLetterMessageQueue)(nil).Dequeue), ctx, count, wait, visibilityTimeout)
+}
+
+// Enqueue mocks base method.
+func (m *MockDeadLetterMessageQueue) Enqueue(arg0 context.Context, arg1 *Message) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Enqueue", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Enqueue indicates an expected call of Enqueue.
+func (mr *MockDeadLetterMessageQueueMockRecorder) Enqueue(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Enqueue", reflect.TypeOf((*MockDeadLetterMessageQueue)(nil).Enqueue), arg0, arg1)
+}
+
+// EnqueueBatch mocks base method.
+func (m *MockDeadLetterMessageQueue) EnqueueBatch(arg0 context.Context, arg1 []*Message) ([]*EnqueueMessageResult, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EnqueueBatch", arg0, arg1)
+	ret0, _ := ret[0].([]*EnqueueMessageResult)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// EnqueueBatch indicates an expected call of EnqueueBatch.
+func (mr *MockDeadLetterMessageQueueMockRecorder) EnqueueBatch(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnqueueBatch", reflect.TypeOf((*MockDeadLetterMessageQueue)(nil).EnqueueBatch), arg0, arg1)
+}
+
+// Redrive mocks base method.
+func (m *MockDeadLetterMessageQueue) Redrive(arg0 context.Context, arg1 *Message) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Redrive", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Redrive indicates an expected call of Redrive.
+func (mr *MockDeadLetterMessageQueueMockRecorder) Redrive(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Redrive", reflect.TypeOf((*MockDeadLetterMessageQueue)(nil).Redrive), arg0, arg1)
 }

@@ -11,6 +11,8 @@ import (
 type MessageQueue interface {
 	// Enqueue all the passed messages as a batch
 	EnqueueBatch(context.Context, []*Message) ([]*EnqueueMessageResult, error)
+	// Enqueue a message synchronously
+	Enqueue(context.Context, *Message) error
 	// Dequeue up to the passed count of messages waiting up to the passed
 	// duration
 	Dequeue(ctx context.Context, count int, wait, visibilityTimeout time.Duration) ([]*Message, error)
