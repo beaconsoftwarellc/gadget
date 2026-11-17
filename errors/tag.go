@@ -16,7 +16,7 @@ type HasCode interface {
 // TaggedError is an error that has been tagged with a status.Status
 type TaggedError interface {
 	error
-	// GetGRPCStatus returns the status.Status for this error
+	// GRPCStatus for this error
 	GRPCStatus() *status.Status
 }
 
@@ -31,6 +31,24 @@ func (e taggedError) Error() string {
 
 func (e taggedError) GRPCStatus() *status.Status {
 	return e.Status
+}
+
+// TagStatus by recomposing its error and return as a [TaggedError]
+func TagStatus(tag string, base *status.Status) TaggedError {
+	var (
+		err       = base.Err()
+		baseError string
+	)
+	if err != nil {
+		baseError = err.Error()
+	} else {
+		baseError = "<empty>"
+	}
+	return &taggedError{
+		Status: status.Newf(base.Code(),
+			"[%s]: %s", tag, baseError),
+		err: err,
+	}
 }
 
 // Tag the passed error
