@@ -27,7 +27,7 @@ func TestTagStatus(t *testing.T) {
 			tag:         "store",
 			base:        status.New(codes.OK, "ignored"),
 			wantCode:    codes.OK,
-			wantMessage: "[store]: <empty>",
+			wantMessage: "",
 		},
 		{
 			name:        "empty tag",
@@ -48,7 +48,13 @@ func TestTagStatus(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := TagStatus(tt.tag, tt.base)
-
+			if tt.wantCode == codes.OK {
+				if got != nil {
+					t.Fatalf("Code() = %s, want <nil>", got.GRPCStatus().Code())
+				} else {
+					return
+				}
+			}
 			gotStatus := got.GRPCStatus()
 			if gotStatus.Code() != tt.wantCode {
 				t.Fatalf("Code() = %v, want %v", gotStatus.Code(), tt.wantCode)
