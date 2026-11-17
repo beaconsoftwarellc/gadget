@@ -39,6 +39,9 @@ func TagStatus(tag string, base *status.Status) TaggedError {
 		err       = base.Err()
 		baseError string
 	)
+	if base.Code() == codes.OK {
+		return nil
+	}
 	if err != nil {
 		baseError = err.Error()
 	} else {
