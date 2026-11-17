@@ -9,7 +9,7 @@ import (
 
 // MessageQueue for enqueueing and dequeueing messages
 type MessageQueue interface {
-	// Enqueue all the passed messages as a batch
+	// EnqueueBatch all the passed messages
 	EnqueueBatch(context.Context, []*Message) ([]*EnqueueMessageResult, error)
 	// Enqueue a message synchronously
 	Enqueue(context.Context, *Message) error

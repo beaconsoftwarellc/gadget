@@ -341,6 +341,9 @@ func (mq *sdk) GetQueueURLForService(ctx context.Context, service string) (strin
 	}
 
 	queueURL, ok := mq.sourceQueues[service]
+	if !ok && len(service) > 0 {
+		queueURL, ok = mq.sourceQueues[service[:len(service)-1]]
+	}
 	return queueURL, ok, nil
 }
 
